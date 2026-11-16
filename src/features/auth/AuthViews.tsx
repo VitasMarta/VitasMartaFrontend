@@ -47,6 +47,7 @@ export function LoginView() {
   const status = useSessionStore((s) => s.status);
   const [step, setStep] = useState<"credentials" | "mfa">("credentials");
   const [mfaToken, setMfaToken] = useState("");
+  const [enrollmentSecret, setEnrollmentSecret] = useState<string | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
@@ -83,6 +84,7 @@ export function LoginView() {
       const result = await login(data.correo, data.password);
       if (result.kind === "mfa") {
         setMfaToken(result.mfaToken);
+        setEnrollmentSecret(result.enrollmentSecret ?? null);
         setStep("mfa");
       } else await finish();
     } catch (error) {
@@ -145,11 +147,22 @@ export function LoginView() {
       ) : (
         <form onSubmit={onMfa} noValidate className="space-y-6">
           <ErrorSummary errors={errors} title={tc("errorSummary")} />
+          {enrollmentSecret && (
+            <section aria-labelledby="mfa-enrolamiento" className="border-l-4 border-ink pl-4">
+              <h2 id="mfa-enrolamiento" className="text-lg font-semibold">{t("enrollTitle")}</h2>
+              <p className="mt-1">{t("enrollBody")}</p>
+              <p className="mt-3 text-sm font-semibold">{t("enrollSecret")}</p>
+              <code className="mt-1 block break-all font-mono text-base tracking-wider select-all" data-testid="mfa-secreto">
+                {enrollmentSecret}
+              </code>
+              <p className="mt-2 text-sm text-ink/80">{t("enrollWarning")}</p>
+            </section>
+          )}
           <TextField label={t("totp")} name="codigo_totp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="\d{6}" required error={errors.codigo_totp} hint={t("totpHint")} className="max-w-60" />
           {failure != null && <ErrorNotice error={failure} referenceLabel={tc("reference")} />}
           <div className="flex gap-3">
             <Button type="submit" loading={busy}>{t("verify")}</Button>
-            <Button variant="ghost" onClick={() => { setStep("credentials"); setFailure(null); }}>{tc("back")}</Button>
+            <Button variant="ghost" onClick={() => { setStep("credentials"); setFailure(null); setEnrollmentSecret(null); }}>{tc("back")}</Button>
           </div>
         </form>
       )}

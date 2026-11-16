@@ -45,12 +45,12 @@ describe("BFF · sesión (cookie httpOnly)", () => {
     expect(setCookieOf(login)).toBe("");
 
     const bad = await mfa.POST(
-      req("/bff/api/v1/identidad/sesiones/mfa", json({ codigo_totp: "000000", mfa_token })),
+      req("/bff/api/v1/identidad/sesiones/mfa", json({ codigo: "000000", mfa_token })),
     );
     expect(bad.status).toBe(401);
 
     const ok = await mfa.POST(
-      req("/bff/api/v1/identidad/sesiones/mfa", json({ codigo_totp: "123456", mfa_token })),
+      req("/bff/api/v1/identidad/sesiones/mfa", json({ codigo: "123456", mfa_token })),
     );
     expect(ok.status).toBe(200);
     expect(setCookieOf(ok)).toContain(REFRESH_COOKIE);
@@ -86,6 +86,25 @@ describe("BFF · sesión (cookie httpOnly)", () => {
     expect((await res.json()).access_token).toBeTruthy();
     const second = /vm_rt=([^;]+)/.exec(setCookieOf(res))![1];
     expect(second).not.toBe(first);
+  });
+
+  it("logout: envía a M7 el refresh de la cookie para revocarlo (FR-712)", async () => {
+    let body: unknown = null;
+    server.use(
+      http.delete(`${GATEWAY_URL}/api/v1/identidad/sesiones`, async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ mensaje: "ok" });
+      }),
+    );
+    const res = await sesiones.DELETE(
+      req("/bff/api/v1/identidad/sesiones", {
+        method: "DELETE",
+        headers: { cookie: `${REFRESH_COOKIE}=rt-123`, authorization: "Bearer t" },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(body).toEqual({ refresh_token: "rt-123" });
+    expect(setCookieOf(res)).toContain("Max-Age=0");
   });
 
   it("logout: borra la cookie aunque el Gateway falle", async () => {

@@ -9,28 +9,34 @@ interface TokenResponse {
   expira_en?: number;
   mfa_requerido?: boolean;
   mfa_token?: string;
+  /** Solo en el primer login de un rol con MFA: secreto TOTP (base32) para la app autenticadora. */
+  secreto_enrolamiento?: string | null;
 }
 
-export type LoginResult = { kind: "ok" } | { kind: "mfa"; mfaToken: string };
+export type LoginResult = { kind: "ok" } | { kind: "mfa"; mfaToken: string; enrollmentSecret?: string };
 
 /**
  * Login (CTR-M7-OUT-02). Si el rol exige MFA (ADMINISTRADOR / INTEGRADOR_TECNICO) responde
- * `{ mfa_requerido: true, mfa_token }` y se continúa con `completeMfa`. 423 ⇒ cuenta bloqueada 15 min.
+ * `{ mfa_requerido: true, mfa_token }` y se continúa con `completeMfa`. En el primer login M7
+ * agrega `secreto_enrolamiento` una sola vez. 423 ⇒ cuenta bloqueada 15 min.
  */
 export async function login(correo: string, password: string): Promise<LoginResult> {
   const { data } = await transport<TokenResponse>(routes.identidad.sesiones, {
     method: "POST",
     body: { correo, password },
   });
-  if (data.mfa_requerido && data.mfa_token) return { kind: "mfa", mfaToken: data.mfa_token };
+  if (data.mfa_requerido && data.mfa_token) {
+    return { kind: "mfa", mfaToken: data.mfa_token, enrollmentSecret: data.secreto_enrolamiento ?? undefined };
+  }
   if (!useSessionStore.getState().setAccessToken(data.access_token)) throw new Error("Token de acceso inválido");
   return { kind: "ok" };
 }
 
+/** M7 (`MfaRequest`): `{ mfa_token, codigo }`. */
 export async function completeMfa(codigoTotp: string, mfaToken: string): Promise<void> {
   const { data } = await transport<TokenResponse>(routes.identidad.sesionesMfa, {
     method: "POST",
-    body: { codigo_totp: codigoTotp, mfa_token: mfaToken },
+    body: { mfa_token: mfaToken, codigo: codigoTotp },
   });
   if (!useSessionStore.getState().setAccessToken(data.access_token)) throw new Error("Token de acceso inválido");
 }

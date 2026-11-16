@@ -36,9 +36,10 @@ export const sesionesHandlers = [
   }),
 
   http.post(gw("/identidad/sesiones/mfa"), async ({ request }) => {
-    const { codigo_totp, mfa_token } = (await request.json()) as { codigo_totp?: string; mfa_token?: string };
+    // Contrato real de M7 (MfaRequest): { mfa_token, codigo }.
+    const { codigo, mfa_token } = (await request.json()) as { codigo?: string; mfa_token?: string };
     const correo = mfa_token ? correoFromMfa(mfa_token) : null;
-    if (!correo || !MOCK_USERS[correo] || codigo_totp !== MOCK_TOTP) {
+    if (!correo || !MOCK_USERS[correo] || codigo !== MOCK_TOTP) {
       return HttpResponse.json(errorBody(request, "MFA_INVALIDO", "El código de verificación no es válido"), { status: 401 });
     }
     return HttpResponse.json(tokenPair(correo));
@@ -53,5 +54,5 @@ export const sesionesHandlers = [
     return HttpResponse.json(tokenPair(correo)); // rotación: el refresh anterior queda inválido
   }),
 
-  http.delete(gw("/identidad/sesiones"), () => HttpResponse.json({ ok: true })),
+  http.delete(gw("/identidad/sesiones"), () => HttpResponse.json({ mensaje: "Sesión cerrada" })),
 ];

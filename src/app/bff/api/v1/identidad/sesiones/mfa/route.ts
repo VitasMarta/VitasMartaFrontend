@@ -8,7 +8,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/** Completa el login con MFA: `{ codigo_totp, mfa_token }` → `{ access_token, expira_en }` + cookie. */
+/** Completa el login con MFA: `{ mfa_token, codigo }` → `{ access_token, expira_en }` + cookie. */
 export async function POST(request: NextRequest) {
   const correlationId = correlationIdOf(request);
   try {
