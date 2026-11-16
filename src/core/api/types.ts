@@ -203,13 +203,14 @@ export interface SolicitudArco {
   paso_actual?: number;
   fecha_solicitud?: string;
 }
+/** M7 `UsuarioListaResponse` (admin): estado ∈ PENDIENTE_VERIFICACION | ACTIVA | BLOQUEADA | SEUDONIMIZADA. */
 export interface UsuarioAdmin {
-  id: string;
+  usuario_ref: string;
   correo: string;
   rol: string;
-  estado?: string;
-  bloqueado?: boolean;
-  ultimo_acceso?: string;
+  estado: string;
+  prestador_ref?: string | null;
+  fecha_registro?: string;
 }
 export interface AuditoriaEntrada {
   [campo: string]: unknown;

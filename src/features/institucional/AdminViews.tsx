@@ -30,6 +30,8 @@ import { Tabs } from "@/shared/ui/Tabs";
 
 const ROLES: Rol[] = ["TURISTA", "PRESTADOR", "ANALISTA_TURISTICO", "AUTORIDAD_AMBIENTAL", "INTEGRADOR_TECNICO", "ADMINISTRADOR"];
 const SIZE = 10;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ESTADO_TONO: Record<string, "good" | "warn" | "bad" | "neutral"> = { ACTIVA: "good", PENDIENTE_VERIFICACION: "warn", BLOQUEADA: "bad", SEUDONIMIZADA: "neutral" };
 const toast = (tone: "success" | "error", message: string, reference?: string) => useUiStore.getState().push({ tone, message, reference });
 
 /** Sub-navegación de la sección de administración (enlace con aria-current). */
@@ -84,19 +86,26 @@ export function UsersView() {
   const locale = useLocale();
   const qc = useQueryClient();
   const [page, setPage] = useState(0);
-  const [filters, setFilters] = useState({ texto: "", rol: "" });
+  const [filters, setFilters] = useState({ correo: "", rol: "" });
   const [panel, setPanel] = useState<{ user: UsuarioAdmin; action: "rol" | "delete" } | null>(null);
+  const [nuevoRol, setNuevoRol] = useState("");
+  const [rolErrors, setRolErrors] = useState<Record<string, string>>({});
   useDocumentTitle(t("title"));
 
+  // M7: ?correo=&rol=&estado=&page=&size= (page base 0).
   const q = useQuery({
     queryKey: ["m7", "usuarios", page, filters],
-    queryFn: async () => (await api.get<PageResponse<UsuarioAdmin>>(routes.identidad.admin.usuarios, { query: { page, size: SIZE, ...filters } })).data,
+    queryFn: async () =>
+      (await api.get<PageResponse<UsuarioAdmin>>(routes.identidad.admin.usuarios, { query: { page, size: SIZE, correo: filters.correo || undefined, rol: filters.rol || undefined } })).data,
   });
   const refresh = () => qc.invalidateQueries({ queryKey: ["m7", "usuarios"] });
+  // M7 `CambiarRolRequest`: { rol_nuevo, prestador_ref } — PRESTADOR exige el tenant aprobado en M4.
   const changeRole = useMutation({
-    mutationFn: async ({ id, rol }: { id: string; rol: string }) => (await api.patch<{ mensaje?: string }>(routes.identidad.admin.rol(id), { body: { rol } })).data,
+    mutationFn: async ({ id, rol, prestadorRef }: { id: string; rol: string; prestadorRef?: string }) =>
+      (await api.patch<{ mensaje?: string }>(routes.identidad.admin.rol(id), { body: { rol_nuevo: rol, ...(rol === "PRESTADOR" ? { prestador_ref: prestadorRef } : {}) } })).data,
     onSuccess: (d) => { toast("success", d.mensaje ?? t("roleUpdated")); setPanel(null); refresh(); },
   });
+  const openRole = (user: UsuarioAdmin) => { setNuevoRol(user.rol); setRolErrors({}); setPanel({ user, action: "rol" }); };
   const unlock = useMutation({ mutationFn: async (id: string) => api.post(routes.identidad.admin.desbloqueo(id)), onSuccess: () => { toast("success", t("unlocked")); refresh(); } });
   const remove = useMutation({ mutationFn: async (id: string) => api.delete(routes.identidad.admin.usuario(id)), onSuccess: () => { toast("success", t("deleted")); setPanel(null); refresh(); } });
 
@@ -104,8 +113,8 @@ export function UsersView() {
     <>
       <PageHeader title={t("title")} description={t("description")} />
       <Container className="py-6">
-        <form className="mb-6 flex flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); setFilters({ texto: String(f.get("texto") ?? ""), rol: String(f.get("rol") ?? "") }); setPage(0); }}>
-          <TextField label={t("search")} name="texto" defaultValue={filters.texto} />
+        <form className="mb-6 flex flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); setFilters({ correo: String(f.get("correo") ?? "").trim(), rol: String(f.get("rol") ?? "") }); setPage(0); }}>
+          <TextField label={t("search")} name="correo" defaultValue={filters.correo} />
           <SelectField label={t("role")} name="rol" defaultValue={filters.rol}>
             <option value="">{t("allRoles")}</option>
             {ROLES.map((r) => <option key={r} value={r}>{tr(r)}</option>)}
@@ -119,20 +128,20 @@ export function UsersView() {
             <EditorialTable
               caption={t("title")}
               rows={q.data.content}
-              rowKey={(u) => u.id}
+              rowKey={(u) => u.usuario_ref}
               empty={t("empty")}
               columns={[
                 { key: "c", header: t("email"), cell: (u) => <span className="font-semibold">{u.correo}</span> },
                 { key: "r", header: t("role"), cell: (u) => (tr.has(u.rol) ? tr(u.rol) : u.rol) },
-                { key: "e", header: tc("status"), cell: (u) => <StatusTag tone={u.bloqueado ? "bad" : "good"}>{u.bloqueado ? t("locked") : t("active")}</StatusTag> },
-                { key: "u", header: t("lastAccess"), cell: (u) => formatDateTime(u.ultimo_acceso, locale) },
+                { key: "e", header: tc("status"), cell: (u) => <StatusTag tone={ESTADO_TONO[u.estado] ?? "neutral"}>{t.has(`states.${u.estado}`) ? t(`states.${u.estado}`) : u.estado}</StatusTag> },
+                { key: "u", header: t("registered"), cell: (u) => formatDateTime(u.fecha_registro, locale) },
                 {
                   key: "a",
                   header: <span className="sr-only">{tc("actions")}</span>,
                   cell: (u) => (
                     <span className="flex flex-wrap gap-x-4 gap-y-1">
-                      <button type="button" className="text-link font-semibold" onClick={() => setPanel({ user: u, action: "rol" })}>{t("changeRole")}<span className="sr-only"> {u.correo}</span></button>
-                      {u.bloqueado && <button type="button" className="text-link font-semibold" onClick={() => unlock.mutate(u.id)}>{t("unlock")}<span className="sr-only"> {u.correo}</span></button>}
+                      <button type="button" className="text-link font-semibold" onClick={() => openRole(u)}>{t("changeRole")}<span className="sr-only"> {u.correo}</span></button>
+                      {u.estado === "BLOQUEADA" && <button type="button" className="text-link font-semibold" onClick={() => unlock.mutate(u.usuario_ref)}>{t("unlock")}<span className="sr-only"> {u.correo}</span></button>}
                       <button type="button" className="text-link font-semibold text-critical" onClick={() => setPanel({ user: u, action: "delete" })}>{tc("delete")}<span className="sr-only"> {u.correo}</span></button>
                     </span>
                   ),
@@ -145,9 +154,26 @@ export function UsersView() {
       </Container>
       <SlideOver open={panel !== null} onClose={() => setPanel(null)} title={panel?.action === "delete" ? t("deleteTitle") : t("changeRole")}>
         {panel?.action === "rol" && (
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); changeRole.mutate({ id: panel.user.id, rol: String(new FormData(e.currentTarget).get("nuevo_rol")) }); }}>
+          <form
+            className="space-y-5"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              const prestadorRef = String(new FormData(e.currentTarget).get("prestador_ref") ?? "").trim();
+              if (nuevoRol === "PRESTADOR" && !UUID_RE.test(prestadorRef)) {
+                setRolErrors({ prestador_ref: t("providerRefError") });
+                return;
+              }
+              setRolErrors({});
+              changeRole.mutate({ id: panel.user.usuario_ref, rol: nuevoRol, prestadorRef });
+            }}
+          >
             <p className="font-semibold">{panel.user.correo}</p>
-            <SelectField label={t("newRole")} name="nuevo_rol" defaultValue={panel.user.rol}>{ROLES.map((r) => <option key={r} value={r}>{tr(r)}</option>)}</SelectField>
+            <SelectField label={t("newRole")} name="nuevo_rol" value={nuevoRol} onChange={(e) => setNuevoRol(e.target.value)}>{ROLES.map((r) => <option key={r} value={r}>{tr(r)}</option>)}</SelectField>
+            {nuevoRol === "PRESTADOR" && (
+              <TextField label={t("providerRef")} name="prestador_ref" defaultValue={panel.user.prestador_ref ?? ""} required hint={t("providerRefHint")} error={rolErrors.prestador_ref} />
+            )}
+            {changeRole.isError && <ErrorNotice error={changeRole.error} referenceLabel={tc("reference")} />}
             <p className="text-sm">{t("auditNotice")}</p>
             <div className="flex gap-3"><Button type="submit" loading={changeRole.isPending}>{tc("save")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
           </form>
@@ -156,7 +182,7 @@ export function UsersView() {
           <div className="space-y-5">
             <p className="font-semibold">{panel.user.correo}</p>
             <p>{t("deleteWarning")}</p>
-            <div className="flex gap-3"><Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate(panel.user.id)}>{tc("delete")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
+            <div className="flex gap-3"><Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate(panel.user.usuario_ref)}>{tc("delete")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
           </div>
         )}
       </SlideOver>
@@ -165,25 +191,34 @@ export function UsersView() {
 }
 
 // ── Matriz de autorización (RBAC) ───────────────────────────────────────────────────────────────
-interface Matriz { version: number; permisos: { rol: string; recurso: string; acciones: string[] }[] }
+/** M7 `PermisoMatrizResponse` / `PermisoMatrizRequest`: un permiso por (rol, recurso, acción). */
+interface PermisoMatriz { rol: string; recurso: string; accion: string; permitir: boolean }
+/** M7 `MatrizResponse`: `{ vigente: { version, fecha_publicacion, responsable, permisos }, historial }`. */
+interface MatrizM7 { vigente: { version: number; fecha_publicacion?: string; responsable?: string; permisos: PermisoMatriz[] } | null; historial?: unknown[] }
 export function MatrixView() {
   const t = useTranslations("admin.matrix");
   const tc = useTranslations("common");
   const qc = useQueryClient();
   const [error, setError] = useState<string>();
   useDocumentTitle(t("title"));
-  const q = useQuery({ queryKey: ["m7", "matriz"], queryFn: async () => (await api.get<Matriz>(routes.identidad.admin.matriz)).data });
+  const q = useQuery({
+    queryKey: ["m7", "matriz"],
+    queryFn: async () => {
+      const v = (await api.get<MatrizM7>(routes.identidad.admin.matriz)).data.vigente;
+      return { version: v?.version ?? 0, permisos: v?.permisos ?? [] };
+    },
+  });
   const save = useMutation({
-    mutationFn: async (m: Matriz) => (await api.put<Matriz>(routes.identidad.admin.matriz, { body: m })).data,
+    mutationFn: async (permisos: PermisoMatriz[]) => (await api.put<{ mensaje?: string; version: number }>(routes.identidad.admin.matriz, { body: { permisos } })).data,
     onSuccess: (d) => { toast("success", t("saved", { version: d.version })); qc.invalidateQueries({ queryKey: ["m7", "matriz"] }); },
   });
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const permisos = JSON.parse(String(new FormData(e.currentTarget).get("permisos")));
-      if (!Array.isArray(permisos) || permisos.some((p) => !p.rol || !p.recurso || !Array.isArray(p.acciones))) throw new Error();
+      if (!Array.isArray(permisos) || !permisos.length || permisos.some((p) => !p.rol || !p.recurso || !p.accion || typeof p.permitir !== "boolean")) throw new Error();
       setError(undefined);
-      save.mutate({ version: q.data!.version, permisos });
+      save.mutate(permisos);
     } catch {
       setError(t("invalidJson"));
     }
@@ -198,10 +233,10 @@ export function MatrixView() {
           {q.data && (
             <>
               <p className="meta mb-2">{t("version", { version: q.data.version })}</p>
-              <EditorialTable caption={t("title")} rows={q.data.permisos} rowKey={(p) => `${p.rol}-${p.recurso}`} columns={[
+              <EditorialTable caption={t("title")} rows={q.data.permisos} rowKey={(p) => `${p.rol}-${p.recurso}-${p.accion}`} columns={[
                 { key: "r", header: t("role"), cell: (p) => <strong>{p.rol}</strong> },
                 { key: "x", header: t("resource"), cell: (p) => p.recurso },
-                { key: "a", header: t("actions"), cell: (p) => p.acciones.join(", ") },
+                { key: "a", header: t("actions"), cell: (p) => `${p.accion}${p.permitir ? "" : " ✕"}` },
               ]} />
             </>
           )}

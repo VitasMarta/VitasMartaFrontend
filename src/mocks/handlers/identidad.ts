@@ -20,28 +20,26 @@ const consentsOf = (sub: string) => {
 export const consentimientoPerfilado = (sub: string) => consentsOf(sub).PERFILADO;
 
 // Usuarios para el panel de administración (M7)
-const usuarios: { id: string; correo: string; rol: string; estado: string; bloqueado: boolean; ultimo_acceso: string }[] = [
-  ...Object.entries(MOCK_USERS).map(([correo, u]) => ({ id: u.sub, correo, rol: u.rol, estado: u.bloqueado ? "BLOQUEADO" : "ACTIVO", bloqueado: !!u.bloqueado, ultimo_acceso: new Date().toISOString() })),
+// Forma real de M7 (`UsuarioListaResponse`).
+const usuarios: { usuario_ref: string; correo: string; rol: string; estado: string; prestador_ref: string | null; fecha_registro: string }[] = [
+  ...Object.entries(MOCK_USERS).map(([correo, u]) => ({ usuario_ref: u.sub, correo, rol: u.rol, estado: u.bloqueado ? "BLOQUEADA" : "ACTIVA", prestador_ref: u.prestador_ref ?? null, fecha_registro: new Date().toISOString() })),
   ...Array.from({ length: 23 }, (_, i) => ({
-    id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
+    usuario_ref: `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`,
     correo: `usuario${i + 1}@correo.co`,
     rol: (["TURISTA", "TURISTA", "PRESTADOR", "ANALISTA_TURISTICO"] as const)[i % 4],
-    estado: "ACTIVO",
-    bloqueado: false,
-    ultimo_acceso: new Date(Date.now() - i * 3_600_000).toISOString(),
+    estado: "ACTIVA",
+    prestador_ref: null,
+    fecha_registro: new Date(Date.now() - i * 3_600_000).toISOString(),
   })),
 ];
 
-let matriz = {
-  version: 4,
-  permisos: [
-    { rol: "TURISTA", recurso: "reservas", acciones: ["crear", "leer", "cancelar"] },
-    { rol: "PRESTADOR", recurso: "oferta", acciones: ["crear", "leer", "actualizar"] },
-    { rol: "ADMINISTRADOR", recurso: "usuarios", acciones: ["leer", "actualizar", "eliminar"] },
-    { rol: "ANALISTA_TURISTICO", recurso: "reportes", acciones: ["leer", "exportar"] },
-    { rol: "AUTORIDAD_AMBIENTAL", recurso: "ambiental", acciones: ["leer"] },
-  ],
-};
+// Forma real de M7 (`MatrizResponse`): un permiso por (rol, recurso, acción).
+const permisosIniciales = [
+  ["TURISTA", "reservas", "crear"], ["TURISTA", "reservas", "leer"], ["TURISTA", "reservas", "cancelar"],
+  ["PRESTADOR", "oferta", "crear"], ["PRESTADOR", "oferta", "actualizar"],
+  ["ADMINISTRADOR", "usuarios", "eliminar"], ["ANALISTA_TURISTICO", "reportes", "exportar"], ["AUTORIDAD_AMBIENTAL", "ambiental", "leer"],
+].map(([rol, recurso, accion]) => ({ rol, recurso, accion, permitir: true }));
+let matriz = { vigente: { version: 4, fecha_publicacion: new Date().toISOString(), responsable: "admin", permisos: permisosIniciales }, historial: [] as unknown[] };
 
 const auditoria = Array.from({ length: 34 }, (_, i) => ({
   marca_temporal: new Date(Date.now() - i * 1_800_000).toISOString(),
@@ -188,9 +186,9 @@ export const identidadHandlers = [
     if (!c) return unauthorized(request);
     if (c.rol !== "ADMINISTRADOR") return forbidden(request);
     const url = new URL(request.url);
-    const texto = (url.searchParams.get("texto") ?? "").toLowerCase();
+    const correo = (url.searchParams.get("correo") ?? "").toLowerCase();
     const rol = url.searchParams.get("rol");
-    const rows = usuarios.filter((u) => (!texto || u.correo.includes(texto)) && (!rol || u.rol === rol));
+    const rows = usuarios.filter((u) => (!correo || u.correo.includes(correo)) && (!rol || u.rol === rol));
     const { slice, page, size, total } = pageOf(rows, url, 0);
     return HttpResponse.json({ content: slice, page, size, totalElements: total });
   }),
@@ -198,34 +196,39 @@ export const identidadHandlers = [
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
     if (c.rol !== "ADMINISTRADOR") return forbidden(request);
-    const { rol } = (await request.json()) as { rol: string };
-    const u = usuarios.find((x) => x.id === params.id);
-    if (u) u.rol = rol;
+    // M7 `CambiarRolRequest`: { rol_nuevo, prestador_ref } (PRESTADOR exige prestador_ref).
+    const { rol_nuevo, prestador_ref } = (await request.json()) as { rol_nuevo?: string; prestador_ref?: string };
+    if (!rol_nuevo) return HttpResponse.json(errorBody(request, "SOLICITUD_INVALIDA", "rol_nuevo es obligatorio"), { status: 400 });
+    if (rol_nuevo === "PRESTADOR" && !prestador_ref) {
+      return HttpResponse.json(errorBody(request, "SOLICITUD_INVALIDA", "El rol PRESTADOR exige prestador_ref"), { status: 400 });
+    }
+    const u = usuarios.find((x) => x.usuario_ref === params.id);
+    if (!u) return HttpResponse.json(errorBody(request, "NO_ENCONTRADO", "Usuario no encontrado"), { status: 404 });
+    u.rol = rol_nuevo;
+    u.prestador_ref = rol_nuevo === "PRESTADOR" ? prestador_ref! : null;
     return HttpResponse.json({ mensaje: "El rol fue actualizado y el cambio quedó registrado en auditoría" });
   }),
   http.post(gw("/identidad/admin/usuarios/:id/desbloqueo"), ({ request, params }) => {
     if (claimsOf(request)?.rol !== "ADMINISTRADOR") return forbidden(request);
-    const u = usuarios.find((x) => x.id === params.id);
-    if (u) {
-      u.bloqueado = false;
-      u.estado = "ACTIVO";
-    }
-    return HttpResponse.json({ ok: true });
+    const u = usuarios.find((x) => x.usuario_ref === params.id);
+    if (u) u.estado = "ACTIVA";
+    return HttpResponse.json({ mensaje: "La cuenta fue desbloqueada" });
   }),
   http.delete(gw("/identidad/admin/usuarios/:id"), ({ request, params }) => {
     if (claimsOf(request)?.rol !== "ADMINISTRADOR") return forbidden(request);
-    const i = usuarios.findIndex((x) => x.id === params.id);
+    const i = usuarios.findIndex((x) => x.usuario_ref === params.id);
     if (i >= 0) usuarios.splice(i, 1);
-    return HttpResponse.json({ ok: true });
+    return HttpResponse.json({ mensaje: "Cuenta eliminada" });
   }),
   http.get(gw("/identidad/admin/matriz-autorizacion"), ({ request }) =>
     claimsOf(request)?.rol === "ADMINISTRADOR" ? HttpResponse.json(matriz) : forbidden(request),
   ),
   http.put(gw("/identidad/admin/matriz-autorizacion"), async ({ request }) => {
     if (claimsOf(request)?.rol !== "ADMINISTRADOR") return forbidden(request);
-    const body = (await request.json()) as typeof matriz;
-    matriz = { ...body, version: matriz.version + 1 };
-    return HttpResponse.json(matriz);
+    const { permisos } = (await request.json()) as { permisos: typeof permisosIniciales };
+    const version = matriz.vigente.version + 1;
+    matriz = { vigente: { version, fecha_publicacion: new Date().toISOString(), responsable: "admin", permisos }, historial: [matriz.vigente, ...matriz.historial] };
+    return HttpResponse.json({ mensaje: "Matriz publicada", version });
   }),
   http.get(gw("/identidad/admin/auditoria"), ({ request }) => {
     if (claimsOf(request)?.rol !== "ADMINISTRADOR") return forbidden(request);
