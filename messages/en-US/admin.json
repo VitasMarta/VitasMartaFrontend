@@ -203,8 +203,8 @@
       "explicit": "Explicit decision (adopt the external one)",
       "saved": "Decision recorded"
     },
-    "occupancy": { "title": "Estimated occupancy", "estimated": "Estimated occupancy", "window": "Rolling window", "inputs": "Estimation inputs", "input": "Input", "value": "Value", "weight": "Weight" },
-    "history": { "from": "From", "to": "To", "apply": "Apply", "chart": "Monthly average occupancy", "occupancy": "Occupancy" },
+    "occupancy": { "title": "Estimated occupancy", "estimated": "Estimated occupancy", "window": "Rolling window", "inputs": "Estimation inputs", "input": "Input", "value": "Value", "weight": "Weight", "none": "This attraction has no estimated occupancy yet: configure its carrying capacity so M8 can compute it.", "inputsNames": { "reservas": "Bookings in the window", "consultas": "Detail page views", "disponibilidad": "Availability spots", "fuentes": "External sources" } },
+    "history": { "from": "From", "to": "To", "apply": "Apply", "chart": "Daily average occupancy", "occupancy": "Occupancy" },
     "practices": {
       "notNatural": "Only natural attractions support environmental good practices.",
       "tooShort": "Write at least 20 characters",

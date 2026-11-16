@@ -119,17 +119,18 @@ export const institucionalHandlers = [
     const c = CATALOGO.find((x) => x.id === params.id);
     return (
       allow(request, ADMIN_ROLES) ??
+      // Forma real de M8 (`OcupacionResponse`).
       HttpResponse.json({
         atractivo_ref: params.id,
-        ocupacion_estimada: c?.ocupacion ?? 40,
-        ventana_minutos: 60,
-        insumos: [
-          { nombre: "Reservas confirmadas", valor: 62, peso: 0.35 },
-          { nombre: "Check-ins validados", valor: 71, peso: 0.25 },
-          { nombre: "Consultas al catálogo", valor: 55, peso: 0.15 },
-          { nombre: "Aforo de sensores", valor: 80, peso: 0.2 },
-          { nombre: "Clima", valor: 40, peso: 0.05 },
-        ],
+        valor: (c?.ocupacion ?? 40).toFixed(2),
+        ventana_movil_minutos: 240,
+        insumo_reservas: 12,
+        insumo_consultas: 30,
+        insumo_disponibilidad: 20,
+        insumo_fuentes_externas: 0,
+        ajuste_no_show: "0.00",
+        marca_temporal: new Date().toISOString(),
+        ciclo_id: "c-1",
       })
     );
   }),

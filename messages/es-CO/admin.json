@@ -203,8 +203,8 @@
       "explicit": "Decisión explícita (adoptar la externa)",
       "saved": "Decisión registrada"
     },
-    "occupancy": { "title": "Ocupación estimada", "estimated": "Ocupación estimada", "window": "Ventana móvil", "inputs": "Insumos de la estimación", "input": "Insumo", "value": "Valor", "weight": "Peso" },
-    "history": { "from": "Desde", "to": "Hasta", "apply": "Aplicar", "chart": "Ocupación promedio mensual", "occupancy": "Ocupación" },
+    "occupancy": { "title": "Ocupación estimada", "estimated": "Ocupación estimada", "window": "Ventana móvil", "inputs": "Insumos de la estimación", "input": "Insumo", "value": "Valor", "weight": "Peso", "none": "Este atractivo aún no tiene ocupación estimada: configura su capacidad de carga para que M8 la calcule.", "inputsNames": { "reservas": "Reservas en la ventana", "consultas": "Consultas de la ficha", "disponibilidad": "Cupos de disponibilidad", "fuentes": "Fuentes externas" } },
+    "history": { "from": "Desde", "to": "Hasta", "apply": "Aplicar", "chart": "Ocupación promedio diaria", "occupancy": "Ocupación" },
     "practices": {
       "notNatural": "Solo los atractivos de tipo natural admiten buenas prácticas ambientales.",
       "tooShort": "Escribe al menos 20 caracteres",

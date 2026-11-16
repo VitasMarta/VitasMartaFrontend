@@ -165,14 +165,37 @@ function ConflictTab({ id }: { id: string }) {
 function OccupancyTab({ id }: { id: string }) {
   const t = useTranslations("admin.environment.occupancy");
   const tc = useTranslations("common");
-  const q = useQuery({ queryKey: ["m8", "ocupacion", id], queryFn: async () => (await api.get<{ ocupacion_estimada: number; ventana_minutos: number; insumos: { nombre: string; valor: number; peso: number }[] }>(routes.ambiental.ocupacion(id))).data });
+  // M8 `OcupacionResponse`: valor (%), ventana_movil_minutos e insumos del ciclo como contadores.
+  type Ocupacion = {
+    valor: number | string; ventana_movil_minutos: number; insumo_reservas: number; insumo_consultas: number;
+    insumo_disponibilidad: number; insumo_fuentes_externas: number; ajuste_no_show?: number | string | null; marca_temporal?: string;
+  };
+  const q = useQuery({
+    queryKey: ["m8", "ocupacion", id],
+    queryFn: async (): Promise<Ocupacion | null> => {
+      try {
+        return (await api.get<Ocupacion>(routes.ambiental.ocupacion(id))).data;
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null; // sin capacidad configurada / sin ciclo vigente
+        throw e;
+      }
+    },
+  });
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
+  if (!q.data) return <StatusBlock kind="empty" title={t("none")} />;
+  const o = q.data;
+  const insumos = [
+    { nombre: t("inputsNames.reservas"), valor: o.insumo_reservas },
+    { nombre: t("inputsNames.consultas"), valor: o.insumo_consultas },
+    { nombre: t("inputsNames.disponibilidad"), valor: o.insumo_disponibilidad },
+    { nombre: t("inputsNames.fuentes"), valor: o.insumo_fuentes_externas },
+  ];
   return (
     <>
-      <MetricRibbon label={t("title")} items={[{ label: t("estimated"), value: `${Math.round(q.data.ocupacion_estimada)} %` }, { label: t("window"), value: `${q.data.ventana_minutos} min` }]} />
-      <div className="mt-6"><EditorialTable caption={t("inputs")} rows={q.data.insumos} rowKey={(i) => i.nombre} columns={[
-        { key: "n", header: t("input"), cell: (i) => i.nombre }, { key: "v", header: t("value"), align: "right", cell: (i) => `${i.valor} %` }, { key: "p", header: t("weight"), align: "right", cell: (i) => `${Math.round(i.peso * 100)} %` },
+      <MetricRibbon label={t("title")} items={[{ label: t("estimated"), value: `${Math.round(Number(o.valor))} %` }, { label: t("window"), value: `${o.ventana_movil_minutos} min` }]} />
+      <div className="mt-6"><EditorialTable caption={t("inputs")} rows={insumos} rowKey={(i) => i.nombre} columns={[
+        { key: "n", header: t("input"), cell: (i) => i.nombre }, { key: "v", header: t("value"), align: "right", cell: (i) => i.valor },
       ]} /></div>
     </>
   );
