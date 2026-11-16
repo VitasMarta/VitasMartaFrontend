@@ -10,6 +10,7 @@ import type {
   CategoriaDTO,
   FichaCatalogo,
   MultimediaDTO,
+  NivelSaturacion,
   RecomendacionesRespuesta,
   RespuestaFranjas,
   ResultadoBusqueda,
@@ -91,6 +92,45 @@ export const useBuenasPracticas = (id: string) =>
 
 export type Recomendaciones = RecomendacionesRespuesta & { httpStatus: number };
 
+/** Respuesta real de M6 (`RespuestaRecomendaciones`). */
+interface RecomendacionesM6 {
+  modo?: string;
+  estrategia_usada?: string;
+  degradada_fallback?: boolean;
+  personalizada?: boolean;
+  metadatos_ia?: { aviso_transparencia?: string };
+  recomendaciones?: {
+    atractivo_id: string; nombre: string; categorias?: string[]; puntuacion_afinidad?: number; explicacion?: string;
+    es_alternativa_sostenible?: boolean; nivel_saturacion?: string; ocupacion_estimada?: number | null;
+  }[];
+  generado_en?: string;
+}
+
+/** Adapta M6 a la vista: `recomendaciones[]` → `items[]` con el bloque de sostenibilidad de la banda. */
+export function adaptarRecomendaciones(d: RecomendacionesM6 & Partial<RecomendacionesRespuesta>, correlationId = ""): RecomendacionesRespuesta {
+  if (Array.isArray(d.items)) return d as RecomendacionesRespuesta; // ya en la forma de la vista (mocks)
+  const degradada = !!d.degradada_fallback;
+  return {
+    estado_respuesta: d.personalizada ? "PERSONALIZADA" : degradada ? "DEGRADADA_FALLBACK" : "ESTANDAR_SIN_PERFILADO",
+    degradada,
+    aviso_transparencia_ia: d.metadatos_ia?.aviso_transparencia ?? "",
+    marca_temporal: d.generado_en ?? new Date().toISOString(),
+    correlation_id: correlationId,
+    items: (d.recomendaciones ?? []).map((r) => ({
+      atractivo_ref: r.atractivo_id,
+      nombre: r.nombre,
+      categorias: r.categorias ?? [],
+      puntuacion: r.puntuacion_afinidad ?? 0,
+      explicacion: r.explicacion ?? "",
+      sostenibilidad: {
+        ocupacion_estimada: r.ocupacion_estimada ?? 0,
+        nivel_saturacion: (r.nivel_saturacion ?? "NOMINAL") as NivelSaturacion,
+        es_alternativa_sostenible: !!r.es_alternativa_sostenible,
+      },
+    })),
+  };
+}
+
 /**
  * M6 · Recomendaciones (solo TURISTA con JWT). `206` = fallback degradado (se muestra normal con una
  * etiqueta sutil). Cualquier error de M6 → `null`: la sección se oculta sin romper la página.
@@ -103,8 +143,8 @@ export const useRecomendaciones = (limite = 5) => {
     retry: false,
     queryFn: async (): Promise<Recomendaciones | null> => {
       try {
-        const r = await api.get<RecomendacionesRespuesta>(routes.recomendaciones.base, { query: { limite } });
-        return { ...r.data, httpStatus: r.status };
+        const r = await api.get<RecomendacionesM6 & Partial<RecomendacionesRespuesta>>(routes.recomendaciones.base, { query: { limite } });
+        return { ...adaptarRecomendaciones(r.data), httpStatus: r.status };
       } catch (error) {
         if (error instanceof ApiError) return null;
         throw error;

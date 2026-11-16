@@ -140,6 +140,10 @@
     "empty": "There are no types defined.",
     "schema": "Attribute schema (JSON Schema)",
     "schemaHint": "Must be valid JSON.",
+    "codeHint": "Lowercase letters, digits and underscore; starts with a letter. It cannot be changed later.",
+    "codeFormat": "Use only lowercase letters, digits and underscore, starting with a letter",
+    "active": "Active",
+    "inactive": "Inactive",
     "required": "This field is required",
     "invalidJson": "The schema is not valid JSON",
     "saved": "Provider type saved",
@@ -235,7 +239,7 @@
       "updated": "Updated: {date}",
       "service": "Service",
       "latency": "Latency",
-      "states": { "OPERATIVO": "Operational", "DEGRADADO": "Degraded", "NO_DISPONIBLE": "Unavailable" }
+      "states": { "SANO": "Operational", "DEGRADADO": "Degraded", "CAIDO": "Unavailable" }
     },
     "alerts": {
       "title": "Alert inbox",

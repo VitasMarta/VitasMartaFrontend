@@ -306,18 +306,20 @@ function ServicesTab() {
   const t = useTranslations("admin.monitoring.services");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const q = useQuery({ queryKey: ["m1", "estado"], refetchInterval: 30_000, queryFn: async () => (await api.get<{ generado_en: string; servicios: { nombre: string; estado: string; latencia_ms: number | null }[] }>(routes.estadoServicios)).data });
+  // M1 (`EstadoServicio`): { servicios: [{ servicio, salud: SANO|DEGRADADO|CAIDO, latencia_ms, ultima_verificacion }] }.
+  const q = useQuery({ queryKey: ["m1", "estado"], refetchInterval: 30_000, queryFn: async () => (await api.get<{ servicios: { servicio: string; salud: string; latencia_ms: number | null; ultima_verificacion?: string }[] }>(routes.estadoServicios)).data });
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const bad = q.data.servicios.filter((s) => s.estado !== "OPERATIVO").length;
+  const bad = q.data.servicios.filter((s) => s.salud !== "SANO").length;
+  const ultima = q.data.servicios.map((s) => s.ultima_verificacion).filter(Boolean).sort().at(-1);
   return (
     <>
       <MetricRibbon label={t("title")} items={[{ label: t("total"), value: q.data.servicios.length }, { label: t("operational"), value: q.data.servicios.length - bad }, { label: t("issues"), value: bad }]} />
-      <p className="meta mt-3">{t("updated", { date: formatDateTime(q.data.generado_en, locale) })}</p>
-      <div className="mt-4"><EditorialTable caption={t("title")} rows={q.data.servicios} rowKey={(s) => s.nombre} columns={[
-        { key: "n", header: t("service"), cell: (s) => <strong>{s.nombre}</strong> },
-        { key: "e", header: tc("status"), cell: (s) => <StatusTag tone={s.estado === "OPERATIVO" ? "good" : s.estado === "DEGRADADO" ? "warn" : "bad"}>{t(`states.${s.estado}`)}</StatusTag> },
-        { key: "l", header: t("latency"), align: "right", cell: (s) => (s.latencia_ms == null ? "—" : `${s.latencia_ms} ms`) },
+      {ultima && <p className="meta mt-3">{t("updated", { date: formatDateTime(ultima, locale) })}</p>}
+      <div className="mt-4"><EditorialTable caption={t("title")} rows={q.data.servicios} rowKey={(s) => s.servicio} columns={[
+        { key: "n", header: t("service"), cell: (s) => <strong>{s.servicio}</strong> },
+        { key: "e", header: tc("status"), cell: (s) => <StatusTag tone={s.salud === "SANO" ? "good" : s.salud === "DEGRADADO" ? "warn" : "bad"}>{t.has(`states.${s.salud}`) ? t(`states.${s.salud}`) : s.salud}</StatusTag> },
+        { key: "l", header: t("latency"), align: "right", cell: (s) => (s.latencia_ms == null || s.latencia_ms < 0 ? "—" : `${s.latencia_ms} ms`) },
       ]} /></div>
     </>
   );
@@ -346,12 +348,12 @@ function AlertsTab() {
       {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
       {q.data && (
         <>
-          <EditorialTable caption={t("title")} rows={q.data.content} rowKey={(a) => a.id} empty={t("empty")} columns={[
+          <EditorialTable caption={t("title")} rows={q.data.content} rowKey={(a) => String(a.id)} empty={t("empty")} columns={[
             { key: "a", header: t("attraction"), cell: (a) => <strong>{a.atractivo_ref}</strong> },
             { key: "t", header: t("type"), cell: (a) => <StatusTag tone={a.tipo === "CRITICA" ? "bad" : "warn"}>{t(`types.${a.tipo}`)}</StatusTag> },
-            { key: "o", header: t("occupancy"), align: "right", cell: (a) => (a.ocupacion == null ? "—" : `${a.ocupacion} %`) },
-            { key: "f", header: tc("date"), cell: (a) => formatDateTime(a.fecha, locale) },
-            { key: "e", header: tc("status"), cell: (a) => t(`states.${a.estado}`) }, { key: "r", header: t("responsible"), cell: (a) => a.usuario_responsable ?? "—" },
+            { key: "o", header: t("occupancy"), align: "right", cell: (a) => (a.ocupacion_al_cruce == null ? "—" : `${Math.round(Number(a.ocupacion_al_cruce))} %`) },
+            { key: "f", header: tc("date"), cell: (a) => formatDateTime(a.marca_temporal_activacion, locale) },
+            { key: "e", header: tc("status"), cell: (a) => t(`states.${a.estado}`) }, { key: "r", header: t("responsible"), cell: (a) => a.usuario_cierre ?? a.usuario_reconocimiento ?? a.usuario_responsable ?? "—" },
             { key: "x", header: <span className="sr-only">{tc("actions")}</span>, cell: (a) => a.estado !== "CERRADA" && <button type="button" className="text-link font-semibold" onClick={() => { setPanel({ alert: a, action: a.estado === "ACTIVA" ? "reconocimiento" : "cierre" }); setError(undefined); }}>{a.estado === "ACTIVA" ? t("acknowledge") : t("close")}<span className="sr-only"> {a.atractivo_ref}</span></button> },
           ]} />
           <Pagination page={page} pageSize={10} total={q.data.totalElements ?? q.data.total_elements ?? 0} onChange={setPage} />
@@ -362,7 +364,7 @@ function AlertsTab() {
           <div className="space-y-5">
             <p>{t("panelText", { attraction: panel.alert.atractivo_ref ?? "", type: t(`types.${panel.alert.tipo}`) })}</p>
             {error && <p role="alert" className="font-medium text-critical">{error}</p>}
-            <div className="flex gap-3"><Button loading={act.isPending} onClick={() => act.mutate({ id: panel.alert.id, action: panel.action })}>{tc("confirm")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
+            <div className="flex gap-3"><Button loading={act.isPending} onClick={() => act.mutate({ id: String(panel.alert.id), action: panel.action })}>{tc("confirm")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
           </div>
         )}
       </SlideOver>

@@ -9,6 +9,7 @@ import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
 import type { ConsentimientoEstado, Finalidad, SolicitudArco } from "@/core/api/types";
+import { consentimientosVigentes, type ConsentimientosM7 } from "./consentimientos";
 import { RequireRole } from "@/core/auth/RequireRole";
 import { fetchPreferencias, type Preferencias } from "@/core/auth/preferences";
 import { formatDate, localized } from "@/core/format";
@@ -163,23 +164,6 @@ function InteresesTab() {
 }
 
 // ── Consentimientos (opt-out del perfilado con IA — REG-03-4) ───────────────────────────────────
-/** M7 (`ConsentimientosResponse`): `{ vigente: { FINALIDAD: { otorgado, version_politica, fecha_hora } }, historial }`. */
-interface ConsentimientosM7 {
-  vigente?: Record<string, { finalidad?: Finalidad; otorgado: boolean; version_politica?: string; fecha_hora?: string }>;
-}
-
-const FINALIDADES: Finalidad[] = ["TRATAMIENTO", "COMERCIAL", "PERFILADO"];
-
-/** Estado vigente por finalidad (las que no tienen registro se muestran como no otorgadas). */
-export function consentimientosVigentes(data: ConsentimientosM7 | ConsentimientoEstado[]): ConsentimientoEstado[] {
-  if (Array.isArray(data)) return data;
-  const vigente = data.vigente ?? {};
-  return FINALIDADES.map((finalidad) => {
-    const c = vigente[finalidad];
-    return { finalidad, otorgado: !!c?.otorgado, version_terminos: c?.version_politica, fecha: c?.fecha_hora };
-  });
-}
-
 function ConsentimientosTab() {
   const t = useTranslations("perfil.consents");
   const tc = useTranslations("common");

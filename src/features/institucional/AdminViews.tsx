@@ -20,7 +20,7 @@ import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
 import { EditorialList, EditorialRow } from "@/shared/ui/EditorialRow";
-import { SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
+import { CheckboxField, SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
 import { StatusTag } from "@/shared/ui/indicators";
 import { Container, DefinitionRows, PageHeader } from "@/shared/ui/layout";
 import { Pagination } from "@/shared/ui/Pagination";
@@ -529,7 +529,8 @@ export function ModerationView() {
 }
 
 // ── Tipos de prestador (JSON Schema) ────────────────────────────────────────────────────────────
-interface TipoPrestador { id: string; codigo: string; nombre: string; atributos_schema: Record<string, unknown>; version: number }
+/** M4 `TipoPrestadorRespuesta`: el `codigo` es el identificador (no hay id ni versión). */
+interface TipoPrestador { codigo: string; nombre: string; atributos_schema: Record<string, unknown>; activo: boolean }
 export function ProviderTypesView() {
   const t = useTranslations("admin.types");
   const tc = useTranslations("common");
@@ -537,11 +538,16 @@ export function ProviderTypesView() {
   const [panel, setPanel] = useState<TipoPrestador | "new" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   useDocumentTitle(t("title"));
+  const edit = panel && panel !== "new" ? panel : null;
   const q = useQuery({ queryKey: ["m4", "tipos"], queryFn: async () => toList<TipoPrestador>((await api.get(routes.prestadores.admin.tipos)).data).items });
   const save = useMutation({
     meta: { silent: true },
-    mutationFn: async (v: { id?: string; version?: number; body: Record<string, unknown> }) =>
-      v.id ? (await api.patch(routes.prestadores.admin.tipo(v.id), { body: { version_esperada: v.version, ...v.body } })).data : (await api.post(routes.prestadores.admin.tipos, { body: v.body })).data,
+    // M4: crear = POST /tipos-prestador?codigo=… ; editar = PATCH /tipos-prestador/{codigo}. Cuerpo
+    // `TipoPrestadorEntrada` { nombre, atributos_schema, activo } (extra=forbid: sin codigo ni versión).
+    mutationFn: async (v: { codigo: string; existente: boolean; body: { nombre: string; atributos_schema: Record<string, unknown>; activo: boolean } }) =>
+      v.existente
+        ? (await api.patch(routes.prestadores.admin.tipo(v.codigo), { body: v.body })).data
+        : (await api.post(routes.prestadores.admin.tipos, { query: { codigo: v.codigo }, body: v.body })).data,
     onSuccess: () => { toast("success", t("saved")); setPanel(null); qc.invalidateQueries({ queryKey: ["m4", "tipos"] }); },
     onError: (e) => e instanceof ApiError && setErrors({ form: e.isVersionConflict ? t("conflict") : e.message }),
   });
@@ -550,14 +556,15 @@ export function ProviderTypesView() {
     const f = new FormData(e.currentTarget);
     const next: Record<string, string> = {};
     let schema: Record<string, unknown> = {};
-    if (!String(f.get("codigo")).trim()) next.codigo = t("required");
+    const codigo = edit?.codigo ?? String(f.get("codigo") ?? "").trim();
+    if (!codigo) next.codigo = t("required");
+    else if (!/^[a-z][a-z0-9_]{0,39}$/.test(codigo)) next.codigo = t("codeFormat");
     if (!String(f.get("nombre")).trim()) next.nombre = t("required");
     try { schema = JSON.parse(String(f.get("schema") || "{}")); } catch { next.schema = t("invalidJson"); }
     setErrors(next);
     if (Object.keys(next).length) return;
-    save.mutate({ id: panel !== "new" && panel ? panel.id : undefined, version: panel !== "new" && panel ? panel.version : undefined, body: { codigo: f.get("codigo"), nombre: f.get("nombre"), atributos_schema: schema } });
+    save.mutate({ codigo, existente: !!edit, body: { nombre: String(f.get("nombre")).trim(), atributos_schema: schema, activo: f.get("activo") === "on" } });
   };
-  const edit = panel && panel !== "new" ? panel : null;
 
   return (
     <>
@@ -566,18 +573,19 @@ export function ProviderTypesView() {
         {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
         {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
         {q.data && (
-          <EditorialTable caption={t("title")} rows={q.data} rowKey={(r) => r.id} empty={t("empty")} columns={[
+          <EditorialTable caption={t("title")} rows={q.data} rowKey={(r) => r.codigo} empty={t("empty")} columns={[
             { key: "c", header: t("code"), cell: (r) => <span className="font-mono">{r.codigo}</span> }, { key: "n", header: t("name"), cell: (r) => <strong>{r.nombre}</strong> },
             { key: "p", header: t("properties"), cell: (r) => Object.keys((r.atributos_schema.properties as object) ?? {}).join(", ") || "—" },
-            { key: "v", header: t("version"), align: "right", cell: (r) => r.version },
+            { key: "v", header: tc("status"), cell: (r) => <StatusTag tone={r.activo ? "good" : "neutral"}>{r.activo ? t("active") : t("inactive")}</StatusTag> },
             { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => <button type="button" className="text-link font-semibold" onClick={() => { setPanel(r); setErrors({}); }}>{tc("edit")}<span className="sr-only"> {r.nombre}</span></button> },
           ]} />
         )}
       </Container>
       <SlideOver open={panel !== null} onClose={() => setPanel(null)} title={edit ? t("edit") : t("new")}>
-        <form key={edit?.id ?? "new"} onSubmit={onSubmit} noValidate className="space-y-5">
-          <TextField label={t("code")} name="codigo" defaultValue={edit?.codigo} required error={errors.codigo} />
+        <form key={edit?.codigo ?? "new"} onSubmit={onSubmit} noValidate className="space-y-5">
+          <TextField label={t("code")} name="codigo" defaultValue={edit?.codigo} required disabled={!!edit} hint={t("codeHint")} error={errors.codigo} />
           <TextField label={t("name")} name="nombre" defaultValue={edit?.nombre} required error={errors.nombre} />
+          <CheckboxField label={t("active")} name="activo" defaultChecked={edit?.activo ?? true} />
           <TextAreaField label={t("schema")} name="schema" rows={10} defaultValue={edit ? JSON.stringify(edit.atributos_schema, null, 2) : "{\n  \"type\": \"object\",\n  \"properties\": {}\n}"} hint={t("schemaHint")} error={errors.schema} className="font-mono" />
           {errors.form && <p role="alert" className="font-medium text-critical">{errors.form}</p>}
           <div className="flex gap-3"><Button type="submit" loading={save.isPending}>{tc("save")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>

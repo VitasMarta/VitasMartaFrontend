@@ -331,19 +331,26 @@ export const prestadoresHandlers = [
     p.estado = ({ aprobar: "aprobado", rechazar: "rechazado", suspender: "suspendido", reactivar: "aprobado" } as Record<string, string>)[String(params.accion)] ?? p.estado;
     return HttpResponse.json(p);
   }),
-  http.get(gw("/prestadores/admin/tipos-prestador"), () => HttpResponse.json({ items: tipos })),
+  http.get(gw("/prestadores/admin/tipos-prestador"), () => HttpResponse.json(tipos)),
+  // M4: POST ?codigo=… con { nombre, atributos_schema, activo } (extra=forbid).
   http.post(gw("/prestadores/admin/tipos-prestador"), async ({ request }) => {
-    const body = (await request.json()) as (typeof tipos)[number];
-    const nuevo = { ...body, id: crypto.randomUUID(), version: 1 };
+    const codigo = new URL(request.url).searchParams.get("codigo") ?? "";
+    const body = (await request.json()) as Record<string, unknown>;
+    if (!/^[a-z][a-z0-9_]{0,39}$/.test(codigo) || "codigo" in body || "version_esperada" in body) {
+      return HttpResponse.json(problemBody(422, "dato_invalido", "Datos invalidos", "codigo va en la URL y el cuerpo solo admite nombre, atributos_schema y activo", "/api/v1/prestadores/admin/tipos-prestador"), { status: 422 });
+    }
+    const nuevo = { codigo, nombre: String(body.nombre), atributos_schema: body.atributos_schema as Record<string, unknown>, activo: body.activo !== false };
     tipos.push(nuevo);
     return HttpResponse.json(nuevo, { status: 201 });
   }),
-  http.patch(gw("/prestadores/admin/tipos-prestador/:id"), async ({ params, request }) => {
-    const t = tipos.find((x) => x.id === params.id);
-    const { version_esperada, ...rest } = (await request.json()) as { version_esperada: number } & Record<string, unknown>;
+  http.patch(gw("/prestadores/admin/tipos-prestador/:codigo"), async ({ params, request }) => {
+    const t = tipos.find((x) => x.codigo === params.codigo);
+    const body = (await request.json()) as Record<string, unknown>;
     if (!t) return HttpResponse.json({}, { status: 404 });
-    if (version_esperada !== t.version) return conflict(`/v1/admin/tipos-prestador/${params.id}`, version_esperada, t.version);
-    Object.assign(t, rest, { version: t.version + 1 });
+    if ("codigo" in body || "version_esperada" in body) {
+      return HttpResponse.json(problemBody(422, "dato_invalido", "Datos invalidos", "Campos no permitidos", `/api/v1/prestadores/admin/tipos-prestador/${params.codigo}`), { status: 422 });
+    }
+    Object.assign(t, body);
     return HttpResponse.json(t);
   }),
   http.get(gw("/prestadores/admin/contenido/:id/proyeccion"), ({ params }) => HttpResponse.json(contenidos.find((c) => c.id === params.id) ?? {})),
@@ -390,9 +397,10 @@ const adminPrestadores = [
   { id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", razon_social: "Sabores del Caribe S.A.S.", nombre_comercial: "Sabores del Caribe", tipo: "gastronomia", estado: "pendiente", email: "hola@sabores.co" },
   { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", razon_social: "Guías Tayrona S.A.S.", nombre_comercial: "Guías Tayrona", tipo: "guia", estado: "suspendido", email: "guias@tayrona.co" },
 ];
-const tipos: { id: string; codigo: string; nombre: string; atributos_schema: Record<string, unknown>; version: number }[] = [
-  { id: "t1", codigo: "operador", nombre: "Operador turístico", atributos_schema: { type: "object", properties: { rnt: { type: "string" } }, required: ["rnt"] }, version: 1 },
-  { id: "t2", codigo: "alojamiento", nombre: "Alojamiento", atributos_schema: { type: "object", properties: { habitaciones: { type: "integer" } } }, version: 2 },
+// Forma real de M4 (`TipoPrestadorRespuesta`): el codigo identifica al tipo.
+const tipos: { codigo: string; nombre: string; atributos_schema: Record<string, unknown>; activo: boolean }[] = [
+  { codigo: "hotel", nombre: "Hotel", atributos_schema: { type: "object", properties: { categoria: { type: "integer" } } }, activo: true },
+  { codigo: "guia_turistico", nombre: "Guía turístico", atributos_schema: { type: "object", properties: { idiomas: { type: "array" } } }, activo: true },
 ];
 const credenciales: { id: string; tenant_id: string; prefijo: string; estado: string; creada: string }[] = [
   { id: "cr-1", tenant_id: DEFAULT_TENANT, prefijo: "vm_a1b2c3", estado: "activa", creada: isoDay(-20) },

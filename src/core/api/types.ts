@@ -68,7 +68,8 @@ export type FichaCatalogo = Record<string, unknown> & {
   id?: string;
   nombre?: Localized;
   descripcion?: Localized;
-  categorias?: string[];
+  /** M2 entrega `[{ slug, nombre }]` (nombre ya en el idioma pedido); se tolera también texto. */
+  categorias?: (string | { slug: string; nombre?: string })[];
   atributos?: Record<string, unknown>;
   /** SUPUESTO: la ficha expone la política de cancelación vigente para aceptarla al reservar. */
   politica_cancelacion?: { politica_ref: string; version: string | number; descripcion?: Localized };
@@ -238,14 +239,20 @@ export interface ConfiguracionCapacidad {
   restriccion_reservas?: boolean;
   criterio_vencido?: boolean;
 }
+/** M8 `AlertaResponse` (id numérico; ocupación y umbral decimales al momento del cruce). */
 export interface AlertaAmbiental {
-  id: string;
+  id: number | string;
   atractivo_ref?: string;
   tipo: "PREVENTIVA" | "CRITICA";
   estado: "ACTIVA" | "RECONOCIDA" | "CERRADA";
-  ocupacion?: number;
-  fecha?: string;
-  usuario_responsable?: string;
+  ocupacion_al_cruce?: number | string | null;
+  umbral_al_cruce?: number | string | null;
+  marca_temporal_activacion?: string;
+  usuario_responsable?: string | null;
+  usuario_reconocimiento?: string | null;
+  marca_temporal_reconocimiento?: string | null;
+  usuario_cierre?: string | null;
+  marca_temporal_cierre?: string | null;
 }
 export interface IndicadorAmbiental {
   atractivo_ref: string;

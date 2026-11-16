@@ -64,7 +64,7 @@ export function FichaView({ id }: { id: string }) {
           <article>
             <Gallery media={media.data ?? []} name={name} />
             <header className="mt-8">
-              {data.categorias && data.categorias.length > 0 && <p className="meta text-ink/80">{data.categorias.join(" · ")}</p>}
+              {data.categorias && data.categorias.length > 0 && <p className="meta text-ink/80">{data.categorias.map((c) => (typeof c === "string" ? c : c.nombre ?? c.slug)).join(" · ")}</p>}
               <h1 className="mt-1">{name}</h1>
               {level && (
                 <div className="mt-3">

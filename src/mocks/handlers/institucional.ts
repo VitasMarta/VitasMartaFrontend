@@ -37,11 +37,11 @@ const versionesDe = (id: string) => {
 };
 
 const alertas = [
-  { id: "al-1", atractivo_ref: "atr-001", tipo: "PREVENTIVA", estado: "ACTIVA", ocupacion: 86.4, fecha: new Date(Date.now() - 3_600_000).toISOString() },
-  { id: "al-2", atractivo_ref: "atr-008", tipo: "CRITICA", estado: "ACTIVA", ocupacion: 93, fecha: new Date(Date.now() - 7_200_000).toISOString() },
-  { id: "al-3", atractivo_ref: "atr-001", tipo: "PREVENTIVA", estado: "RECONOCIDA", ocupacion: 85.2, fecha: new Date(Date.now() - 86_400_000).toISOString(), usuario_responsable: "admin@vitasmarta.co" },
-  { id: "al-4", atractivo_ref: "atr-002", tipo: "PREVENTIVA", estado: "CERRADA", ocupacion: 85.7, fecha: new Date(Date.now() - 3 * 86_400_000).toISOString(), usuario_responsable: "admin@vitasmarta.co" },
-] as { id: string; atractivo_ref: string; tipo: string; estado: string; ocupacion: number; fecha: string; usuario_responsable?: string }[];
+  { id: 1, atractivo_ref: "atr-001", tipo: "PREVENTIVA", estado: "ACTIVA", ocupacion_al_cruce: 86.4, umbral_al_cruce: 85, marca_temporal_activacion: new Date(Date.now() - 3_600_000).toISOString() },
+  { id: 2, atractivo_ref: "atr-008", tipo: "CRITICA", estado: "ACTIVA", ocupacion_al_cruce: 93, umbral_al_cruce: 85, marca_temporal_activacion: new Date(Date.now() - 7_200_000).toISOString() },
+  { id: 3, atractivo_ref: "atr-001", tipo: "PREVENTIVA", estado: "RECONOCIDA", ocupacion_al_cruce: 85.2, umbral_al_cruce: 85, marca_temporal_activacion: new Date(Date.now() - 86_400_000).toISOString(), usuario_responsable: "admin@vitasmarta.co" },
+  { id: 4, atractivo_ref: "atr-002", tipo: "PREVENTIVA", estado: "CERRADA", ocupacion_al_cruce: 85.7, umbral_al_cruce: 85, marca_temporal_activacion: new Date(Date.now() - 3 * 86_400_000).toISOString(), usuario_responsable: "admin@vitasmarta.co" },
+] as { id: number; atractivo_ref: string; tipo: string; estado: string; ocupacion_al_cruce: number; umbral_al_cruce: number; marca_temporal_activacion: string; usuario_responsable?: string }[];
 
 const nombre = (ref: string) => CATALOGO.find((c) => c.id === ref)?.nombre["es-CO"] ?? ref;
 const FLUJO = { "06-10": 0.18, "10-14": 0.34, "14-18": 0.31, "18-22": 0.17 };
@@ -59,19 +59,13 @@ export const institucionalHandlers = [
   http.get(gw("/estado/servicios"), ({ request }) => {
     const denied = allow(request, ADMIN_ROLES);
     if (denied) return denied;
+    // Forma real de M1 (`EstadoServicio`).
+    const ahora = new Date().toISOString();
+    const s = (servicio: string, salud: string, latencia_ms: number) => ({ servicio, salud, latencia_ms, ultima_verificacion: ahora });
     return HttpResponse.json({
-      generado_en: new Date().toISOString(),
       servicios: [
-        { nombre: "M1 · API Gateway", estado: "OPERATIVO", latencia_ms: 12 },
-        { nombre: "M2 · Catálogo", estado: "OPERATIVO", latencia_ms: 48 },
-        { nombre: "M3 · Reservas", estado: "OPERATIVO", latencia_ms: 61 },
-        { nombre: "M4 · Prestadores", estado: "OPERATIVO", latencia_ms: 55 },
-        { nombre: "M5 · Integración", estado: "DEGRADADO", latencia_ms: 640 },
-        { nombre: "M6 · IA / Recomendaciones", estado: "OPERATIVO", latencia_ms: 380 },
-        { nombre: "M7 · Identidad", estado: "OPERATIVO", latencia_ms: 33 },
-        { nombre: "M8 · Ambiental", estado: "OPERATIVO", latencia_ms: 41 },
-        { nombre: "M9 · Reportes", estado: "OPERATIVO", latencia_ms: 72 },
-        { nombre: "M10 · Notificaciones", estado: "NO_DISPONIBLE", latencia_ms: null },
+        s("svc-catalogo", "SANO", 48), s("svc-reservas", "SANO", 61), s("svc-prestadores", "SANO", 55), s("svc-integracion", "DEGRADADO", 640),
+        s("svc-recomendaciones", "SANO", 380), s("svc-identidad", "SANO", 33), s("svc-ambiental", "SANO", 41), s("svc-reportes", "SANO", 72), s("svc-notificaciones", "CAIDO", -1),
       ],
     });
   }),
@@ -159,7 +153,7 @@ export const institucionalHandlers = [
   http.post(gw("/ambiental/alertas/:id/reconocimiento"), ({ request, params }) => {
     const denied = allow(request, ADMIN_ROLES);
     if (denied) return denied;
-    const a = alertas.find((x) => x.id === params.id);
+    const a = alertas.find((x) => String(x.id) === params.id);
     if (!a) return HttpResponse.json(errorBody(request, "NO_ENCONTRADO", "Alerta no encontrada"), { status: 404 });
     a.estado = "RECONOCIDA";
     a.usuario_responsable = "admin@vitasmarta.co";
@@ -168,7 +162,7 @@ export const institucionalHandlers = [
   http.post(gw("/ambiental/alertas/:id/cierre"), ({ request, params }) => {
     const denied = allow(request, ADMIN_ROLES);
     if (denied) return denied;
-    const a = alertas.find((x) => x.id === params.id);
+    const a = alertas.find((x) => String(x.id) === params.id);
     if (!a) return HttpResponse.json(errorBody(request, "NO_ENCONTRADO", "Alerta no encontrada"), { status: 404 });
     if (a.estado === "ACTIVA") return HttpResponse.json(errorBody(request, "ALERTA_NO_RECONOCIDA", "La alerta debe reconocerse antes de cerrarse"), { status: 409 });
     a.estado = "CERRADA";

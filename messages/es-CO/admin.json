@@ -140,6 +140,10 @@
     "empty": "No hay tipos definidos.",
     "schema": "Esquema de atributos (JSON Schema)",
     "schemaHint": "Debe ser un JSON válido.",
+    "codeHint": "Minúsculas, números y guion bajo; empieza por letra. No se puede cambiar después.",
+    "codeFormat": "Usa solo minúsculas, números y guion bajo, empezando por una letra",
+    "active": "Activo",
+    "inactive": "Inactivo",
     "required": "Este campo es obligatorio",
     "invalidJson": "El esquema no es un JSON válido",
     "saved": "Tipo de prestador guardado",
@@ -235,7 +239,7 @@
       "updated": "Actualizado: {date}",
       "service": "Servicio",
       "latency": "Latencia",
-      "states": { "OPERATIVO": "Operativo", "DEGRADADO": "Degradado", "NO_DISPONIBLE": "No disponible" }
+      "states": { "SANO": "Operativo", "DEGRADADO": "Degradado", "CAIDO": "No disponible" }
     },
     "alerts": {
       "title": "Bandeja de alertas",
