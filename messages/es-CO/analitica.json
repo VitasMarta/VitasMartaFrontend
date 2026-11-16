@@ -5,7 +5,7 @@
   "compareWith": "Comparar con",
   "none": "Sin comparación",
   "month": "Mes (ocupación)",
-  "occupancy": { "title": "Tasa de ocupación", "rate": "Tasa de ocupación", "base": "Reservas confirmadas pasadas" },
+  "occupancy": { "title": "Tasa de ocupación", "rate": "Tasa de ocupación", "base": "Reservas confirmadas pasadas", "provider": "Prestador", "chooseProvider": "Elige un prestador", "providerId": "Identificador del prestador", "providerIdHint": "UUID del prestador (lo entrega la administración).", "needProvider": "La tasa de ocupación es por prestador: elige uno para verla." },
   "demand": {
     "topConsulted": "Más consultado",
     "attractions": "Atractivos más consultados",

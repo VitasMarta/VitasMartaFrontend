@@ -29,6 +29,7 @@
   "interests": {
     "legend": "Travel interests",
     "hint": "These categories feed your personalized recommendations.",
+    "notReadable": "We cannot show the interests you already saved yet. When you save, your selection replaces the previous one.",
     "saved": "Your interests were updated"
   },
   "consents": {

@@ -374,10 +374,14 @@ export const prestadoresHandlers = [
     const { slice, page, size, total } = pageOf(rows, url, 1);
     return HttpResponse.json({ items: slice, total, page, page_size: size });
   }),
-  http.get(gw("/prestadores/admin/outbox"), () =>
-    HttpResponse.json({ items: [{ id: "ob-1", evento: "contenido.publicado", estado: "ENVIADO", intentos: 1 }, { id: "ob-2", evento: "prestador.aprobado", estado: "FALLIDO", intentos: 4 }], total: 2 }),
-  ),
-  http.post(gw("/prestadores/admin/outbox/:id/reintentar"), ({ params }) => HttpResponse.json({ id: params.id, estado: "PENDIENTE" })),
+  // Forma real de M4 (`PaginaOutboxSchema`): por prestador (X-Tenant-Id) y estados en minúscula.
+  http.get(gw("/prestadores/admin/outbox"), ({ request }) => {
+    const t = request.headers.get("x-tenant-id");
+    if (!t) return HttpResponse.json(problemBody(400, "tenant_requerido", "Error de dominio", "Esta operacion exige la cabecera X-Tenant-Id", "/api/v1/prestadores/admin/outbox"), { status: 400 });
+    const ev = (id: string, event_type: string, routing_key: string, estado: string, intentos: number) => ({ id, tenant_id: t, event_type, routing_key, id_fuente: id, version: 1, estado, intentos, ocurrido_en: new Date().toISOString(), proximo_intento_en: null, publicado_en: null, ultimo_error: estado === "fallido" ? "broker no disponible" : null });
+    return HttpResponse.json({ items: [ev("00000000-0000-4000-a000-000000000001", "ContenidoPublicado", "prestadores.contenido.publicado", "publicado", 1), ev("00000000-0000-4000-a000-000000000002", "PrestadorAprobado", "prestadores.prestador.aprobado", "fallido", 4)], total: 2, page: 1, page_size: 20 });
+  }),
+  http.post(gw("/prestadores/admin/outbox/:id/reintentar"), ({ params }) => HttpResponse.json({ id: params.id, estado: "pendiente" })),
 ];
 
 const adminPrestadores = [

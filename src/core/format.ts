@@ -50,6 +50,22 @@ export const localDayOf = (iso: string): string => {
   return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TZ }).format(d);
 };
 
+/** Rango de los últimos `n` meses (incluido el actual) como `YYYY-MM`: M9 lo exige para series de tendencia. */
+export function rangoMensual(n = 6): { desde: string; hasta: string } {
+  const d = new Date();
+  const hasta = d.toISOString().slice(0, 7);
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() - (n - 1));
+  return { desde: d.toISOString().slice(0, 7), hasta };
+}
+
+/** Rango de fechas (`YYYY-MM-DD`) de los últimos `dias` días: M8 exige `desde` y `hasta` en el histórico. */
+export function rangoDias(dias = 180): { desde: string; hasta: string } {
+  const hasta = new Date();
+  const desde = new Date(hasta.getTime() - dias * 86_400_000);
+  return { desde: desde.toISOString().slice(0, 10), hasta: hasta.toISOString().slice(0, 10) };
+}
+
 export const formatBytes = (bytes: number): string =>
   bytes > 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
 

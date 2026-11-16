@@ -8,7 +8,7 @@ import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
 import { toList, type AlertaAmbiental, type ConfiguracionCapacidad, type PageResponse, type ResultadoBusqueda } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
-import { formatDate, formatDateTime, localized } from "@/core/format";
+import { formatDate, formatDateTime, localized, rangoDias } from "@/core/format";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
@@ -181,16 +181,30 @@ function OccupancyTab({ id }: { id: string }) {
 function HistoryTab({ id }: { id: string }) {
   const t = useTranslations("admin.environment.history");
   const tc = useTranslations("common");
-  const [range, setRange] = useState({ desde: "", hasta: "" });
-  const q = useQuery({ queryKey: ["m8", "historico", id, range], queryFn: async () => (await api.get<{ serie: { fecha: string; ocupacion_promedio: number }[] }>(routes.ambiental.historico(id), { query: range })).data });
+  // M8 exige `desde` y `hasta` (fechas ISO): por defecto, los últimos 6 meses.
+  const [range, setRange] = useState(() => rangoDias(180));
+  // M8 `HistoricoSostenibilidadResponse`: ocupacion_estimada[{ valor, marca_temporal, ciclo_id }] por ciclo de monitoreo.
+  const q = useQuery({
+    queryKey: ["m8", "historico", id, range],
+    queryFn: async () => {
+      const d = (await api.get<{ ocupacion_estimada?: { valor: number | string; marca_temporal: string }[] }>(routes.ambiental.historico(id), { query: range })).data;
+      // Promedio diario de los ciclos (la gráfica muestra la tendencia, no cada ciclo de 15 s).
+      const porDia = new Map<string, number[]>();
+      for (const o of d.ocupacion_estimada ?? []) {
+        const dia = o.marca_temporal.slice(0, 10);
+        porDia.set(dia, [...(porDia.get(dia) ?? []), Number(o.valor)]);
+      }
+      return { serie: [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([fecha, v]) => ({ fecha, ocupacion_promedio: Math.round((v.reduce((s, x) => s + x, 0) / v.length) * 10) / 10 })) };
+    },
+  });
   return (
     <div className="space-y-6">
-      <form className="flex flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); setRange({ desde: String(f.get("desde") ?? ""), hasta: String(f.get("hasta") ?? "") }); }}>
-        <TextField label={t("from")} name="desde" type="date" /><TextField label={t("to")} name="hasta" type="date" /><Button type="submit">{t("apply")}</Button>
+      <form className="flex flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); const desde = String(f.get("desde") ?? ""); const hasta = String(f.get("hasta") ?? ""); if (desde && hasta) setRange({ desde, hasta }); }}>
+        <TextField label={t("from")} name="desde" type="date" defaultValue={range.desde} required /><TextField label={t("to")} name="hasta" type="date" defaultValue={range.hasta} required /><Button type="submit">{t("apply")}</Button>
       </form>
       {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
       {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
-      {q.data && <TrendChart label={t("chart")} valueLabel={t("occupancy")} format={(n) => `${n} %`} data={q.data.serie.map((s) => ({ x: s.fecha.slice(0, 7), y: s.ocupacion_promedio }))} />}
+      {q.data && <TrendChart label={t("chart")} valueLabel={t("occupancy")} format={(n) => `${n} %`} data={q.data.serie.map((s) => ({ x: s.fecha.slice(5), y: s.ocupacion_promedio }))} />}
     </div>
   );
 }

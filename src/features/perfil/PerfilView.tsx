@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
 import type { ConsentimientoEstado, Finalidad, SolicitudArco } from "@/core/api/types";
@@ -111,7 +112,20 @@ function InteresesTab() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const categorias = useCategorias();
-  const q = useQuery({ queryKey: ["intereses"], queryFn: async () => (await api.get<{ intereses: string[] }>(routes.identidad.intereses)).data.intereses });
+  // M7 solo expone el reemplazo (PUT /intereses); no hay lectura de los intereses guardados. Si la lectura
+  // no está disponible se parte de una selección vacía y se avisa que guardar reemplaza la anterior.
+  const q = useQuery({
+    queryKey: ["intereses"],
+    retry: false,
+    queryFn: async (): Promise<string[] | null> => {
+      try {
+        return (await api.get<{ intereses: string[] }>(routes.identidad.intereses)).data.intereses;
+      } catch (e) {
+        if (e instanceof ApiError && [404, 405, 500].includes(e.status)) return null;
+        throw e;
+      }
+    },
+  });
   const [draft, setDraft] = useState<Set<string> | null>(null);
   const save = useMutation({
     mutationFn: async (list: string[]) => api.put(routes.identidad.intereses, { body: { intereses: list } }), // reemplazo atómico
@@ -120,7 +134,7 @@ function InteresesTab() {
 
   if (q.isPending || categorias.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const current = draft ?? new Set(q.data);
+  const current = draft ?? new Set(q.data ?? []);
   const toggle = (slug: string) => {
     const next = new Set(current);
     if (next.has(slug)) next.delete(slug);
@@ -133,6 +147,7 @@ function InteresesTab() {
       <fieldset>
         <legend className="mb-2 font-semibold">{t("legend")}</legend>
         <p className="mb-3 text-sm text-ink/80">{t("hint")}</p>
+        {q.data === null && <p role="status" className="mb-3 border-l-4 border-ink pl-3 text-sm">{t("notReadable")}</p>}
         <div className="grid gap-x-6 sm:grid-cols-2">
           {categorias.data?.map((c) => (
             <label key={c.slug} className="flex min-h-11 cursor-pointer items-center gap-3">

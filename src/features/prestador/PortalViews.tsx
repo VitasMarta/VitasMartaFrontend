@@ -11,7 +11,7 @@ import { IntentKeyCache } from "@/core/api/idempotency";
 import { routes } from "@/core/api/routes";
 import type { SerieDashboard } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
-import { formatCOP, formatDate, formatDateTime, formatNumber, localized } from "@/core/format";
+import { formatCOP, formatDate, formatDateTime, formatNumber, localized, rangoMensual } from "@/core/format";
 import { useRouter } from "@/core/i18n/navigation";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
@@ -408,7 +408,8 @@ export function IndicatorsView() {
   const q = useIndicadoresM4(range.desde, range.hasta);
   const series = useQuery({
     queryKey: ["m9", "series", "mi-ocupacion"],
-    queryFn: async () => (await api.get<SerieDashboard>(routes.reportes.series, { query: { indicador: "reservas_por_periodo", tipo: "LINEA_TENDENCIA" } })).data,
+    // LINEA_TENDENCIA exige `desde` y `hasta` mensuales (M9).
+    queryFn: async () => (await api.get<SerieDashboard>(routes.reportes.series, { query: { indicador: "reservas_por_periodo", tipo: "LINEA_TENDENCIA", ...rangoMensual(6) } })).data,
     retry: false,
   });
   useDocumentTitle(t("title"));

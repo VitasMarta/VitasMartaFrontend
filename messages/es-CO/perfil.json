@@ -29,6 +29,7 @@
   "interests": {
     "legend": "Intereses turísticos",
     "hint": "Estas categorías alimentan tus recomendaciones personalizadas.",
+    "notReadable": "Por ahora no podemos mostrar los intereses que ya guardaste. Al guardar, tu selección reemplaza la anterior.",
     "saved": "Tus intereses fueron actualizados"
   },
   "consents": {

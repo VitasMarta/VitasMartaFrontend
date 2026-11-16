@@ -135,7 +135,16 @@ export const institucionalHandlers = [
   }),
   http.get(gw("/ambiental/atractivos/:id/historico"), ({ request, params }) => {
     const base = CATALOGO.find((x) => x.id === params.id)?.ocupacion ?? 50;
-    return allow(request, ADMIN_ROLES) ?? HttpResponse.json({ atractivo_ref: params.id, serie: Array.from({ length: 12 }, (_, i) => ({ fecha: isoDay(-30 * (11 - i)), ocupacion_promedio: Math.round(base - 15 + ((i * 11) % 30)) })) });
+    const url = new URL(request.url);
+    // M8 exige desde/hasta (sin ellos responde error) y devuelve la ocupación por ciclo de monitoreo.
+    if (!url.searchParams.get("desde") || !url.searchParams.get("hasta")) {
+      return HttpResponse.json(errorBody(request, "PARAMETRO_INVALIDO", "desde y hasta son obligatorios"), { status: 400 });
+    }
+    return allow(request, ADMIN_ROLES) ?? HttpResponse.json({
+      atractivo_ref: params.id, desde: url.searchParams.get("desde"), hasta: url.searchParams.get("hasta"), meses_retencion: 12,
+      ocupacion_estimada: Array.from({ length: 12 }, (_, i) => ({ valor: Math.round(base - 15 + ((i * 11) % 30)), marca_temporal: `${isoDay(-14 * (11 - i))}T12:00:00Z`, ciclo_id: `c-${i}` })),
+      alertas: [], cambios_configuracion: [],
+    });
   }),
   http.get(gw("/ambiental/alertas"), ({ request }) => {
     const denied = allow(request, ADMIN_ROLES);

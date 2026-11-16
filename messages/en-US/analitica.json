@@ -5,7 +5,7 @@
   "compareWith": "Compare with",
   "none": "No comparison",
   "month": "Month (occupancy)",
-  "occupancy": { "title": "Occupancy rate", "rate": "Occupancy rate", "base": "Past confirmed bookings" },
+  "occupancy": { "title": "Occupancy rate", "rate": "Occupancy rate", "base": "Past confirmed bookings", "provider": "Provider", "chooseProvider": "Choose a provider", "providerId": "Provider identifier", "providerIdHint": "Provider UUID (given by the administration).", "needProvider": "The occupancy rate is per provider: choose one to see it." },
   "demand": {
     "topConsulted": "Most viewed",
     "attractions": "Most viewed attractions",

@@ -309,17 +309,37 @@ function M4Audit() {
 function OutboxPanel() {
   const t = useTranslations("admin.audit");
   const tc = useTranslations("common");
+  const tm = useTranslations("admin.moderation");
+  const locale = useLocale();
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["m4", "outbox"], queryFn: async () => toList<{ id: string; evento: string; estado: string; intentos: number }>((await api.get(routes.prestadores.admin.outbox)).data) });
-  const retry = useMutation({ mutationFn: async (id: string) => api.post(routes.prestadores.admin.outboxReintentar(id)), onSuccess: () => { toast("success", t("retried")); qc.invalidateQueries({ queryKey: ["m4", "outbox"] }); } });
-  if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
-  if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
+  // El outbox de M4 es por prestador (X-Tenant-Id obligatorio): se elige el prestador como en Moderación.
+  const { q: providers, tenant, setTenant } = useTenantPicker();
+  type EventoOutbox = { id: string; event_type: string; routing_key: string; estado: string; intentos: number; ocurrido_en: string; ultimo_error?: string | null };
+  const q = useQuery({
+    queryKey: ["m4", "outbox", tenant],
+    enabled: !!tenant,
+    queryFn: async () => toList<EventoOutbox>((await api.get(routes.prestadores.admin.outbox, { tenantId: tenant })).data),
+  });
+  const retry = useMutation({ mutationFn: async (id: string) => api.post(routes.prestadores.admin.outboxReintentar(id), { tenantId: tenant }), onSuccess: () => { toast("success", t("retried")); qc.invalidateQueries({ queryKey: ["m4", "outbox"] }); } });
   return (
-    <EditorialTable caption={t("outbox")} rows={q.data.items} rowKey={(r) => r.id} empty={t("empty")} columns={[
-      { key: "e", header: t("event"), cell: (r) => r.evento }, { key: "s", header: tc("status"), cell: (r) => <StatusTag tone={r.estado === "FALLIDO" ? "bad" : r.estado === "ENVIADO" ? "good" : "warn"}>{r.estado}</StatusTag> },
-      { key: "i", header: t("attempts"), align: "right", cell: (r) => r.intentos },
-      { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.estado === "FALLIDO" && <button type="button" className="text-link font-semibold" onClick={() => retry.mutate(r.id)}>{t("retry")}<span className="sr-only"> {r.evento}</span></button> },
-    ]} />
+    <div className="space-y-4">
+      <div className="max-w-sm">
+        <SelectField label={tm("provider")} name="tenant" value={tenant} onChange={(e) => setTenant(e.target.value)}>
+          {(providers.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.nombre_comercial ?? p.razon_social}</option>)}
+        </SelectField>
+      </div>
+      {(providers.isPending || (!!tenant && q.isPending)) && <StatusBlock kind="loading" title={tc("loading")} />}
+      {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
+      {q.data && (
+        <EditorialTable caption={t("outbox")} rows={q.data.items} rowKey={(r) => r.id} empty={t("empty")} columns={[
+          { key: "e", header: t("event"), cell: (r) => <span><span className="font-semibold">{r.event_type}</span><span className="meta block text-ink/80">{r.routing_key}</span></span> },
+          { key: "f", header: tc("date"), cell: (r) => formatDateTime(r.ocurrido_en, locale) },
+          { key: "s", header: tc("status"), cell: (r) => <StatusTag tone={r.estado === "fallido" ? "bad" : r.estado === "publicado" ? "good" : "warn"}>{r.estado}</StatusTag> },
+          { key: "i", header: t("attempts"), align: "right", cell: (r) => r.intentos },
+          { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.estado === "fallido" && <button type="button" className="text-link font-semibold" onClick={() => retry.mutate(r.id)}>{t("retry")}<span className="sr-only"> {r.event_type}</span></button> },
+        ]} />
+      )}
+    </div>
   );
 }
 
@@ -339,9 +359,10 @@ interface PrestadorAdmin { id: string; razon_social: string; nombre_comercial?: 
 const ESTADO_TONE: Record<string, "good" | "warn" | "bad" | "neutral"> = { aprobado: "good", pendiente: "warn", rechazado: "bad", suspendido: "bad" };
 const PROVIDER_ACTIONS: Record<string, string[]> = { pendiente: ["aprobar", "rechazar"], aprobado: ["suspender"], suspendido: ["reactivar"], rechazado: [] };
 
-export function usePrestadoresAdmin(estado?: string, texto?: string, page = 1) {
+export function usePrestadoresAdmin(estado?: string, texto?: string, page = 1, enabled = true) {
   return useQuery({
     queryKey: ["m4", "admin", "prestadores", estado, texto, page],
+    enabled,
     queryFn: async () => toList<PrestadorAdmin>((await api.get(routes.prestadores.admin.prestadores, { query: { estado, texto, page, page_size: SIZE } })).data),
   });
 }

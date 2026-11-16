@@ -8,7 +8,9 @@ import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
 import type { IndicadoresDemanda, IndicadorAmbiental, JobExportacion, MapaCalor, SerieDashboard, TasaOcupacion } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
-import { formatDateTime, formatNumber } from "@/core/format";
+import { formatDateTime, formatNumber, rangoMensual } from "@/core/format";
+import { useSessionStore } from "@/core/auth/sessionStore";
+import { usePrestadoresAdmin } from "@/features/institucional/AdminViews";
 import { saveBlob } from "@/features/reservas/api";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
@@ -31,6 +33,7 @@ const quarters = () => {
   }
   return out;
 };
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const months = () => Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setMonth(d.getMonth() - i); return d.toISOString().slice(0, 7); });
 
 // ── Gestor de exportaciones asíncronas (guía §3.6) ──────────────────────────────────────────────
@@ -99,11 +102,20 @@ export function AnalyticsView() {
   const [periodo, setPeriodo] = useState(quarters()[1] ?? quarters()[0]);
   const [comparar, setComparar] = useState("");
   const [mes, setMes] = useState(months()[1] ?? months()[0]);
+  // M9 exige `prestador` en la tasa de ocupación para ADMINISTRADOR/ANALISTA (el PRESTADOR la ve por su token).
+  const [prestador, setPrestador] = useState("");
+  const rol = useSessionStore((s) => s.user?.rol);
+  const aprobados = usePrestadoresAdmin("aprobado", undefined, 1, rol === "ADMINISTRADOR");
   useDocumentTitle(t("title"));
 
   const demanda = useQuery({ queryKey: ["m9", "demanda", periodo, comparar], queryFn: async () => (await api.get<IndicadoresDemanda>(routes.reportes.demanda, { query: { periodo, compararCon: comparar || undefined, topN: 6 } })).data });
-  const ocupacion = useQuery({ queryKey: ["m9", "ocupacion", mes], queryFn: async () => (await api.get<TasaOcupacion>(routes.reportes.ocupacion, { query: { periodo: mes, compararCon: months()[2] } })).data });
-  const tendencia = useQuery({ queryKey: ["m9", "tendencia", periodo], queryFn: async () => (await api.get<SerieDashboard>(routes.reportes.series, { query: { indicador: "reservas_por_periodo", tipo: "LINEA_TENDENCIA", periodo } })).data });
+  const ocupacion = useQuery({
+    queryKey: ["m9", "ocupacion", mes, prestador],
+    enabled: UUID_RE.test(prestador),
+    queryFn: async () => (await api.get<TasaOcupacion>(routes.reportes.ocupacion, { query: { prestador, periodo: mes, compararCon: months().find((m) => m < mes) } })).data,
+  });
+  // LINEA_TENDENCIA exige `desde` y `hasta` mensuales (M9).
+  const tendencia = useQuery({ queryKey: ["m9", "tendencia"], queryFn: async () => (await api.get<SerieDashboard>(routes.reportes.series, { query: { indicador: "reservas_por_periodo", tipo: "LINEA_TENDENCIA", ...rangoMensual(6) } })).data });
   const calor = useQuery({ queryKey: ["m9", "calor", periodo], queryFn: async () => (await api.get<MapaCalor>(routes.reportes.mapaCalor, { query: { periodo } })).data });
 
   const d = demanda.data;
@@ -115,8 +127,18 @@ export function AnalyticsView() {
           <SelectField label={t("period")} name="periodo" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>{quarters().map((q) => <option key={q} value={q}>{q}</option>)}</SelectField>
           <SelectField label={t("compareWith")} name="comparar" value={comparar} onChange={(e) => setComparar(e.target.value)}><option value="">{t("none")}</option>{quarters().filter((q) => q !== periodo).map((q) => <option key={q} value={q}>{q}</option>)}</SelectField>
           <SelectField label={t("month")} name="mes" value={mes} onChange={(e) => setMes(e.target.value)}>{months().map((m) => <option key={m} value={m}>{m}</option>)}</SelectField>
+          {rol === "ADMINISTRADOR" ? (
+            <SelectField label={t("occupancy.provider")} name="prestador" value={prestador} onChange={(e) => setPrestador(e.target.value)}>
+              <option value="">{t("occupancy.chooseProvider")}</option>
+              {(aprobados.data?.items ?? []).map((p) => <option key={p.id} value={p.id}>{p.nombre_comercial ?? p.razon_social}</option>)}
+            </SelectField>
+          ) : (
+            <TextField label={t("occupancy.providerId")} name="prestador" value={prestador} onChange={(e) => setPrestador(e.target.value.trim())} hint={t("occupancy.providerIdHint")} />
+          )}
         </form>
       </Container>
+      {!UUID_RE.test(prestador) && <Container><p className="border-l-4 border-ink pl-3 text-sm">{t("occupancy.needProvider")}</p></Container>}
+      {ocupacion.isError && <Container><ErrorNotice error={ocupacion.error} referenceLabel={tc("reference")} /></Container>}
 
       {ocupacion.data && (
         <MetricRibbon label={t("occupancy.title")} items={[
