@@ -443,7 +443,7 @@ export function ModerationView() {
   const [panel, setPanel] = useState<Contenido | null>(null);
   const [error, setError] = useState<string>();
   useDocumentTitle(t("title"));
-  const list = useOferta(tipo, page, estado || undefined, tenant || undefined);
+  const list = useOferta(tipo, page, estado || undefined, tenant);
   const preview = useQuery({ queryKey: ["m4", "proyeccion", panel?.id, tenant], enabled: !!panel, queryFn: async () => (await api.get<Record<string, unknown>>(routes.prestadores.admin.contenidoProyeccion(panel!.id), { tenantId: tenant })).data });
   const act = useMutation({
     meta: { silent: true },

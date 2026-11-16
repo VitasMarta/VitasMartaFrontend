@@ -9,9 +9,14 @@ import type { Contenido, Tipo } from "./offer";
 
 export const PAGE_SIZE = 10;
 
+/**
+ * Oferta del prestador. El administrador actúa sobre un prestador con `X-Tenant-Id`: pasar `""`
+ * mientras aún no se elige deja la consulta en espera (M4 respondería 400 tenant_requerido).
+ */
 export const useOferta = (tipo: Tipo, page: number, estado?: string, tenantId?: string) =>
   useQuery({
     queryKey: ["m4", "oferta", tipo, page, estado, tenantId],
+    enabled: tenantId !== "",
     queryFn: async () =>
       toList<Contenido>((await api.get(routes.prestadores.oferta(tipo), { query: { page, page_size: PAGE_SIZE, estado }, tenantId })).data),
   });
