@@ -126,15 +126,18 @@ export function useFranjaActions(contenidoId: string) {
   };
 }
 
+/**
+ * M4 `ReservaRespuesta` (vista del prestador, leída de M3 por el canal interno). Estados en minúscula:
+ * pendiente_confirmacion | confirmada | rechazada | cancelada | expirada. `total` es decimal en texto.
+ */
 export interface ReservaM4 {
   id: string;
-  codigo_confirmacion: string;
-  servicio_nombre: string;
-  turista: string;
-  fecha_inicio: string;
-  cantidad_cupos: number;
   estado: string;
-  total: { monto: number };
+  fecha_creacion: string;
+  contenido_id?: string | null;
+  total?: string | number | null;
+  version: number;
+  actualizado_en?: string | null;
 }
 export const useReservasRecibidas = (page: number, estado?: string) =>
   useQuery({

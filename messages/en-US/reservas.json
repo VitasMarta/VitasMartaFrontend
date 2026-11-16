@@ -37,6 +37,10 @@
   "states": {
     "CONFIRMADA": "Confirmed",
     "PENDIENTE_CONFIRMACION": "Pending confirmation",
+    "PENDIENTE_CONFIRMACION_PRESTADOR": "Pending confirmation",
+    "PENDIENTE_PAGO_EXTERNO": "Pending payment",
+    "SOLICITADA": "Requested",
+    "COMPLETADA": "Completed",
     "PENDIENTE": "Pending",
     "CANCELADA": "Cancelled",
     "RECHAZADA": "Rejected",

@@ -158,7 +158,7 @@
     "description": "Confirma o rechaza las reservas pendientes y gestiona cancelaciones.",
     "filter": "Filtrar por estado",
     "all": "Todos",
-    "states": { "PENDIENTE_CONFIRMACION": "Pendiente de confirmación", "CONFIRMADA": "Confirmada", "CANCELADA": "Cancelada", "RECHAZADA": "Rechazada" },
+    "states": { "pendiente_confirmacion": "Pendiente de confirmación", "confirmada": "Confirmada", "cancelada": "Cancelada", "rechazada": "Rechazada", "expirada": "Expirada" },
     "empty": "No hay reservas para mostrar.",
     "code": "Código",
     "service": "Servicio",

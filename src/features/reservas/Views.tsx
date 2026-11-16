@@ -26,10 +26,14 @@ import { PoliticaOfertaTexto, ReservaStatus, isFinal, isPending } from "./util";
 const SIZE = 10;
 const CLASES: ClasificacionReserva[] = ["ACTIVAS", "PASADAS", "CANCELADAS"];
 
+/** Total de la reserva: M3 envía `tarifa.importe_total` (texto decimal). */
 const totalOf = (r: ReservaRespuesta, locale: string) => {
-  const a = amountOf(r.tarifa as number | { monto: number } | null | undefined);
-  return a == null ? "—" : formatCOP(a, locale);
+  const t = r.tarifa;
+  const a = t == null ? null : typeof t === "number" ? t : t.importe_total != null ? Number(t.importe_total) : amountOf(t as { monto: number });
+  return a == null || Number.isNaN(a) ? "—" : formatCOP(a, locale);
 };
+/** Texto de la política aceptada (M3 `politica.contenido`). */
+const politicaTexto = (r: ReservaRespuesta) => r.politica?.contenido ?? r.politica?.descripcion ?? null;
 
 function ReservasTable({ clasificacion }: { clasificacion: ClasificacionReserva }) {
   const t = useTranslations("reservas.list");
@@ -112,7 +116,7 @@ function CancelPanel({ reserva, open, onClose }: { reserva: ReservaRespuesta; op
   return (
     <SlideOver open={open} onClose={onClose} title={t("title")}>
       <form onSubmit={onSubmit} noValidate className="space-y-5">
-        <p>{reserva.politica?.descripcion ?? t("generic")}</p>
+        <p>{politicaTexto(reserva) ?? t("generic")}</p>
         <TextAreaField label={t("reason")} name="motivo" required error={error} />
         <div className="flex gap-3">
           <Button type="submit" variant="danger" loading={accion.isPending}>{t("confirm")}</Button>
@@ -247,7 +251,7 @@ export function ReservationDetailView({ reservaRef }: { reservaRef: string }) {
                 r.fecha_fin && r.fecha_fin !== r.fecha_inicio ? { term: t("end"), value: formatDateTime(r.fecha_fin, locale) } : null,
                 r.cantidad_cupos ? { term: t("spots"), value: r.cantidad_cupos } : null,
                 { term: t("total"), value: <strong className="tabular">{totalOf(r, locale)}</strong> },
-                r.politica?.descripcion ? { term: t("policy"), value: r.politica.descripcion } : null,
+                politicaTexto(r) ? { term: t("policy"), value: politicaTexto(r) } : null,
                 r.original_ref ? { term: t("original"), value: <Link href={`/mis-reservas/${r.original_ref}`} className="text-link">{r.original_ref}</Link> } : null,
                 r.reemplazo_ref ? { term: t("replacement"), value: <Link href={`/mis-reservas/${r.reemplazo_ref}`} className="text-link">{r.reemplazo_ref}</Link> } : null,
               ] as ({ term: React.ReactNode; value: React.ReactNode } | null)[]).filter((x): x is { term: React.ReactNode; value: React.ReactNode } => x !== null)}

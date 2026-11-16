@@ -158,7 +158,7 @@
     "description": "Confirm or reject pending bookings and manage cancellations.",
     "filter": "Filter by status",
     "all": "All",
-    "states": { "PENDIENTE_CONFIRMACION": "Pending confirmation", "CONFIRMADA": "Confirmed", "CANCELADA": "Cancelled", "RECHAZADA": "Rejected" },
+    "states": { "pendiente_confirmacion": "Pending confirmation", "confirmada": "Confirmed", "cancelada": "Cancelled", "rechazada": "Rejected", "expirada": "Expired" },
     "empty": "There are no bookings to show.",
     "code": "Code",
     "service": "Service",

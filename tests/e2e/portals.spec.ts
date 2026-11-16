@@ -93,7 +93,7 @@ test("prestador: oferta, edición, conflicto de versión sin perder el texto, y 
   // Reservas recibidas: confirmar con panel deslizante e Idempotency-Key
   await a.goto("/es-CO/reservas-recibidas");
   await expect(a.getByRole("table", { name: "Reservas recibidas" })).toBeVisible();
-  await a.getByRole("button", { name: /^Confirmar K1000/ }).click();
+  await a.getByRole("button", { name: /^Confirmar 00000000/ }).first().click();
   const dialog = a.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Confirmar" }).click();

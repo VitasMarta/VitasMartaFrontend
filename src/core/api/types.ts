@@ -148,8 +148,11 @@ export interface ReservaRespuesta {
   fecha_fin?: string;
   /** Fecha límite del soft lock / confirmación del prestador. */
   vence_en?: string | null;
-  tarifa?: { monto: number; moneda?: string } | number | null;
-  politica?: { politica_ref?: string; version?: string | number; descripcion?: string } | null;
+  creada_en?: string;
+  /** M3: `{ importe_total, importe_unitario, moneda, unidad }` (importes decimales como texto). */
+  tarifa?: { importe_total?: string | number; importe_unitario?: string | number; moneda?: string; unidad?: string; monto?: number } | number | null;
+  /** M3: política aceptada (`contenido` es el texto vigente al reservar). */
+  politica?: { politica_ref?: string; version?: string | number; contenido?: string | null; aceptada_en?: string; descripcion?: string } | null;
   instrucciones_pago_externo?: string | null;
   siguiente_accion?: string | null;
   penalidad_aplicada_porcentaje?: number | null;

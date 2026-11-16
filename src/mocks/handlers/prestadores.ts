@@ -62,16 +62,15 @@ const isTipo = (p: unknown) => ["atractivos", "actividades", "eventos"].includes
 
 const solicitudes = new Map<string, Record<string, unknown>>();
 
+// Forma real de M4 (`ReservaRespuesta`): estados en minúscula y `total` decimal en texto.
 const reservasM4 = Array.from({ length: 12 }, (_, i) => ({
-  id: `rv-${i + 1}`,
-  codigo_confirmacion: `K${String(1000 + i)}`,
+  id: `00000000-0000-4000-9000-${String(i + 1).padStart(12, "0")}`,
+  estado: ["pendiente_confirmacion", "confirmada", "confirmada", "cancelada"][i % 4],
+  fecha_creacion: `${isoDay(-(i % 5))}T08:00:00Z`,
   contenido_id: i % 2 ? "atr-001" : "act-001",
-  servicio_nombre: i % 2 ? "Mirador El Cerro" : "Kayak al amanecer",
-  turista: `Visitante ${i + 1}`,
-  fecha_inicio: `${isoDay(i % 5 + 1)}T08:00:00-05:00`,
-  cantidad_cupos: (i % 4) + 1,
-  estado: ["PENDIENTE_CONFIRMACION", "CONFIRMADA", "CONFIRMADA", "CANCELADA"][i % 4],
-  total: { monto: ((i % 4) + 1) * 85000, moneda: "COP" },
+  total: (((i % 4) + 1) * 85000).toFixed(2),
+  version: 1,
+  actualizado_en: `${isoDay(-(i % 5))}T08:00:00Z`,
 }));
 
 export const prestadoresHandlers = [
@@ -176,20 +175,20 @@ export const prestadoresHandlers = [
     if (!r) return HttpResponse.json(problemBody(404, "no_encontrado", "No encontrado", "Reserva no encontrada", `/v1/prestadores/reservas/${params.id}`), { status: 404 });
     const previo = claves.get(key);
     if (!previo) {
-      r.estado = params.accion === "confirmar" ? "CONFIRMADA" : params.accion === "rechazar" ? "RECHAZADA" : "CANCELADA";
+      r.estado = params.accion === "confirmar" ? "confirmada" : params.accion === "rechazar" ? "rechazada" : "cancelada";
       claves.set(key, r.estado);
     }
-    return HttpResponse.json(r);
+    return HttpResponse.json({ reserva_id: r.id, estado: r.estado, version: r.version + 1, actualizado_en: new Date().toISOString() });
   }),
   http.get(gw("/prestadores/reservas/:id"), ({ params }) => HttpResponse.json(reservasM4.find((x) => x.id === params.id) ?? {})),
   http.post(gw("/prestadores/check-in/validar"), async ({ request }) => {
     if (!tenantOf(request)) return unauthorized(request);
     const { codigo_qr } = (await request.json()) as { codigo_qr: string };
     if (codigo_qr === "LIMITE") return new HttpResponse(JSON.stringify(problemBody(429, "rate_limit", "Demasiadas solicitudes", "Límite de 30 validaciones por minuto", "/v1/prestadores/check-in/validar")), { status: 429, headers: { "content-type": "application/json", "retry-after": "20" } });
-    const r = reservasM4.find((x) => x.codigo_confirmacion === codigo_qr || x.id === codigo_qr);
+    const r = reservasM4.find((x) => x.id === codigo_qr || x.id.slice(0, 8).toUpperCase() === codigo_qr);
     return HttpResponse.json(
       r
-        ? { valido: r.estado === "CONFIRMADA", reserva_id: r.id, estado: r.estado, contenido_id: r.contenido_id, mensaje: r.estado === "CONFIRMADA" ? "Reserva válida. Check-in registrado." : "La reserva no está confirmada.", validado_en: new Date().toISOString() }
+        ? { valido: r.estado === "confirmada", reserva_id: r.id, estado: r.estado, contenido_id: r.contenido_id, mensaje: r.estado === "confirmada" ? "Reserva válida. Check-in registrado." : "La reserva no está confirmada.", validado_en: new Date().toISOString() }
         : { valido: false, reserva_id: null, estado: null, contenido_id: null, mensaje: "Código QR no reconocido.", validado_en: new Date().toISOString() },
     );
   }),

@@ -12,8 +12,8 @@ interface ReservaMock {
   fecha_inicio: string;
   fecha_fin: string;
   vence_en: string | null;
-  tarifa: { monto: number; moneda: string };
-  politica: { politica_ref: string; version: number; descripcion: string };
+  tarifa: { importe_total: string; importe_unitario: string; moneda: string; unidad: string };
+  politica: { politica_ref: string; version: string; contenido: string; aceptada_en: string };
   instrucciones_pago_externo: string | null;
   siguiente_accion: string | null;
   penalidad_aplicada_porcentaje: number | null;
@@ -43,12 +43,13 @@ function crear(owner: string, servicioRef: string, franjaRef: string, cupos: num
     owner,
     prestador_ref: servicio.prestador_ref,
     codigo_confirmacion: ref.slice(4),
-    estado: estado ?? (pendiente ? "PENDIENTE_CONFIRMACION" : "CONFIRMADA"),
+    estado: estado ?? (pendiente ? "PENDIENTE_CONFIRMACION_PRESTADOR" : "CONFIRMADA"),
     fecha_inicio: inicio,
     fecha_fin: inicio,
     vence_en: pendiente ? new Date(Date.now() + 10 * 60_000).toISOString() : null,
-    tarifa: { monto: (servicio.precio ?? 0) * cupos, moneda: "COP" },
-    politica: { ...politicaDe(), descripcion: POLITICA_TXT },
+    // Forma real de M3: importes decimales en texto.
+    tarifa: { importe_total: ((servicio.precio ?? 0) * cupos).toFixed(2), importe_unitario: (servicio.precio ?? 0).toFixed(2), moneda: "COP", unidad: "POR_CUPO" },
+    politica: { politica_ref: politicaDe().politica_ref, version: String(politicaDe().version), contenido: POLITICA_TXT, aceptada_en: new Date().toISOString() },
     instrucciones_pago_externo: pendiente ? "El pago se realiza directamente con el prestador al llegar al destino." : null,
     siguiente_accion: pendiente ? "Esperando confirmación del prestador. Tu cupo está retenido temporalmente." : null,
     penalidad_aplicada_porcentaje: null,

@@ -11,7 +11,7 @@ import { IntentKeyCache } from "@/core/api/idempotency";
 import { routes } from "@/core/api/routes";
 import type { SerieDashboard } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
-import { formatCOP, formatDate, formatDateTime, formatNumber } from "@/core/format";
+import { formatCOP, formatDate, formatDateTime, formatNumber, localized } from "@/core/format";
 import { useRouter } from "@/core/i18n/navigation";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
@@ -26,7 +26,10 @@ import { SlideOver } from "@/shared/ui/SlideOver";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { Tabs } from "@/shared/ui/Tabs";
 import { formValues, validate, type FieldErrors } from "@/shared/validate";
-import { PAGE_SIZE, newClientKey, useAccionReservaM4, useIndicadoresM4, useReservasRecibidas, type ReservaM4 } from "./api";
+import { PAGE_SIZE, newClientKey, useAccionReservaM4, useIndicadoresM4, useOferta, useReservasRecibidas, type ReservaM4 } from "./api";
+
+/** Código legible de una reserva o contenido (primeros 8 caracteres del UUID). */
+const codigoCorto = (id: string) => id.slice(0, 8).toUpperCase();
 import { ReservaStatus } from "@/features/reservas/util";
 
 // ── Onboarding: autoregistro de prestador (M4) ──────────────────────────────────────────────────
@@ -246,6 +249,9 @@ export function ReceivedReservationsView() {
   const [panel, setPanel] = useState<{ row: ReservaM4; accion: "confirmar" | "rechazar" | "cancelar" } | null>(null);
   const [error, setError] = useState<string>();
   const q = useReservasRecibidas(page, estado || undefined);
+  // M4 solo envía `contenido_id`: el nombre se toma de la oferta propia del prestador.
+  const oferta = useOferta("atractivos", 1);
+  const nombres = new Map((oferta.data?.items ?? []).map((c) => [c.id, localized(c.nombre, locale)] as const));
   const mutation = useAccionReservaM4();
   const keys = useState(() => new IntentKeyCache())[0]; // misma clave si se reintenta la misma acción
   useDocumentTitle(t("title"));
@@ -269,7 +275,7 @@ export function ReceivedReservationsView() {
         <div className="mb-4 max-w-xs">
           <SelectField label={t("filter")} name="estado" value={estado} onChange={(e) => { setEstado(e.target.value); setPage(1); }}>
             <option value="">{t("all")}</option>
-            {["PENDIENTE_CONFIRMACION", "CONFIRMADA", "CANCELADA", "RECHAZADA"].map((s) => <option key={s} value={s}>{t(`states.${s}`)}</option>)}
+            {["pendiente_confirmacion", "confirmada", "cancelada", "rechazada", "expirada"].map((s) => <option key={s} value={s}>{t(`states.${s}`)}</option>)}
           </SelectField>
         </div>
         {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
@@ -282,26 +288,24 @@ export function ReceivedReservationsView() {
               rowKey={(r) => r.id}
               empty={t("empty")}
               columns={[
-                { key: "c", header: t("code"), cell: (r) => <span className="font-mono text-sm">{r.codigo_confirmacion}</span> },
-                { key: "s", header: t("service"), cell: (r) => <span className="font-semibold">{r.servicio_nombre}</span> },
-                { key: "t", header: t("tourist"), cell: (r) => r.turista },
-                { key: "f", header: t("date"), cell: (r) => formatDateTime(r.fecha_inicio, locale) },
-                { key: "q", header: t("spots"), align: "right", cell: (r) => r.cantidad_cupos },
-                { key: "m", header: t("total"), align: "right", cell: (r) => formatCOP(r.total.monto, locale) },
+                { key: "c", header: t("code"), cell: (r) => <span className="font-mono text-sm">{codigoCorto(r.id)}</span> },
+                { key: "s", header: t("service"), cell: (r) => <span className="font-semibold">{(r.contenido_id && nombres.get(r.contenido_id)) || (r.contenido_id ? codigoCorto(r.contenido_id) : "—")}</span> },
+                { key: "f", header: t("date"), cell: (r) => formatDateTime(r.fecha_creacion, locale) },
+                { key: "m", header: t("total"), align: "right", cell: (r) => (r.total != null && !Number.isNaN(Number(r.total)) ? formatCOP(Number(r.total), locale) : "—") },
                 { key: "e", header: tc("status"), cell: (r) => <ReservaStatus estado={r.estado} /> },
                 {
                   key: "a",
                   header: <span className="sr-only">{tc("actions")}</span>,
                   cell: (r) =>
-                    r.estado === "PENDIENTE_CONFIRMACION" || r.estado === "CONFIRMADA" ? (
+                    r.estado === "pendiente_confirmacion" || r.estado === "confirmada" ? (
                       <span className="flex flex-wrap gap-x-4 gap-y-1">
-                        {r.estado === "PENDIENTE_CONFIRMACION" && (
+                        {r.estado === "pendiente_confirmacion" && (
                           <>
-                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "confirmar" })}>{t("actions.confirmar")}<span className="sr-only"> {r.codigo_confirmacion}</span></button>
-                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "rechazar" })}>{t("actions.rechazar")}<span className="sr-only"> {r.codigo_confirmacion}</span></button>
+                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "confirmar" })}>{t("actions.confirmar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
+                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "rechazar" })}>{t("actions.rechazar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
                           </>
                         )}
-                        <button type="button" className="text-link font-semibold text-critical" onClick={() => setPanel({ row: r, accion: "cancelar" })}>{t("actions.cancelar")}<span className="sr-only"> {r.codigo_confirmacion}</span></button>
+                        <button type="button" className="text-link font-semibold text-critical" onClick={() => setPanel({ row: r, accion: "cancelar" })}>{t("actions.cancelar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
                       </span>
                     ) : null,
                 },
@@ -314,7 +318,7 @@ export function ReceivedReservationsView() {
       <SlideOver open={panel !== null} onClose={() => { setPanel(null); setError(undefined); }} title={panel ? t(`actions.${panel.accion}`) : ""}>
         {panel && (
           <form onSubmit={onSubmit} noValidate className="space-y-5">
-            <p>{t("confirmText", { code: panel.row.codigo_confirmacion, service: panel.row.servicio_nombre })}</p>
+            <p>{t("confirmText", { code: codigoCorto(panel.row.id), service: (panel.row.contenido_id && nombres.get(panel.row.contenido_id)) || "—" })}</p>
             <TextAreaField label={panel.accion === "confirmar" ? t("noteOptional") : t("reason")} name="motivo" required={panel.accion !== "confirmar"} error={error} />
             <div className="flex gap-3">
               <Button type="submit" variant={panel.accion === "confirmar" ? "primary" : "danger"} loading={mutation.isPending}>{tc("confirm")}</Button>
