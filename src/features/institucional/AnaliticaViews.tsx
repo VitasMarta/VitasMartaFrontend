@@ -45,7 +45,7 @@ function ExportManager({ periodo }: { periodo: string }) {
   const [downloadError, setDownloadError] = useState<string>();
 
   const create = useMutation({
-    mutationFn: async () => (await api.post<JobExportacion>(routes.reportes.exportaciones, { body: { formato, filtros: { periodo, indicadores: ["atractivos_consultados", "tasa_ocupacion"], prestador: null } } })).data,
+    mutationFn: async () => (await api.post<JobExportacion>(routes.reportes.exportaciones, { body: { formato, filtros: { periodo, indicadores: ["atractivos_mas_consultados", "actividades_mas_reservadas", "periodos_alta_demanda"], prestador: null } } })).data,
     onSuccess: (job) => { setJobId(job.job_id); setDownloadError(undefined); },
   });
 
