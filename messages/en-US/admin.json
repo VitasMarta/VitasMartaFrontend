@@ -93,6 +93,8 @@
   "providers": {
     "title": "Providers",
     "description": "Registered applications and providers.",
+    "providerId": "Provider identifier",
+    "assignRoleHint": "To enable the portal, go to Users, find the applicant's account and assign the Provider role with this identifier.",
     "all": "All",
     "states": { "pendiente": "Pending", "aprobado": "Approved", "rechazado": "Rejected", "suspendido": "Suspended" },
     "search": "Search by name",

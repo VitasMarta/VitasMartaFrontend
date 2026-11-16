@@ -400,7 +400,14 @@ export function ProvidersView() {
       <SlideOver open={panel !== null} onClose={() => setPanel(null)} title={panel?.razon_social ?? ""}>
         {panel && (
           <form onSubmit={onSubmit} noValidate className="space-y-5">
-            <DefinitionRows rows={[{ term: t("type"), value: panel.tipo }, { term: tc("status"), value: t(`states.${panel.estado}`) }, { term: t("email"), value: panel.email }]} />
+            <DefinitionRows rows={[
+              { term: t("type"), value: panel.tipo },
+              { term: tc("status"), value: t(`states.${panel.estado}`) },
+              ...(panel.email ? [{ term: t("email"), value: panel.email }] : []),
+              // El administrador lo usa como `prestador_ref` al asignar el rol PRESTADOR en Usuarios (M7).
+              { term: t("providerId"), value: <code className="break-all font-mono select-all" data-testid="prestador-id">{panel.id}</code> },
+            ]} />
+            {panel.estado === "aprobado" && <p className="border-l-4 border-ink pl-3 text-sm">{t("assignRoleHint")}</p>}
             {(PROVIDER_ACTIONS[panel.estado] ?? []).length === 0 ? <p>{t("noActions")}</p> : (
               <>
                 <SelectField label={t("action")} name="accion" value={action} onChange={(e) => setAction(e.target.value)}>

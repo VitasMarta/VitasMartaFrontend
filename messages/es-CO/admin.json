@@ -93,6 +93,8 @@
   "providers": {
     "title": "Prestadores",
     "description": "Solicitudes y prestadores registrados.",
+    "providerId": "Identificador del prestador",
+    "assignRoleHint": "Para habilitar el portal, ve a Usuarios, busca la cuenta del solicitante y asígnale el rol Prestador con este identificador.",
     "all": "Todos",
     "states": { "pendiente": "Pendiente", "aprobado": "Aprobado", "rechazado": "Rechazado", "suspendido": "Suspendido" },
     "search": "Buscar por nombre",
