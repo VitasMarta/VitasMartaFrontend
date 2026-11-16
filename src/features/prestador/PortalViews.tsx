@@ -74,7 +74,8 @@ export function OnboardingView() {
   );
 }
 
-function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => void; resendId?: string }) {
+type DatosSolicitud = { razon_social?: string; nombre_comercial?: string; descripcion?: { es?: string; en?: string } | null };
+function SolicitudForm({ onCreated, resendId, inicial }: { onCreated: (id: string) => void; resendId?: string; inicial?: DatosSolicitud }) {
   const t = useTranslations("prestador.onboarding");
   const tc = useTranslations("common");
   const keys = useState(() => new IntentKeyCache())[0];
@@ -115,8 +116,37 @@ function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => voi
         }),
   });
 
+  /**
+   * Reenvío (M4 `CorreccionesSolicitudSchema`): todas las correcciones son opcionales; se envía solo lo que
+   * la persona llenó (los datos privados no se precargan porque M4 no los devuelve por esta vía).
+   */
+  const onResend = (e: FormEvent<HTMLFormElement>) => {
+    const v = formValues(e.currentTarget) as Record<string, string>;
+    const s = (k: string) => (v[k] ?? "").trim();
+    const fe: FieldErrors = {};
+    const correo = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    if (s("email") && !correo.test(s("email"))) fe.email = t("emailError");
+    if (s("rep_email") && !correo.test(s("rep_email"))) fe.rep_email = t("emailError");
+    if (s("razon_social") && s("razon_social").length < 3) fe.razon_social = t("required");
+    if (s("nombre_comercial") && s("nombre_comercial").length < 3) fe.nombre_comercial = t("required");
+    const rep = ["rep_nombre", "rep_documento", "rep_email"].map(s);
+    if (rep.some(Boolean) && !rep.every(Boolean)) fe.rep_nombre = t("repAllRequired");
+    const body: Record<string, unknown> = {};
+    for (const k of ["razon_social", "nombre_comercial", "email", "telefono", "direccion_privada", "sitio_web"]) if (s(k)) body[k] = s(k);
+    if (s("descripcion_es") || s("descripcion_en")) body.descripcion = { ...(s("descripcion_es") ? { es: s("descripcion_es") } : {}), ...(s("descripcion_en") ? { en: s("descripcion_en") } : {}) };
+    if (rep.every(Boolean)) body.representante_legal = { nombre: rep[0], documento: rep[1], email: rep[2], ...(s("rep_telefono") ? { telefono: s("rep_telefono") } : {}) };
+    if (!Object.keys(fe).length && !Object.keys(body).length) fe.form = t("nothingToCorrect");
+    setErrors(fe);
+    if (Object.keys(fe).length) return;
+    send.mutate(body, {
+      onSuccess: (r) => onCreated(r.id),
+      onError: (error) => { if (error instanceof ApiError) setErrors({ ...error.fieldErrors(), ...(Object.keys(error.fieldErrors()).length ? {} : { form: error.message }) }); },
+    });
+  };
+
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (resendId) return onResend(e);
     const { data: parsed, errors: fe } = validate(schema, formValues(e.currentTarget));
     setErrors(fe ?? {});
     if (!parsed) return;
@@ -165,15 +195,15 @@ function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => voi
             </SelectField>
           </>
         )}
-        <TextField label={t("legalName")} name="razon_social" required error={errors.razon_social} />
-        <TextField label={t("tradeName")} name="nombre_comercial" required error={errors.nombre_comercial} />
+        <TextField label={t("legalName")} name="razon_social" required={!resendId} defaultValue={inicial?.razon_social} error={errors.razon_social} />
+        <TextField label={t("tradeName")} name="nombre_comercial" required={!resendId} defaultValue={inicial?.nombre_comercial} error={errors.nombre_comercial} />
         <TextField label={t("email")} name="email" type="email" required error={errors.email} />
         {!resendId && <TextField label={t("nit")} name="nit" required error={errors.nit} hint={t("nitHint")} />}
         <TextField label={t("phone")} name="telefono" type="tel" required error={errors.telefono} />
         <TextField label={t("website")} name="sitio_web" type="url" error={errors.sitio_web} />
         <TextField label={t("address")} name="direccion_privada" required error={errors.direccion_privada} hint={t("addressHint")} className="sm:col-span-2" />
-        <TextAreaField label={t("descEs")} name="descripcion_es" required error={errors.descripcion_es} className="sm:col-span-2" />
-        <TextAreaField label={t("descEn")} name="descripcion_en" required error={errors.descripcion_en} className="sm:col-span-2" />
+        <TextAreaField label={t("descEs")} name="descripcion_es" required={!resendId} defaultValue={inicial?.descripcion?.es} error={errors.descripcion_es} className="sm:col-span-2" />
+        <TextAreaField label={t("descEn")} name="descripcion_en" required={!resendId} defaultValue={inicial?.descripcion?.en} error={errors.descripcion_en} className="sm:col-span-2" />
       </fieldset>
       <fieldset className="grid gap-6 sm:grid-cols-2">
         <legend className="mb-4 w-full border-b-2 border-ink pb-2 text-xl font-semibold">{t("legalRep")}</legend>
@@ -206,7 +236,7 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
     queryFn: async () =>
       (
         await api.get<{
-          prestador: { estado: string; razon_social?: string; motivo_estado?: string | null };
+          prestador: { estado: string; razon_social?: string; nombre_comercial?: string; descripcion?: { es?: string; en?: string } | null; motivo_estado?: string | null };
           historial: { estado_origen?: string; estado_destino: string; ocurrido_en: string; motivo?: string | null }[];
         }>(routes.prestadores.solicitud(id))
       ).data,
@@ -233,7 +263,8 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
         ))}
       </ol>
       {prestador.estado === "rechazado" && !resending && <Button onClick={() => setResending(true)}>{t("correctResend")}</Button>}
-      {resending && <SolicitudForm resendId={id} onCreated={() => { setResending(false); qc.invalidateQueries({ queryKey: ["m4", "solicitud", id] }); }} />}
+      {resending && <p className="border-l-4 border-ink pl-3 text-sm">{t("resendHelp")}</p>}
+      {resending && <SolicitudForm resendId={id} inicial={prestador} onCreated={() => { setResending(false); qc.invalidateQueries({ queryKey: ["m4", "solicitud", id] }); }} />}
       <Button variant="ghost" onClick={onNew}>{t("startNew")}</Button>
     </div>
   );
