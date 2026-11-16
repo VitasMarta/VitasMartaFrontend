@@ -340,7 +340,7 @@ function SlotsPanel({ content }: { content: Contenido }) {
     setError(undefined);
     const done = { onSuccess: () => setPanel(null), onError: (err: unknown) => err instanceof ApiError && setError(err.message) };
     if (panel?.mode === "edit") actions.update.mutate({ id: panel.slot.id, version: panel.slot.version, cupo_total: total, cupo_disponible: disp, estado: String(f.get("estado")) }, done);
-    else actions.create.mutate({ fecha: String(f.get("fecha")), hora_inicio: String(f.get("hora_inicio")), hora_fin: String(f.get("hora_fin")), cupo_total: total, cupo_disponible: total, estado: "DISPONIBLE" }, done);
+    else actions.create.mutate({ fecha: String(f.get("fecha")), hora_inicio: String(f.get("hora_inicio")), hora_fin: String(f.get("hora_fin")), cupo_total: total, cupo_disponible: total, estado: "disponible" }, done);
   };
   const slot = panel?.mode === "edit" ? panel.slot : undefined;
 
@@ -388,9 +388,9 @@ function SlotsPanel({ content }: { content: Contenido }) {
             <>
               <TextField label={t("availableQuota")} name="cupo_disponible" type="number" min={0} defaultValue={slot.cupo_disponible} required />
               <SelectField label={tc("status")} name="estado" defaultValue={slot.estado}>
-                <option value="DISPONIBLE">{t("states.DISPONIBLE")}</option>
-                <option value="AGOTADA">{t("states.AGOTADA")}</option>
-                <option value="CERRADA">{t("states.CERRADA")}</option>
+                <option value="disponible">{t("states.disponible")}</option>
+                <option value="agotado">{t("states.agotado")}</option>
+                <option value="cerrado">{t("states.cerrado")}</option>
               </SelectField>
             </>
           )}

@@ -108,7 +108,7 @@
     "availableQuota": "Available spots",
     "none": "There are no time slots yet.",
     "quotaError": "Check the spots: available cannot exceed total",
-    "states": { "DISPONIBLE": "Available", "AGOTADA": "Sold out", "CERRADA": "Closed" }
+    "states": { "disponible": "Available", "agotado": "Sold out", "cerrado": "Closed" }
   },
   "onboarding": {
     "title": "Register your business",

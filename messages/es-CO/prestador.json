@@ -108,7 +108,7 @@
     "availableQuota": "Cupo disponible",
     "none": "No hay franjas registradas.",
     "quotaError": "Revisa los cupos: el disponible no puede superar el total",
-    "states": { "DISPONIBLE": "Disponible", "AGOTADA": "Agotada", "CERRADA": "Cerrada" }
+    "states": { "disponible": "Disponible", "agotado": "Agotada", "cerrado": "Cerrada" }
   },
   "onboarding": {
     "title": "Registra tu negocio",

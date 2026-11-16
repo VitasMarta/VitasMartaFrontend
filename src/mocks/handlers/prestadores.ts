@@ -35,8 +35,8 @@ const contenidos: Contenido[] = [
 const historial = new Map<string, { de: string; a: string; motivo?: string; fecha: string; actor: string }[]>();
 const multimedia = new Map<string, { id: string; tipo: string; url_cdn: string; tam_bytes: number; mime_type: string; orden: number }[]>();
 const franjas: { id: string; contenido_id: string; fecha: string; hora_inicio: string; hora_fin: string; cupo_total: number; cupo_disponible: number; estado: string; version: number }[] = [
-  { id: "fr-1", contenido_id: "atr-001", fecha: isoDay(2), hora_inicio: "08:00", hora_fin: "12:00", cupo_total: 20, cupo_disponible: 14, estado: "DISPONIBLE", version: 1 },
-  { id: "fr-2", contenido_id: "atr-001", fecha: isoDay(3), hora_inicio: "08:00", hora_fin: "12:00", cupo_total: 20, cupo_disponible: 20, estado: "DISPONIBLE", version: 1 },
+  { id: "fr-1", contenido_id: "atr-001", fecha: isoDay(2), hora_inicio: "08:00", hora_fin: "12:00", cupo_total: 20, cupo_disponible: 14, estado: "disponible", version: 1 },
+  { id: "fr-2", contenido_id: "atr-001", fecha: isoDay(3), hora_inicio: "08:00", hora_fin: "12:00", cupo_total: 20, cupo_disponible: 20, estado: "disponible", version: 1 },
 ];
 const perfiles = new Map<string, Record<string, unknown>>();
 const config = new Map<string, Record<string, unknown>>();
