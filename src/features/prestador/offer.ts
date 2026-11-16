@@ -14,7 +14,7 @@ export interface Contenido {
 
 export interface FieldDef {
   name: string;
-  kind?: "text" | "textarea" | "number" | "select" | "datetime-local";
+  kind?: "text" | "textarea" | "number" | "select" | "datetime-local" | "time" | "checkbox";
   options?: string[];
   required?: boolean;
   min?: number;
@@ -32,12 +32,19 @@ const COMMON: FieldDef[] = [
 ];
 
 const EXTRA: Record<Tipo, FieldDef[]> = {
+  // Contrato M4 (`AtractivoCreacionSchema`): tarifas[{concepto, precio}], horarios[{dia_semana, hora_inicio,
+  // hora_fin}], condiciones_acceso {es,en}, accesibilidad {clave: bool}, sostenibilidad {criterios, certificaciones}.
   atractivos: [
-    { name: "horarios" },
-    { name: "tarifas" },
-    { name: "condiciones_acceso", kind: "textarea" },
-    { name: "accesibilidad", kind: "textarea" },
-    { name: "sostenibilidad", kind: "textarea" },
+    { name: "tarifa_concepto_es" },
+    { name: "tarifa_monto", kind: "number", min: 0 },
+    { name: "hora_apertura", kind: "time" },
+    { name: "hora_cierre", kind: "time" },
+    { name: "condiciones_acceso_es", kind: "textarea" },
+    { name: "condiciones_acceso_en", kind: "textarea" },
+    { name: "acc_movilidad_reducida", kind: "checkbox" },
+    { name: "acc_rampa", kind: "checkbox" },
+    { name: "acc_banio_adaptado", kind: "checkbox" },
+    { name: "certificaciones" },
   ],
   actividades: [
     { name: "duracion_minutos", kind: "number", required: true, min: 1, max: 1440 },
@@ -88,7 +95,23 @@ export function toFormValues(tipo: Tipo, c: Contenido | undefined): Record<strin
     lng: str((c.ubicacion as { lng?: number } | undefined)?.lng),
   };
   if (tipo === "atractivos") {
-    Object.assign(base, { horarios: str(c.horarios), tarifas: str(c.tarifas), condiciones_acceso: str(c.condiciones_acceso), accesibilidad: str(c.accesibilidad), sostenibilidad: str(c.sostenibilidad) });
+    const tarifa = (Array.isArray(c.tarifas) ? c.tarifas[0] : undefined) as { concepto?: unknown; precio?: { monto?: unknown } } | undefined;
+    const horario = (Array.isArray(c.horarios) ? c.horarios[0] : undefined) as { hora_inicio?: string; hora_fin?: string } | undefined;
+    const cond = pair(c.condiciones_acceso);
+    const acc = (c.accesibilidad ?? {}) as Record<string, unknown>;
+    const sos = (c.sostenibilidad ?? {}) as { certificaciones?: unknown };
+    Object.assign(base, {
+      tarifa_concepto_es: tarifa ? pair(tarifa.concepto).es : "",
+      tarifa_monto: tarifa?.precio?.monto != null ? String(Number(tarifa.precio.monto)) : "",
+      hora_apertura: horario?.hora_inicio ?? "",
+      hora_cierre: horario?.hora_fin ?? "",
+      condiciones_acceso_es: cond.es,
+      condiciones_acceso_en: cond.en,
+      acc_movilidad_reducida: acc.movilidad_reducida ? "true" : "",
+      acc_rampa: acc.rampa ? "true" : "",
+      acc_banio_adaptado: acc.banio_adaptado ? "true" : "",
+      certificaciones: list(sos.certificaciones),
+    });
   } else if (tipo === "actividades") {
     const op = (c.operador ?? {}) as Record<string, string>;
     Object.assign(base, {
@@ -122,7 +145,18 @@ export function toBody(tipo: Tipo, v: Record<string, string>): Record<string, un
     ubicacion: { lat: num(v.lat ?? ""), lng: num(v.lng ?? "") },
   };
   if (tipo === "atractivos") {
-    Object.assign(body, { horarios: v.horarios || undefined, tarifas: v.tarifas || undefined, condiciones_acceso: v.condiciones_acceso || undefined, accesibilidad: v.accesibilidad || undefined, sostenibilidad: v.sostenibilidad || undefined });
+    const monto = num(v.tarifa_monto ?? "");
+    const concepto = (v.tarifa_concepto_es ?? "").trim() || "Entrada general";
+    const certs = csv(v.certificaciones ?? "");
+    const acc = { movilidad_reducida: v.acc_movilidad_reducida === "true", rampa: v.acc_rampa === "true", banio_adaptado: v.acc_banio_adaptado === "true" };
+    Object.assign(body, {
+      // M3 toma el precio de la oferta de esta tarifa: sin ella la franja no tiene importe.
+      tarifas: monto != null ? [{ concepto: { es: concepto, en: concepto }, precio: { monto: monto.toFixed(2), moneda: "COP" } }] : undefined,
+      horarios: v.hora_apertura && v.hora_cierre ? [0, 1, 2, 3, 4, 5, 6].map((dia_semana) => ({ dia_semana, hora_inicio: v.hora_apertura, hora_fin: v.hora_cierre })) : undefined,
+      condiciones_acceso: v.condiciones_acceso_es ? { es: v.condiciones_acceso_es, ...(v.condiciones_acceso_en ? { en: v.condiciones_acceso_en } : {}) } : undefined,
+      accesibilidad: Object.values(acc).some(Boolean) ? acc : undefined,
+      sostenibilidad: certs.length ? { criterios: {}, certificaciones: certs } : undefined,
+    });
   } else if (tipo === "actividades") {
     Object.assign(body, {
       duracion_minutos: num(v.duracion_minutos ?? ""), nivel_dificultad: v.nivel_dificultad, equipamiento: csv(v.equipamiento ?? ""),

@@ -132,7 +132,7 @@ export const prestadoresHandlers = [
   }),
   http.get(gw("/prestadores/mi-perfil/configuracion-reservas"), ({ request }) => {
     const t = tenantOf(request);
-    return t ? HttpResponse.json(config.get(t) ?? { version: 1, requiere_confirmacion_manual: true, tiempo_maximo_confirmacion_minutos: 120, instrucciones_pago: "Pago directo en el sitio.", medios_pago: ["efectivo", "transferencia"] }) : unauthorized(request);
+    return t ? HttpResponse.json(config.get(t) ?? { version: 1, requiere_confirmacion_manual: true, tiempo_maximo_confirmacion_minutos: 120, instrucciones_pago: { es: "Pago directo en el sitio.", en: "Pay on site." }, medios_pago: ["efectivo", "transferencia"] }) : unauthorized(request);
   }),
   http.put(gw("/prestadores/mi-perfil/configuracion-reservas"), async ({ request }) => {
     const t = tenantOf(request);
@@ -146,7 +146,7 @@ export const prestadoresHandlers = [
   }),
   http.get(gw("/prestadores/mi-perfil/politica-cancelacion"), ({ request }) => {
     const t = tenantOf(request);
-    return t ? HttpResponse.json(politicas.get(t) ?? { version: 1, tipo: "flexible", horas_limite_cancelacion: 24, penalidad_porcentaje: 20, descripcion: "Cancelación gratuita hasta 24 horas antes.", condiciones: "" }) : unauthorized(request);
+    return t ? HttpResponse.json(politicas.get(t) ?? { version: 1, tipo: "flexible", horas_limite_cancelacion: 24, penalidad_porcentaje: 20, descripcion: { es: "Cancelación gratuita hasta 24 horas antes.", en: "Free cancellation up to 24 hours before." }, condiciones: null }) : unauthorized(request);
   }),
   http.put(gw("/prestadores/mi-perfil/politica-cancelacion"), async ({ request }) => {
     const t = tenantOf(request);

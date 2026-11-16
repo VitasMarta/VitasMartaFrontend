@@ -447,12 +447,23 @@ export function IndicatorsView() {
 type Versioned = { version: number; [k: string]: unknown };
 function useVersioned(key: string, path: string) {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["m4", key], queryFn: async () => (await api.get<Versioned>(path)).data });
+  // 404 = el prestador aún no la ha creado (configuración/política nuevas): se edita sobre valores por defecto.
+  const q = useQuery({
+    queryKey: ["m4", key],
+    queryFn: async (): Promise<Versioned | null> => {
+      try {
+        return (await api.get<Versioned>(path)).data;
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    },
+  });
   const [conflict, setConflict] = useState(false);
   const save = useMutation({
     meta: { silent: true },
     mutationFn: async ({ method, body }: { method: "patch" | "put"; body: Record<string, unknown> }) =>
-      (await api[method]<Versioned>(path, { body: { version_esperada: q.data?.version, ...body } })).data,
+      (await api[method]<Versioned>(path, { body: { ...(q.data?.version != null ? { version_esperada: q.data.version } : {}), ...body } })).data,
     onSuccess: () => { setConflict(false); qc.invalidateQueries({ queryKey: ["m4", key] }); useUiStore.getState().push({ tone: "success", message: "✓" }); },
     onError: (e) => { if (e instanceof ApiError && e.isVersionConflict) setConflict(true); else if (e instanceof ApiError) useUiStore.getState().push({ tone: "error", message: e.message, reference: e.correlationId }); },
   });
@@ -476,7 +487,7 @@ function ProfileTab() {
   const { q, save, conflict, reload } = useVersioned("perfil", routes.prestadores.miPerfil);
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const d = q.data as Versioned & { nombre_comercial?: string; sitio_web?: string; descripcion?: { es?: string; en?: string } };
+  const d = (q.data ?? {}) as Partial<Versioned> & { nombre_comercial?: string; sitio_web?: string; descripcion?: { es?: string; en?: string } };
   return (
     <form key={d.version} className="max-w-2xl space-y-6" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); save.mutate({ method: "patch", body: { nombre_comercial: f.get("nombre_comercial"), sitio_web: f.get("sitio_web") || undefined, descripcion: { es: f.get("descripcion_es"), en: f.get("descripcion_en") } } }); }}>
       {conflict && <ConflictStrip onReload={reload} />}
@@ -496,14 +507,31 @@ function BookingConfigTab() {
   const [manual, setManual] = useState<boolean | null>(null);
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const d = q.data as Versioned & { requiere_confirmacion_manual: boolean; tiempo_maximo_confirmacion_minutos: number; instrucciones_pago?: string; medios_pago?: string[] };
+  // M4 `ConfiguracionReservasEntrada`: instrucciones_pago es bilingüe ({ es, en }).
+  const d = (q.data ?? { requiere_confirmacion_manual: true, tiempo_maximo_confirmacion_minutos: 120 }) as Partial<Versioned> & {
+    requiere_confirmacion_manual: boolean; tiempo_maximo_confirmacion_minutos: number; instrucciones_pago?: { es?: string; en?: string }; medios_pago?: string[];
+  };
   const on = manual ?? d.requiere_confirmacion_manual;
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const es = String(f.get("instrucciones_es") ?? "").trim();
+    const en = String(f.get("instrucciones_en") ?? "").trim();
+    save.mutate({ method: "put", body: {
+      requiere_confirmacion_manual: on,
+      tiempo_maximo_confirmacion_minutos: Number(f.get("tiempo")),
+      instrucciones_pago: es || en ? { ...(es ? { es } : {}), ...(en ? { en } : {}) } : undefined,
+      medios_pago: String(f.get("medios")).split(",").map((s) => s.trim()).filter(Boolean),
+    } });
+  };
   return (
-    <form key={d.version} className="max-w-2xl space-y-6" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); save.mutate({ method: "put", body: { requiere_confirmacion_manual: on, tiempo_maximo_confirmacion_minutos: Number(f.get("tiempo")), instrucciones_pago: f.get("instrucciones"), medios_pago: String(f.get("medios")).split(",").map((s) => s.trim()).filter(Boolean) } }); }}>
+    <form key={d.version ?? "nueva"} className="max-w-2xl space-y-6" onSubmit={onSubmit}>
       {conflict && <ConflictStrip onReload={reload} />}
+      {q.data === null && <p role="status" className="border-l-4 border-ink pl-3">{t("notCreatedYet")}</p>}
       <SwitchField label={t("manualConfirm")} name="manual" hint={t("manualHint")} checked={on} onChange={setManual} />
       <TextField label={t("confirmTime")} name="tiempo" type="number" min={5} max={10080} defaultValue={d.tiempo_maximo_confirmacion_minutos} hint={t("confirmTimeHint")} className="max-w-60" />
-      <TextAreaField label={t("paymentInstructions")} name="instrucciones" defaultValue={d.instrucciones_pago} />
+      <TextAreaField label={t("paymentInstructionsEs")} name="instrucciones_es" defaultValue={d.instrucciones_pago?.es} required />
+      <TextAreaField label={t("paymentInstructionsEn")} name="instrucciones_en" defaultValue={d.instrucciones_pago?.en} />
       <TextField label={t("paymentMethods")} name="medios" defaultValue={d.medios_pago?.join(", ")} hint={t("paymentMethodsHint")} />
       <Button type="submit" loading={save.isPending}>{tc("save")}</Button>
     </form>
@@ -516,10 +544,31 @@ function PolicyTab() {
   const { q, save, conflict, reload } = useVersioned("politica", routes.prestadores.politicaCancelacion);
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const d = q.data as Versioned & { tipo: string; horas_limite_cancelacion: number; penalidad_porcentaje: number; descripcion?: string; condiciones?: string };
+  // M4 `PoliticaCancelacionEntrada`: descripcion y condiciones son bilingües ({ es, en }).
+  type Texto = { es?: string; en?: string };
+  const d = (q.data ?? { tipo: "moderada", horas_limite_cancelacion: 24, penalidad_porcentaje: 20 }) as Partial<Versioned> & {
+    tipo: string; horas_limite_cancelacion: number; penalidad_porcentaje: number; descripcion?: Texto; condiciones?: Texto | null;
+  };
+  const texto = (f: FormData, base: string): Texto | undefined => {
+    const es = String(f.get(`${base}_es`) ?? "").trim();
+    const en = String(f.get(`${base}_en`) ?? "").trim();
+    return es || en ? { ...(es ? { es } : {}), ...(en ? { en } : {}) } : undefined;
+  };
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    save.mutate({ method: "put", body: {
+      tipo: f.get("tipo"),
+      horas_limite_cancelacion: Number(f.get("horas")),
+      penalidad_porcentaje: Number(f.get("penalidad")),
+      descripcion: texto(f, "descripcion"),
+      condiciones: texto(f, "condiciones"),
+    } });
+  };
   return (
-    <form key={d.version} className="max-w-2xl space-y-6" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); save.mutate({ method: "put", body: { tipo: f.get("tipo"), horas_limite_cancelacion: Number(f.get("horas")), penalidad_porcentaje: Number(f.get("penalidad")), descripcion: f.get("descripcion"), condiciones: f.get("condiciones") } }); }}>
+    <form key={d.version ?? "nueva"} className="max-w-2xl space-y-6" onSubmit={onSubmit}>
       {conflict && <ConflictStrip onReload={reload} />}
+      {q.data === null && <p role="status" className="border-l-4 border-ink pl-3">{t("notCreatedYet")}</p>}
       <SelectField label={t("policyType")} name="tipo" defaultValue={d.tipo}>
         {["flexible", "moderada", "estricta"].map((x) => <option key={x} value={x}>{t(`policyTypes.${x}`)}</option>)}
       </SelectField>
@@ -527,8 +576,10 @@ function PolicyTab() {
         <TextField label={t("hoursLimit")} name="horas" type="number" min={0} defaultValue={d.horas_limite_cancelacion} />
         <TextField label={t("penalty")} name="penalidad" type="number" min={0} max={100} defaultValue={d.penalidad_porcentaje} />
       </div>
-      <TextAreaField label={t("policyDescription")} name="descripcion" defaultValue={d.descripcion} />
-      <TextAreaField label={t("conditions")} name="condiciones" defaultValue={d.condiciones} />
+      <TextAreaField label={t("policyDescriptionEs")} name="descripcion_es" defaultValue={d.descripcion?.es} required />
+      <TextAreaField label={t("policyDescriptionEn")} name="descripcion_en" defaultValue={d.descripcion?.en} />
+      <TextAreaField label={t("conditionsEs")} name="condiciones_es" defaultValue={d.condiciones?.es} />
+      <TextAreaField label={t("conditionsEn")} name="condiciones_en" defaultValue={d.condiciones?.en} />
       <Button type="submit" loading={save.isPending}>{tc("save")}</Button>
     </form>
   );

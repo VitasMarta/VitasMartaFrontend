@@ -10,7 +10,7 @@ import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button, ButtonLink } from "@/shared/ui/Button";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
-import { ErrorSummary, SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
+import { CheckboxField, ErrorSummary, SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
 import { StatusTag, type Tone } from "@/shared/ui/indicators";
 import { Container, PageHeader } from "@/shared/ui/layout";
 import { Pagination } from "@/shared/ui/Pagination";
@@ -102,6 +102,8 @@ function FieldInput({ def, value, error, onChange, tipo }: { def: FieldDef; valu
   const label = t.has(`${tipo}.${def.name}`) ? t(`${tipo}.${def.name}`) : t(def.name);
   const common = { label, name: def.name, value, error, required: def.required, onChange: (e: { target: { value: string } }) => onChange(e.target.value) };
   if (def.kind === "textarea") return <TextAreaField {...common} rows={3} />;
+  if (def.kind === "checkbox")
+    return <CheckboxField label={label} name={def.name} checked={value === "true"} error={error} onChange={(e) => onChange(e.target.checked ? "true" : "")} />;
   if (def.kind === "select")
     return (
       <SelectField {...common}>
