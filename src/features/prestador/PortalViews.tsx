@@ -39,6 +39,13 @@ const readStored = () => {
   }
 };
 
+/** Catálogo de tipos de M4 (`catalogo_tipo_prestador`, códigos estables). */
+const TIPOS_PRESTADOR = ["hotel", "restaurante", "agencia_viajes", "guia_turistico", "artesano", "operador_actividades", "otro"] as const;
+/** `SegmentoPrestador` de M4. */
+const SEGMENTOS = ["microempresa", "pyme", "gran_cadena", "independiente"] as const;
+/** Versión de los términos que acepta el solicitante en M4. */
+const VERSION_TERMINOS_M4 = "2026-01";
+
 export function OnboardingView() {
   const t = useTranslations("prestador.onboarding");
   const tc = useTranslations("common");
@@ -74,39 +81,63 @@ function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => voi
     mutationFn: async (body: Record<string, unknown>) => {
       const key = await keys.get(JSON.stringify(body), newClientKey);
       const path = resendId ? routes.prestadores.solicitudReenviar(resendId) : routes.prestadores.solicitudes;
-      const { data } = await api.post<{ prestador_id: string }>(path, { body, idempotencyKey: key });
+      // M4 responde `PrestadorPublico` (`id` = tenant del prestador) al radicar y al reenviar.
+      const { data } = await api.post<{ id: string }>(path, { body, idempotencyKey: key });
       keys.reset();
       return data;
     },
   });
 
   const schema = z.object({
-    tipo: z.string().min(1, t("required")), segmento: z.string().min(1, t("required")),
-    razon_social: z.string().min(2, t("required")), nombre_comercial: z.string().min(2, t("required")),
-    email: z.string().email(t("emailError")), nit: z.string().regex(/^\d{9,10}(-?\d)?$/, t("nitError")),
+    ...(resendId
+      ? {}
+      : {
+          tipo: z.string().min(1, t("required")),
+          segmento: z.string().min(1, t("required")),
+          nit: z.string().regex(/^\d{9,10}(-?\d)?$/, t("nitError")),
+        }),
+    razon_social: z.string().min(3, t("required")), nombre_comercial: z.string().min(3, t("required")),
+    email: z.string().email(t("emailError")),
     telefono: z.string().min(7, t("required")), direccion_privada: z.string().min(5, t("required")),
     rep_nombre: z.string().min(2, t("required")), rep_documento: z.string().min(5, t("required")),
     rep_email: z.string().email(t("emailError")), rep_telefono: z.string().min(7, t("required")),
     descripcion_es: z.string().min(10, t("descError")), descripcion_en: z.string().min(10, t("descError")),
     sitio_web: z.string().url(t("urlError")).optional().or(z.literal("")),
-    tratamiento: z.literal(true, { error: t("consentError") }),
+    // Al reenviar (correcciones) M4 no vuelve a pedir tipo, segmento, NIT ni consentimientos.
+    ...(resendId
+      ? {}
+      : {
+          tratamiento: z.literal(true, { error: t("consentError") }),
+          terminos: z.literal(true, { error: t("termsError") }),
+        }),
   });
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { data, errors: fe } = validate(schema, formValues(e.currentTarget));
+    const { data: parsed, errors: fe } = validate(schema, formValues(e.currentTarget));
     setErrors(fe ?? {});
-    if (!data) return;
+    if (!parsed) return;
+    const data = parsed as typeof parsed & { tipo?: string; segmento?: string; nit?: string };
+    const comunes = {
+      razon_social: data.razon_social, nombre_comercial: data.nombre_comercial, email: data.email,
+      telefono: data.telefono, direccion_privada: data.direccion_privada, sitio_web: data.sitio_web || undefined,
+      descripcion: { es: data.descripcion_es, en: data.descripcion_en },
+      representante_legal: { nombre: data.rep_nombre, documento: data.rep_documento, email: data.rep_email, telefono: data.rep_telefono },
+    };
     send.mutate(
+      resendId
+        ? comunes // `CorreccionesSolicitudSchema` (extra=forbid)
+        : {
+            ...comunes,
+            tipo: data.tipo, segmento: data.segmento, nit: data.nit,
+            // M4 exige las dos finalidades obligatorias (FINALIDADES_OBLIGATORIAS).
+            consentimientos: [
+              { finalidad: "tratamiento_datos_personales", version_terminos: VERSION_TERMINOS_M4, aceptado: true },
+              { finalidad: "terminos_servicio", version_terminos: VERSION_TERMINOS_M4, aceptado: true },
+            ],
+          },
       {
-        tipo: data.tipo, segmento: data.segmento, razon_social: data.razon_social, nombre_comercial: data.nombre_comercial, email: data.email, nit: data.nit,
-        telefono: data.telefono, direccion_privada: data.direccion_privada, sitio_web: data.sitio_web || undefined,
-        descripcion: { es: data.descripcion_es, en: data.descripcion_en },
-        representante_legal: { nombre: data.rep_nombre, documento: data.rep_documento, email: data.rep_email, telefono: data.rep_telefono },
-        consentimientos: [{ finalidad: "TRATAMIENTO", aceptado: true, version_terminos: "2026.1" }],
-      },
-      {
-        onSuccess: (r) => onCreated(r.prestador_id),
+        onSuccess: (r) => onCreated(r.id),
         onError: (error) => {
           if (error instanceof ApiError) setErrors({ ...error.fieldErrors(), ...(Object.keys(error.fieldErrors()).length ? {} : { form: error.message }) });
         },
@@ -119,18 +150,22 @@ function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => voi
       <ErrorSummary errors={errors} title={tc("errorSummary")} />
       <fieldset className="grid gap-6 sm:grid-cols-2">
         <legend className="mb-4 w-full border-b-2 border-ink pb-2 text-xl font-semibold">{t("business")}</legend>
-        <SelectField label={t("type")} name="tipo" defaultValue="" required error={errors.tipo}>
-          <option value="" disabled>—</option>
-          {["operador", "alojamiento", "gastronomia", "guia", "transporte"].map((x) => <option key={x} value={x}>{t(`types.${x}`)}</option>)}
-        </SelectField>
-        <SelectField label={t("segment")} name="segmento" defaultValue="" required error={errors.segmento}>
-          <option value="" disabled>—</option>
-          {["micro", "pequena", "mediana"].map((x) => <option key={x} value={x}>{t(`segments.${x}`)}</option>)}
-        </SelectField>
+        {!resendId && (
+          <>
+            <SelectField label={t("type")} name="tipo" defaultValue="" required error={errors.tipo}>
+              <option value="" disabled>—</option>
+              {TIPOS_PRESTADOR.map((x) => <option key={x} value={x}>{t(`types.${x}`)}</option>)}
+            </SelectField>
+            <SelectField label={t("segment")} name="segmento" defaultValue="" required error={errors.segmento}>
+              <option value="" disabled>—</option>
+              {SEGMENTOS.map((x) => <option key={x} value={x}>{t(`segments.${x}`)}</option>)}
+            </SelectField>
+          </>
+        )}
         <TextField label={t("legalName")} name="razon_social" required error={errors.razon_social} />
         <TextField label={t("tradeName")} name="nombre_comercial" required error={errors.nombre_comercial} />
         <TextField label={t("email")} name="email" type="email" required error={errors.email} />
-        <TextField label={t("nit")} name="nit" required error={errors.nit} hint={t("nitHint")} />
+        {!resendId && <TextField label={t("nit")} name="nit" required error={errors.nit} hint={t("nitHint")} />}
         <TextField label={t("phone")} name="telefono" type="tel" required error={errors.telefono} />
         <TextField label={t("website")} name="sitio_web" type="url" error={errors.sitio_web} />
         <TextField label={t("address")} name="direccion_privada" required error={errors.direccion_privada} hint={t("addressHint")} className="sm:col-span-2" />
@@ -144,7 +179,12 @@ function SolicitudForm({ onCreated, resendId }: { onCreated: (id: string) => voi
         <TextField label={t("repEmail")} name="rep_email" type="email" required error={errors.rep_email} />
         <TextField label={t("repPhone")} name="rep_telefono" type="tel" required error={errors.rep_telefono} />
       </fieldset>
-      <CheckboxField label={t("consent")} name="tratamiento" required error={errors.tratamiento} />
+      {!resendId && (
+        <>
+          <CheckboxField label={t("consent")} name="tratamiento" required error={errors.tratamiento} />
+          <CheckboxField label={t("terms")} name="terminos" required error={errors.terminos} />
+        </>
+      )}
       {errors.form && <p role="alert" className="font-medium text-critical">{errors.form}</p>}
       <Button type="submit" loading={send.isPending}>{resendId ? t("resend") : t("submit")}</Button>
     </form>
@@ -159,7 +199,14 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["m4", "solicitud", id],
-    queryFn: async () => (await api.get<{ prestador: { estado: string; razon_social?: string; motivo_rechazo?: string }; historial: { estado: string; fecha: string; motivo?: string }[] }>(routes.prestadores.solicitud(id))).data,
+    // M4 `SolicitudDetalle`: { prestador: PrestadorPublico, historial: TransicionHistorial[] }.
+    queryFn: async () =>
+      (
+        await api.get<{
+          prestador: { estado: string; razon_social?: string; motivo_estado?: string | null };
+          historial: { estado_origen?: string; estado_destino: string; ocurrido_en: string; motivo?: string | null }[];
+        }>(routes.prestadores.solicitud(id))
+      ).data,
   });
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <div className="space-y-4"><ErrorNotice error={q.error} referenceLabel={tc("reference")} /><Button variant="secondary" onClick={onNew}>{t("startNew")}</Button></div>;
@@ -168,17 +215,18 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <p className="flex items-center gap-3 text-lg">{t("status")}: <StatusTag tone={tone}>{t(`statuses.${prestador.estado}`)}</StatusTag></p>
+      <p className="flex items-center gap-3 text-lg">{t("status")}: <StatusTag tone={tone}>{t.has(`statuses.${prestador.estado}`) ? t(`statuses.${prestador.estado}`) : prestador.estado}</StatusTag></p>
+      {prestador.estado === "aprobado" && <p className="border-l-4 border-emerald pl-3">{t("approvedHelp")}</p>}
       {prestador.estado === "pendiente" && <p className="border-l-4 border-ink pl-3">{t("pendingHelp")}</p>}
       {prestador.estado === "rechazado" && (
         <div className="border-l-4 border-critical pl-3">
           <p className="font-semibold">{t("rejectedReason")}</p>
-          <p>{prestador.motivo_rechazo}</p>
+          <p>{prestador.motivo_estado}</p>
         </div>
       )}
       <ol className="divide-y divide-ink/15 border-y border-ink/15">
         {historial.map((h, i) => (
-          <li key={i} className="py-3"><strong>{t(`statuses.${h.estado}`)}</strong> <span className="meta text-ink/80">· {formatDate(h.fecha, locale)}{h.motivo ? ` · ${h.motivo}` : ""}</span></li>
+          <li key={i} className="py-3"><strong>{t.has(`statuses.${h.estado_destino}`) ? t(`statuses.${h.estado_destino}`) : h.estado_destino}</strong> <span className="meta text-ink/80">· {formatDate(h.ocurrido_en, locale)}{h.motivo ? ` · ${h.motivo}` : ""}</span></li>
         ))}
       </ol>
       {prestador.estado === "rechazado" && !resending && <Button onClick={() => setResending(true)}>{t("correctResend")}</Button>}

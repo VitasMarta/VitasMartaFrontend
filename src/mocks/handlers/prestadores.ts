@@ -82,17 +82,38 @@ export const prestadoresHandlers = [
     if (String(body.nit ?? "").endsWith("0000")) {
       return HttpResponse.json(problemBody(422, "dato_invalido", "Datos invalidos", "El NIT ya esta registrado", "/v1/prestadores/solicitudes"), { status: 422 });
     }
+    // Contrato real de M4: ambas finalidades obligatorias y respuesta `PrestadorPublico` (`id`).
+    const aceptadas = new Set(((body.consentimientos as { finalidad: string; aceptado: boolean }[] | undefined) ?? []).filter((c) => c.aceptado).map((c) => c.finalidad));
+    if (!aceptadas.has("tratamiento_datos_personales") || !aceptadas.has("terminos_servicio")) {
+      return HttpResponse.json(problemBody(422, "consentimiento_obligatorio", "Consentimiento obligatorio", "Faltan consentimientos obligatorios", "/v1/prestadores/solicitudes"), { status: 422 });
+    }
     const id = crypto.randomUUID();
-    solicitudes.set(id, { prestador: { id, ...body, estado: "pendiente" }, historial: [{ estado: "pendiente", fecha: new Date().toISOString() }] });
-    return HttpResponse.json({ prestador_id: id, estado: "pendiente" }, { status: 201 });
+    const ahora = new Date().toISOString();
+    solicitudes.set(id, { prestador: { id, ...body, estado: "pendiente", version: 1 }, historial: [{ estado_origen: "nuevo", estado_destino: "pendiente", motivo: null, ocurrido_en: ahora, version_resultante: 1 }] });
+    return HttpResponse.json({ id, tipo: body.tipo, segmento: body.segmento, estado: "pendiente", version: 1 }, { status: 201 });
   }),
   http.get(gw("/prestadores/solicitudes/:id"), ({ params }) => {
     if (params.id === "rechazada") {
-      return HttpResponse.json({ prestador: { id: "rechazada", razon_social: "Demo S.A.S.", estado: "rechazado", motivo_rechazo: "El RUT adjunto no coincide con la razón social." }, historial: [{ estado: "pendiente", fecha: isoDay(-3) }, { estado: "rechazado", fecha: isoDay(-1), motivo: "El RUT adjunto no coincide con la razón social." }] });
+      const motivo = "El RUT adjunto no coincide con la razón social.";
+      return HttpResponse.json({
+        prestador: { id: "rechazada", razon_social: "Demo S.A.S.", estado: "rechazado", motivo_estado: motivo, version: 2 },
+        historial: [
+          { estado_origen: "nuevo", estado_destino: "pendiente", motivo: null, ocurrido_en: isoDay(-3), version_resultante: 1 },
+          { estado_origen: "pendiente", estado_destino: "rechazado", motivo, ocurrido_en: isoDay(-1), version_resultante: 2 },
+        ],
+      });
     }
-    return HttpResponse.json(solicitudes.get(String(params.id)) ?? { prestador: { id: params.id, estado: "pendiente" }, historial: [{ estado: "pendiente", fecha: isoDay(0) }] });
+    return HttpResponse.json(solicitudes.get(String(params.id)) ?? { prestador: { id: params.id, estado: "pendiente", version: 1 }, historial: [{ estado_origen: "nuevo", estado_destino: "pendiente", motivo: null, ocurrido_en: isoDay(0), version_resultante: 1 }] });
   }),
-  http.post(gw("/prestadores/solicitudes/:id/reenviar"), ({ params }) => HttpResponse.json({ prestador_id: params.id, estado: "pendiente" })),
+  http.post(gw("/prestadores/solicitudes/:id/reenviar"), async ({ params, request }) => {
+    // `CorreccionesSolicitudSchema` (extra=forbid): no admite tipo, segmento, NIT ni consentimientos.
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const prohibidos = ["tipo", "segmento", "nit", "consentimientos"].filter((k) => k in body);
+    if (prohibidos.length) {
+      return HttpResponse.json(problemBody(422, "dato_invalido", "Datos invalidos", `Campos no permitidos: ${prohibidos.join(", ")}`, `/v1/prestadores/solicitudes/${params.id}/reenviar`), { status: 422 });
+    }
+    return HttpResponse.json({ id: params.id, estado: "pendiente", version: 3 });
+  }),
 
   // ── Perfil, configuración y política ─────────────────────────────────────────────────────────
   http.get(gw("/prestadores/mi-perfil"), ({ request }) => {
