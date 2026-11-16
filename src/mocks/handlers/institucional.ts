@@ -27,7 +27,8 @@ interface Cfg {
   criterio_vencido: boolean;
 }
 const versiones = new Map<string, Cfg[]>();
-const cambios = new Map<string, { version: number; campo: string; antes: unknown; despues: unknown; fecha: string; usuario: string }[]>();
+// Forma real de M8 (`CambioConfiguracionResponse`).
+const cambios = new Map<string, { campo: string; valor_anterior: string | null; valor_modificado: string | null; usuario: string; fecha: string; hora: string; version_resultante: number }[]>();
 const versionesDe = (id: string) => {
   if (!versiones.has(id)) {
     versiones.set(id, [{ capacidad_carga: 1000, umbral_recomendacion: 80, umbral_preventivo: 85, umbral_critico: 90, fuente_criterio: "Resolución CORPAMAG 2024", vigencia_desde: isoDay(-120), vigencia_hasta: isoDay(240), responsable: "admin@vitasmarta.co", version: 1, restriccion_reservas: true, criterio_vencido: false }]);
@@ -84,7 +85,8 @@ export const institucionalHandlers = [
     return HttpResponse.json({ atractivo_ref: c.id, fecha_publicacion: isoDay(0), ...((await request.json()) as object) }, { status: 201 });
   }),
   http.get(gw("/ambiental/atractivos/:id/configuracion-capacidad/versiones"), ({ request, params }) =>
-    allow(request, ADMIN_ROLES) ?? HttpResponse.json([...versionesDe(String(params.id))].reverse()),
+    // M8: `PaginaResponse<VersionConfiguracionResponse>`.
+    allow(request, ADMIN_ROLES) ?? HttpResponse.json({ content: [...versionesDe(String(params.id))].reverse().map((v) => ({ version: v.version, fecha_creacion: new Date().toISOString(), responsable: v.responsable, vigencia_desde: v.vigencia_desde, vigencia_hasta: v.vigencia_hasta })), page: 0, size: 20, totalElements: versionesDe(String(params.id)).length }),
   ),
   http.get(gw("/ambiental/atractivos/:id/configuracion-capacidad/auditoria"), ({ request, params }) =>
     allow(request, ADMIN_ROLES) ?? HttpResponse.json(cambios.get(String(params.id)) ?? []),
@@ -108,7 +110,7 @@ export const institucionalHandlers = [
     const nueva = { ...body, version: previa.version + 1, responsable: "admin@vitasmarta.co" };
     lista.push(nueva);
     const log = cambios.get(String(params.id)) ?? [];
-    (Object.keys(nueva) as (keyof Cfg)[]).filter((k) => k !== "version" && nueva[k] !== previa[k]).forEach((k) => log.unshift({ version: nueva.version, campo: k, antes: previa[k], despues: nueva[k], fecha: new Date().toISOString(), usuario: "admin@vitasmarta.co" }));
+    (Object.keys(nueva) as (keyof Cfg)[]).filter((k) => k !== "version" && nueva[k] !== previa[k]).forEach((k) => log.unshift({ campo: k, valor_anterior: previa[k] == null ? null : String(previa[k]), valor_modificado: nueva[k] == null ? null : String(nueva[k]), usuario: "admin@vitasmarta.co", fecha: new Date().toISOString().slice(0, 10), hora: new Date().toISOString().slice(11, 19), version_resultante: nueva.version! }));
     cambios.set(String(params.id), log);
     return HttpResponse.json(nueva, { status: request.method === "POST" ? 201 : 200 });
   }),

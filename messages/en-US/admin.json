@@ -168,7 +168,9 @@
     "capacity": {
       "saved": "New version {version} published",
       "positive": "Must be greater than zero",
-      "order": { "preventive": "Must be greater than the recommendation threshold", "critical": "Must be greater than the preventive threshold" },
+      "order": { "preventive": "Must be greater than the recommendation threshold", "critical": "Must be greater than the preventive threshold", "validity": "Must be on or after the start date" },
+      "required": "This field is required",
+      "notConfigured": "This attraction has no carrying capacity configured yet. Fill in the data and publish the first version.",
       "expired": "The capacity criterion has expired. Update the validity or the source.",
       "currentVersion": "Version {version} · responsible: {user}",
       "capacity": "Carrying capacity (people)",

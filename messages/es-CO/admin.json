@@ -168,7 +168,9 @@
     "capacity": {
       "saved": "Nueva versión {version} publicada",
       "positive": "Debe ser mayor que cero",
-      "order": { "preventive": "Debe ser mayor que el umbral de recomendación", "critical": "Debe ser mayor que el umbral preventivo" },
+      "order": { "preventive": "Debe ser mayor que el umbral de recomendación", "critical": "Debe ser mayor que el umbral preventivo", "validity": "Debe ser igual o posterior a la fecha de inicio" },
+      "required": "Este dato es obligatorio",
+      "notConfigured": "Este atractivo aún no tiene capacidad de carga configurada. Completa los datos y publica la primera versión.",
       "expired": "El criterio de capacidad está vencido. Actualiza la vigencia o la fuente.",
       "currentVersion": "Versión {version} · responsable: {user}",
       "capacity": "Capacidad de carga (personas)",

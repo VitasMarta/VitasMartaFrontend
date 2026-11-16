@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
-import type { AlertaAmbiental, ConfiguracionCapacidad, PageResponse, ResultadoBusqueda } from "@/core/api/types";
+import { toList, type AlertaAmbiental, type ConfiguracionCapacidad, type PageResponse, type ResultadoBusqueda } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
 import { formatDate, formatDateTime, localized } from "@/core/format";
 import { useUiStore } from "@/core/store/uiStore";
@@ -40,52 +40,86 @@ function CapacityTab({ id }: { id: string }) {
   const tc = useTranslations("common");
   const locale = useLocale();
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["m8", "capacidad", id], queryFn: async () => (await api.get<ConfiguracionCapacidad>(routes.ambiental.capacidad(id))).data });
-  const versions = useQuery({ queryKey: ["m8", "versiones", id], queryFn: async () => (await api.get<ConfiguracionCapacidad[]>(routes.ambiental.capacidadVersiones(id))).data });
-  const log = useQuery({ queryKey: ["m8", "cambios", id], queryFn: async () => (await api.get<{ version: number; campo: string; antes: unknown; despues: unknown; fecha: string; usuario: string }[]>(routes.ambiental.capacidadAuditoria(id))).data });
+  // 404 = el atractivo aún no tiene configuración: se crea con POST; las siguientes versiones con PUT (M8).
+  const q = useQuery({
+    queryKey: ["m8", "capacidad", id],
+    queryFn: async (): Promise<ConfiguracionCapacidad | null> => {
+      try {
+        return (await api.get<ConfiguracionCapacidad>(routes.ambiental.capacidad(id))).data;
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    },
+  });
+  const existe = !!q.data;
+  // M8: versiones paginadas (`VersionConfiguracionResponse`) y auditoría como lista de `CambioConfiguracionResponse`.
+  const versions = useQuery({
+    queryKey: ["m8", "versiones", id],
+    enabled: existe,
+    queryFn: async () => toList<{ version: number; fecha_creacion?: string; responsable?: string; vigencia_desde?: string; vigencia_hasta?: string }>((await api.get(routes.ambiental.capacidadVersiones(id))).data).items,
+  });
+  const log = useQuery({
+    queryKey: ["m8", "cambios", id],
+    enabled: existe,
+    queryFn: async () => (await api.get<{ campo: string; valor_anterior?: string | null; valor_modificado?: string | null; usuario?: string; fecha?: string; hora?: string; version_resultante: number }[]>(routes.ambiental.capacidadAuditoria(id))).data,
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [restrict, setRestrict] = useState<boolean | null>(null);
   const save = useMutation({
     meta: { silent: true },
-    mutationFn: async (body: Partial<ConfiguracionCapacidad>) => (await api.put<ConfiguracionCapacidad>(routes.ambiental.capacidad(id), { body })).data,
+    mutationFn: async (body: Partial<ConfiguracionCapacidad>) =>
+      (existe
+        ? await api.put<ConfiguracionCapacidad>(routes.ambiental.capacidad(id), { body })
+        : await api.post<ConfiguracionCapacidad>(routes.ambiental.capacidad(id), { body })
+      ).data,
     onSuccess: (d) => { toast("success", t("saved", { version: d.version ?? 0 })); setErrors({}); qc.invalidateQueries({ queryKey: ["m8"] }); },
     onError: (e) => e instanceof ApiError && setErrors({ ...e.fieldErrors(), ...(Object.keys(e.fieldErrors()).length ? {} : { form: e.message }) }),
   });
 
   if (q.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
   if (q.isError) return <ErrorNotice error={q.error} referenceLabel={tc("reference")} />;
-  const c = q.data;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const enUnAnio = new Date(Date.now() + 365 * 86_400_000).toISOString().slice(0, 10);
+  const c: Partial<ConfiguracionCapacidad> = q.data ?? { umbral_recomendacion: 80, umbral_preventivo: 85, umbral_critico: 90, vigencia_desde: hoy, vigencia_hasta: enUnAnio, restriccion_reservas: false };
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const n = (k: string) => Number(f.get(k));
+    const s = (k: string) => String(f.get(k) ?? "").trim();
     const next: Record<string, string> = {};
     if (!(n("capacidad_carga") > 0)) next.capacidad_carga = t("positive");
     if (n("umbral_preventivo") <= n("umbral_recomendacion")) next.umbral_preventivo = t("order.preventive");
     if (n("umbral_critico") <= n("umbral_preventivo")) next.umbral_critico = t("order.critical");
+    // M8 (`ConfiguracionRequest`) exige fuente del criterio, vigencia y responsable.
+    for (const k of ["fuente_criterio", "vigencia_desde", "vigencia_hasta", "responsable"]) if (!s(k)) next[k] = t("required");
+    if (s("vigencia_desde") && s("vigencia_hasta") && s("vigencia_hasta") < s("vigencia_desde")) next.vigencia_hasta = t("order.validity");
     setErrors(next);
     if (Object.keys(next).length) return;
     save.mutate({
       capacidad_carga: n("capacidad_carga"), umbral_recomendacion: n("umbral_recomendacion"), umbral_preventivo: n("umbral_preventivo"), umbral_critico: n("umbral_critico"),
-      fuente_criterio: String(f.get("fuente_criterio")), vigencia_desde: String(f.get("vigencia_desde")), vigencia_hasta: String(f.get("vigencia_hasta")), restriccion_reservas: restrict ?? c.restriccion_reservas,
+      fuente_criterio: s("fuente_criterio"), vigencia_desde: s("vigencia_desde"), vigencia_hasta: s("vigencia_hasta"), responsable: s("responsable"),
+      restriccion_reservas: restrict ?? c.restriccion_reservas ?? false,
     });
   };
 
   return (
     <div className="space-y-10">
       {c.criterio_vencido && <p role="alert" className="border-l-4 border-critical pl-3 font-semibold text-critical">{t("expired")}</p>}
-      <form key={c.version} onSubmit={onSubmit} noValidate className="max-w-3xl space-y-6">
+      <form key={c.version ?? "nueva"} onSubmit={onSubmit} noValidate className="max-w-3xl space-y-6">
         <ErrorSummary errors={errors} title={tc("errorSummary")} />
-        <p className="meta">{t("currentVersion", { version: c.version ?? 1, user: c.responsable ?? "—" })}</p>
+        {existe
+          ? <p className="meta">{t("currentVersion", { version: c.version ?? 1, user: c.responsable ?? "—" })}</p>
+          : <p role="status" className="border-l-4 border-ink pl-3">{t("notConfigured")}</p>}
         <div className="grid gap-6 sm:grid-cols-2">
           <TextField label={t("capacity")} name="capacidad_carga" type="number" min={1} defaultValue={c.capacidad_carga} error={errors.capacidad_carga} required />
-          <TextField label={t("source")} name="fuente_criterio" defaultValue={c.fuente_criterio} />
+          <TextField label={t("source")} name="fuente_criterio" defaultValue={c.fuente_criterio} error={errors.fuente_criterio} required />
+          <TextField label={t("responsible")} name="responsable" defaultValue={c.responsable} error={errors.responsable} required />
           <TextField label={t("recommendation")} name="umbral_recomendacion" type="number" min={0} max={100} defaultValue={c.umbral_recomendacion} error={errors.umbral_recomendacion} required />
           <TextField label={t("preventive")} name="umbral_preventivo" type="number" min={0} max={100} defaultValue={c.umbral_preventivo} error={errors.umbral_preventivo} required />
           <TextField label={t("critical")} name="umbral_critico" type="number" min={0} max={100} defaultValue={c.umbral_critico} error={errors.umbral_critico} required />
-          <span />
-          <TextField label={t("validFrom")} name="vigencia_desde" type="date" defaultValue={c.vigencia_desde} />
-          <TextField label={t("validTo")} name="vigencia_hasta" type="date" defaultValue={c.vigencia_hasta} />
+          <TextField label={t("validFrom")} name="vigencia_desde" type="date" defaultValue={c.vigencia_desde} error={errors.vigencia_desde} required />
+          <TextField label={t("validTo")} name="vigencia_hasta" type="date" defaultValue={c.vigencia_hasta} error={errors.vigencia_hasta} required />
         </div>
         <SwitchField label={t("restrict")} name="restriccion" hint={t("restrictHint")} checked={restrict ?? c.restriccion_reservas ?? false} onChange={setRestrict} />
         {errors.form && <p role="alert" className="font-medium text-critical">{errors.form}</p>}
@@ -95,16 +129,16 @@ function CapacityTab({ id }: { id: string }) {
 
       <section aria-labelledby="versions"><h3 id="versions" className="border-t-2 border-ink pt-4 !text-xl">{t("versions")}</h3>
         {versions.data && <EditorialTable caption={t("versions")} rows={versions.data} rowKey={(v) => String(v.version)} columns={[
-          { key: "v", header: "v", align: "right", cell: (v) => v.version }, { key: "c", header: t("capacity"), align: "right", cell: (v) => v.capacidad_carga },
-          { key: "u", header: t("thresholds"), cell: (v) => `${v.umbral_recomendacion} / ${v.umbral_preventivo} / ${v.umbral_critico}` },
+          { key: "v", header: "v", align: "right", cell: (v) => v.version },
+          { key: "c", header: tc("date"), cell: (v) => formatDateTime(v.fecha_creacion, locale) },
           { key: "d", header: t("validity"), cell: (v) => `${formatDate(v.vigencia_desde, locale)} → ${formatDate(v.vigencia_hasta, locale)}` }, { key: "r", header: t("responsible"), cell: (v) => v.responsable },
         ]} />}
       </section>
       <section aria-labelledby="changes"><h3 id="changes" className="border-t-2 border-ink pt-4 !text-xl">{t("changes")}</h3>
-        {log.data && <EditorialTable caption={t("changes")} rows={log.data} empty={t("noChanges")} rowKey={(r) => `${r.version}-${r.campo}`} columns={[
-          { key: "v", header: "v", align: "right", cell: (r) => r.version }, { key: "f", header: t("field"), cell: (r) => r.campo },
-          { key: "a", header: t("before"), cell: (r) => String(r.antes ?? "—") }, { key: "d", header: t("after"), cell: (r) => String(r.despues ?? "—") },
-          { key: "t", header: tc("date"), cell: (r) => formatDateTime(r.fecha, locale) }, { key: "u", header: t("responsible"), cell: (r) => r.usuario },
+        {log.data && <EditorialTable caption={t("changes")} rows={log.data} empty={t("noChanges")} rowKey={(r) => `${r.version_resultante}-${r.campo}`} columns={[
+          { key: "v", header: "v", align: "right", cell: (r) => r.version_resultante }, { key: "f", header: t("field"), cell: (r) => r.campo },
+          { key: "a", header: t("before"), cell: (r) => r.valor_anterior ?? "—" }, { key: "d", header: t("after"), cell: (r) => r.valor_modificado ?? "—" },
+          { key: "t", header: tc("date"), cell: (r) => `${formatDate(r.fecha, locale)}${r.hora ? ` ${r.hora.slice(0, 5)}` : ""}` }, { key: "u", header: t("responsible"), cell: (r) => r.usuario ?? "—" },
         ]} />}
       </section>
     </div>
