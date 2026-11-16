@@ -585,8 +585,8 @@ export function ProviderTypesView() {
         <form key={edit?.codigo ?? "new"} onSubmit={onSubmit} noValidate className="space-y-5">
           <TextField label={t("code")} name="codigo" defaultValue={edit?.codigo} required disabled={!!edit} hint={t("codeHint")} error={errors.codigo} />
           <TextField label={t("name")} name="nombre" defaultValue={edit?.nombre} required error={errors.nombre} />
-          <CheckboxField label={t("active")} name="activo" defaultChecked={edit?.activo ?? true} />
           <TextAreaField label={t("schema")} name="schema" rows={10} defaultValue={edit ? JSON.stringify(edit.atributos_schema, null, 2) : "{\n  \"type\": \"object\",\n  \"properties\": {}\n}"} hint={t("schemaHint")} error={errors.schema} className="font-mono" />
+          <CheckboxField label={t("active")} name="activo" defaultChecked={edit?.activo ?? true} />
           {errors.form && <p role="alert" className="font-medium text-critical">{errors.form}</p>}
           <div className="flex gap-3"><Button type="submit" loading={save.isPending}>{tc("save")}</Button><Button variant="secondary" onClick={() => setPanel(null)}>{tc("cancel")}</Button></div>
         </form>

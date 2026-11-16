@@ -152,7 +152,7 @@ export function LoginView() {
               <h2 id="mfa-enrolamiento" className="text-lg font-semibold">{t("enrollTitle")}</h2>
               <p className="mt-1">{t("enrollBody")}</p>
               <p className="mt-3 text-sm font-semibold">{t("enrollSecret")}</p>
-              <code className="mt-1 block break-all font-mono text-base tracking-wider select-all" data-testid="mfa-secreto">
+              <code className="mt-1 block break-all font-mono text-lg text-ink tracking-wider select-all" data-testid="mfa-secreto">
                 {enrollmentSecret}
               </code>
               <p className="mt-2 text-sm text-ink/80">{t("enrollWarning")}</p>

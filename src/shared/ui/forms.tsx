@@ -153,7 +153,8 @@ export function CheckboxField({
           aria-describedby={describedBy(fid, error, hint)}
           className="mt-1 size-5 shrink-0 accent-ink"
         />
-        <label htmlFor={fid} className="text-base">
+        {/* `text-base` en este proyecto también es el COLOR base (casi blanco): la etiqueta quedaba invisible. */}
+        <label htmlFor={fid} className="text-ink">
           {label}
           {required && <span aria-hidden="true"> *</span>}
         </label>

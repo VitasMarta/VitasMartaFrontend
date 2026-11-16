@@ -102,7 +102,7 @@ test("prestador: oferta, edición, conflicto de versión sin perder el texto, y 
 
   // Check-in QR
   await a.goto("/es-CO/checkin-qr");
-  await a.getByLabel("Código QR").fill("K1001");
+  await a.getByLabel("Código QR").fill("00000000-0000-4000-9000-000000000002"); // reserva confirmada del mock (id real de M3)
   await a.getByRole("button", { name: "Validar" }).click();
   await expect(a.getByText(/Reserva válida/)).toBeVisible();
   await context.close();
