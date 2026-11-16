@@ -54,7 +54,12 @@
     "created": "We registered your ARCO request",
     "progress": "Request progress",
     "steps": { "1": "Received", "2": "Identity verified", "3": "Under review", "4": "Resolved", "5": "Closed" },
-    "errors": { "detail": "Describe your request with at least 10 characters" }
+    "field": "Data to correct",
+    "fields": { "nombre_visible": "Display name", "idioma_preferido": "Preferred language", "idioma_autorizado": "Authorized language" },
+    "newValue": "Correct value",
+    "purpose": "Use you object to",
+    "purposes": { "COMERCIAL": "Commercial communications", "PERFILADO": "Artificial intelligence profiling" },
+    "errors": { "detail": "Describe your request with at least 10 characters", "newValue": "Enter the correct value" }
   },
   "data": {
     "body": "Download a readable PDF with the personal data we hold about you.",

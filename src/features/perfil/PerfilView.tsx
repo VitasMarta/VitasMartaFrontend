@@ -217,7 +217,7 @@ function ArcoTab() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const create = useMutation({
     // M7 (`SolicitudArcoRequest`): { tipo, detalle: { ... } } — el detalle es un objeto.
-    mutationFn: async (body: { tipo: string; detalle: string }) => (await api.post<{ solicitud_ref: string }>(routes.identidad.arco, { body: { tipo: body.tipo, detalle: { descripcion: body.detalle } } })).data,
+    mutationFn: async (body: { tipo: string; detalle: Record<string, string> }) => (await api.post<{ solicitud_ref: string }>(routes.identidad.arco, { body })).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["arco"] });
       useUiStore.getState().push({ tone: "success", message: t("created") });
@@ -225,12 +225,22 @@ function ArcoTab() {
   });
   const steps = [1, 2, 3, 4, 5].map((n) => t(`steps.${n}`));
 
+  // M7 valida el detalle según el tipo: RECTIFICACION exige { campo, valor_nuevo } (campos rectificables de
+  // M7) y OPOSICION admite { finalidad }; ACCESO y CANCELACION aceptan una descripción libre.
+  const [tipo, setTipo] = useState<(typeof ARCO_TIPOS)[number]>("ACCESO");
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const { data, errors: fe } = validate(z.object({ tipo: z.enum(ARCO_TIPOS), detalle: z.string().min(10, t("errors.detail")) }), formValues(form));
-    setErrors(fe ?? {});
-    if (data) create.mutate(data, { onSuccess: () => form.reset() });
+    const v = formValues(form) as Record<string, string>;
+    const fe: FieldErrors = {};
+    if ((v.detalle ?? "").trim().length < 10) fe.detalle = t("errors.detail");
+    if (tipo === "RECTIFICACION" && !(v.valor_nuevo ?? "").trim()) fe.valor_nuevo = t("errors.newValue");
+    setErrors(fe);
+    if (Object.keys(fe).length) return;
+    const detalle: Record<string, string> = { descripcion: v.detalle.trim() };
+    if (tipo === "RECTIFICACION") Object.assign(detalle, { campo: v.campo, valor_nuevo: v.valor_nuevo.trim() });
+    if (tipo === "OPOSICION") detalle.finalidad = v.finalidad;
+    create.mutate({ tipo, detalle }, { onSuccess: () => { form.reset(); setTipo("ACCESO"); } });
   };
 
   return (
@@ -238,9 +248,22 @@ function ArcoTab() {
       <form onSubmit={onSubmit} noValidate className="max-w-xl space-y-5">
         <h2 className="!text-2xl">{t("new")}</h2>
         <ErrorSummary errors={errors} title={tc("errorSummary")} />
-        <SelectField label={t("type")} name="tipo" defaultValue="ACCESO">
+        <SelectField label={t("type")} name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value as (typeof ARCO_TIPOS)[number])}>
           {ARCO_TIPOS.map((x) => <option key={x} value={x}>{t(`types.${x}`)}</option>)}
         </SelectField>
+        {tipo === "RECTIFICACION" && (
+          <>
+            <SelectField label={t("field")} name="campo" defaultValue="nombre_visible">
+              {["nombre_visible", "idioma_preferido", "idioma_autorizado"].map((c) => <option key={c} value={c}>{t(`fields.${c}`)}</option>)}
+            </SelectField>
+            <TextField label={t("newValue")} name="valor_nuevo" required error={errors.valor_nuevo} />
+          </>
+        )}
+        {tipo === "OPOSICION" && (
+          <SelectField label={t("purpose")} name="finalidad" defaultValue="COMERCIAL">
+            {["COMERCIAL", "PERFILADO"].map((f) => <option key={f} value={f}>{f === "COMERCIAL" ? t("purposes.COMERCIAL") : t("purposes.PERFILADO")}</option>)}
+          </SelectField>
+        )}
         <TextAreaField label={t("detail")} name="detalle" required error={errors.detalle} hint={t("detailHint")} />
         <Button type="submit" loading={create.isPending}>{t("submit")}</Button>
       </form>

@@ -54,7 +54,12 @@
     "created": "Registramos tu solicitud ARCO",
     "progress": "Progreso del trámite",
     "steps": { "1": "Recibida", "2": "Identidad verificada", "3": "En revisión", "4": "Resuelta", "5": "Cerrada" },
-    "errors": { "detail": "Describe tu solicitud con al menos 10 caracteres" }
+    "field": "Dato a corregir",
+    "fields": { "nombre_visible": "Nombre visible", "idioma_preferido": "Idioma preferido", "idioma_autorizado": "Idioma autorizado" },
+    "newValue": "Valor correcto",
+    "purpose": "Uso al que te opones",
+    "purposes": { "COMERCIAL": "Comunicaciones comerciales", "PERFILADO": "Perfilado con inteligencia artificial" },
+    "errors": { "detail": "Describe tu solicitud con al menos 10 caracteres", "newValue": "Escribe el valor correcto" }
   },
   "data": {
     "body": "Descarga un PDF legible con los datos personales que tenemos sobre ti.",
