@@ -84,7 +84,9 @@ export const identidadHandlers = [
     HttpResponse.json({ mensaje: "Si el correo está registrado, recibirás un enlace de recuperación" }, { status: 202 }),
   ),
   http.post(gw("/identidad/password/restablecimiento"), async ({ request }) => {
-    const { token } = (await request.json()) as { token?: string };
+    // M7 (`RestablecimientoRequest`): { token, password }.
+    const { token, password } = (await request.json()) as { token?: string; password?: string };
+    if (!password) return HttpResponse.json(errorBody(request, "VALIDACION", "La solicitud contiene datos inválidos", [{ campo: "password", problema: "no debe estar vacío" }]), { status: 400 });
     return token === "expirado"
       ? HttpResponse.json(errorBody(request, "TOKEN_EXPIRADO", "El enlace de recuperación expiró"), { status: 400 })
       : HttpResponse.json({ ok: true });

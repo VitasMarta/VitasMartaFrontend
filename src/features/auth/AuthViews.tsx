@@ -371,7 +371,8 @@ export function ResetView() {
     if (!data) return;
     setBusy(true);
     try {
-      await api.post(routes.identidad.restablecimiento, { auth: false, body: { token, nueva_password: data.nueva_password } });
+      // M7 (`RestablecimientoRequest`): { token, password }.
+      await api.post(routes.identidad.restablecimiento, { auth: false, body: { token, password: data.nueva_password } });
       setDone(true);
     } catch (error) {
       setFailure(error);
