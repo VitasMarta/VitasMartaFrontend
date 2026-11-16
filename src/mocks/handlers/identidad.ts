@@ -56,7 +56,15 @@ const auditoria = Array.from({ length: 34 }, (_, i) => ({
 export const identidadHandlers = [
   // ── Públicos: registro, verificación, recuperación, OAuth ───────────────────────────────────
   http.post(gw("/identidad/cuentas"), async ({ request }) => {
-    const body = (await request.json()) as { correo?: string; tipo_usuario?: string };
+    const body = (await request.json()) as {
+      correo?: string;
+      tipo_usuario?: string;
+      consentimientos?: { finalidad: string; otorgado?: boolean }[];
+    };
+    // M7 exige el consentimiento de TRATAMIENTO con `otorgado: true` (campos desconocidos se ignoran).
+    if (!body.consentimientos?.some((c) => c.finalidad === "TRATAMIENTO" && c.otorgado === true)) {
+      return HttpResponse.json(errorBody(request, "SOLICITUD_INVALIDA", "El consentimiento de tratamiento es obligatorio"), { status: 400 });
+    }
     // M7 (S1): el autorregistro solo crea TURISTA; PRESTADOR lo asigna la administración.
     if (body.tipo_usuario && body.tipo_usuario !== "TURISTA") {
       return HttpResponse.json(errorBody(request, "SOLICITUD_INVALIDA", "El rol de prestador lo asigna la administración"), { status: 400 });

@@ -148,13 +148,33 @@ function InteresesTab() {
 }
 
 // ── Consentimientos (opt-out del perfilado con IA — REG-03-4) ───────────────────────────────────
+/** M7 (`ConsentimientosResponse`): `{ vigente: { FINALIDAD: { otorgado, version_politica, fecha_hora } }, historial }`. */
+interface ConsentimientosM7 {
+  vigente?: Record<string, { finalidad?: Finalidad; otorgado: boolean; version_politica?: string; fecha_hora?: string }>;
+}
+
+const FINALIDADES: Finalidad[] = ["TRATAMIENTO", "COMERCIAL", "PERFILADO"];
+
+/** Estado vigente por finalidad (las que no tienen registro se muestran como no otorgadas). */
+export function consentimientosVigentes(data: ConsentimientosM7 | ConsentimientoEstado[]): ConsentimientoEstado[] {
+  if (Array.isArray(data)) return data;
+  const vigente = data.vigente ?? {};
+  return FINALIDADES.map((finalidad) => {
+    const c = vigente[finalidad];
+    return { finalidad, otorgado: !!c?.otorgado, version_terminos: c?.version_politica, fecha: c?.fecha_hora };
+  });
+}
+
 function ConsentimientosTab() {
   const t = useTranslations("perfil.consents");
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
   // Respuesta inmediata del interruptor; se descarta al llegar la respuesta del servidor.
   const [pending, setPending] = useState<Partial<Record<Finalidad, boolean>>>({});
-  const q = useQuery({ queryKey: ["consentimientos"], queryFn: async () => (await api.get<ConsentimientoEstado[]>(routes.identidad.consentimientos)).data });
+  const q = useQuery({
+    queryKey: ["consentimientos"],
+    queryFn: async () => consentimientosVigentes((await api.get<ConsentimientosM7 | ConsentimientoEstado[]>(routes.identidad.consentimientos)).data),
+  });
   const toggle = useMutation({
     mutationFn: async ({ finalidad, otorgado }: { finalidad: Finalidad; otorgado: boolean }) => api.put(routes.identidad.consentimiento(finalidad), { body: { otorgado } }),
     onSettled: (_d, _e, v) => setPending((p) => ({ ...p, [v.finalidad]: undefined })),

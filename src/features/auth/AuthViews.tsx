@@ -199,7 +199,7 @@ export function RegisterView() {
     if (!data) return;
     setBusy(true);
     try {
-      const version_terminos = "2026.1";
+      // M7 (`ConsentimientoRequest`): { finalidad, otorgado }. La versión de la política la fija M7.
       await api.post(routes.identidad.cuentas, {
         auth: false,
         body: {
@@ -209,9 +209,9 @@ export function RegisterView() {
           // al aprobar la solicitud radicada en «Ser prestador» (M4).
           tipo_usuario: "TURISTA",
           consentimientos: [
-            { finalidad: "TRATAMIENTO", version_terminos, aceptado: true },
-            { finalidad: "COMERCIAL", version_terminos, aceptado: !!data.comercial },
-            { finalidad: "PERFILADO", version_terminos, aceptado: !!data.perfilado },
+            { finalidad: "TRATAMIENTO", otorgado: true },
+            { finalidad: "COMERCIAL", otorgado: !!data.comercial },
+            { finalidad: "PERFILADO", otorgado: !!data.perfilado },
           ],
         },
       });
