@@ -49,7 +49,7 @@ export function useAccionContenido(id: string) {
 export const useHistorial = (id: string) =>
   useQuery({
     queryKey: ["m4", "historial", id],
-    queryFn: async () => toList<{ de: string; a: string; motivo?: string; fecha: string; actor: string }>((await api.get(routes.prestadores.contenido(id, "historial"), { query: { page: 1, page_size: 20 } })).data),
+    queryFn: async () => toList<{ estado_origen: string; estado_destino: string; motivo?: string | null; usuario_id?: string; ocurrido_en: string; version_resultante?: number }>((await api.get(routes.prestadores.contenido(id, "historial"), { query: { page: 1, page_size: 20 } })).data),
   });
 
 export interface Multimedia {

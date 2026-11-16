@@ -234,8 +234,8 @@ function EditorialPanel({ tipo, content }: { tipo: Tipo; content: Contenido }) {
         <ol className="mt-3 divide-y divide-ink/15 border-y border-ink/15">
           {hist.data?.items.map((h, i) => (
             <li key={i} className="py-3">
-              <p className="font-medium">{h.de} → {h.a}</p>
-              <p className="meta text-ink/80">{formatDate(h.fecha, locale)} · {h.actor}{h.motivo ? ` · ${h.motivo}` : ""}</p>
+              <p className="font-medium">{h.estado_origen} → {h.estado_destino}</p>
+              <p className="meta text-ink/80">{formatDate(h.ocurrido_en, locale)} · v{h.version_resultante}{h.motivo ? ` · ${h.motivo}` : ""}</p>
             </li>
           ))}
         </ol>

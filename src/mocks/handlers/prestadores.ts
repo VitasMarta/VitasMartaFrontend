@@ -32,7 +32,7 @@ const contenidos: Contenido[] = [
   seed("actividades", 2, "borrador", "Buceo de superficie", { duracion_minutos: 180, nivel_dificultad: "alta", precio: { monto: 150000, moneda: "COP" } }),
   seed("eventos", 1, "publicado", "Noche de música del Caribe", { fecha_inicio: `${isoDay(14)}T19:00:00-05:00`, fecha_fin: `${isoDay(14)}T23:00:00-05:00`, cupo_total: 200, modalidad: "presencial" }),
 ];
-const historial = new Map<string, { de: string; a: string; motivo?: string; fecha: string; actor: string }[]>();
+const historial = new Map<string, { estado_origen: string; estado_destino: string; motivo: string | null; usuario_id: string; ocurrido_en: string; version_resultante: number }[]>();
 const multimedia = new Map<string, { id: string; tipo: string; url_cdn: string; tam_bytes: number; mime_type: string; orden: number }[]>();
 const franjas: { id: string; contenido_id: string; fecha: string; hora_inicio: string; hora_fin: string; cupo_total: number; cupo_disponible: number; estado: string; version: number }[] = [
   { id: "fr-1", contenido_id: "atr-001", fecha: isoDay(2), hora_inicio: "08:00", hora_fin: "12:00", cupo_total: 20, cupo_disponible: 14, estado: "disponible", version: 1 },
@@ -258,11 +258,11 @@ export const prestadoresHandlers = [
     const de = c.estado;
     c.estado = params.accion === "corregir" ? "borrador" : "en_revision";
     c.version += 1;
-    historial.set(c.id, [...(historial.get(c.id) ?? []), { de, a: c.estado, motivo, fecha: new Date().toISOString(), actor: "prestador" }]);
+    historial.set(c.id, [...(historial.get(c.id) ?? []), { estado_origen: de, estado_destino: c.estado, motivo: motivo ?? null, usuario_id: "00000000-0000-4000-8000-000000000001", ocurrido_en: new Date().toISOString(), version_resultante: c.version }]);
     return HttpResponse.json(c);
   }),
   http.get(gw("/prestadores/contenido/:id/historial"), ({ params }) =>
-    HttpResponse.json({ items: historial.get(String(params.id)) ?? [{ de: "—", a: "borrador", fecha: isoDay(-5), actor: "prestador" }], total: 1, page: 1, page_size: 20 }),
+    HttpResponse.json({ items: historial.get(String(params.id)) ?? [{ estado_origen: "nuevo", estado_destino: "borrador", motivo: null, usuario_id: "00000000-0000-4000-8000-000000000001", ocurrido_en: isoDay(-5), version_resultante: 1 }], total: 1, page: 1, page_size: 20 }),
   ),
   http.put(gw("/prestadores/contenido/:id/multimedia/orden"), async ({ params, request }) => {
     const { items } = (await request.json()) as { items: { id: string; orden: number }[] };
