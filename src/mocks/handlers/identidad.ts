@@ -56,7 +56,11 @@ const auditoria = Array.from({ length: 34 }, (_, i) => ({
 export const identidadHandlers = [
   // ── Públicos: registro, verificación, recuperación, OAuth ───────────────────────────────────
   http.post(gw("/identidad/cuentas"), async ({ request }) => {
-    const body = (await request.json()) as { correo?: string };
+    const body = (await request.json()) as { correo?: string; tipo_usuario?: string };
+    // M7 (S1): el autorregistro solo crea TURISTA; PRESTADOR lo asigna la administración.
+    if (body.tipo_usuario && body.tipo_usuario !== "TURISTA") {
+      return HttpResponse.json(errorBody(request, "SOLICITUD_INVALIDA", "El rol de prestador lo asigna la administración"), { status: 400 });
+    }
     if (body.correo && MOCK_USERS[body.correo]) {
       return HttpResponse.json(errorBody(request, "CORREO_EN_USO", "No fue posible crear la cuenta con ese correo", [{ campo: "correo", problema: "ya está registrado" }]), { status: 409 });
     }

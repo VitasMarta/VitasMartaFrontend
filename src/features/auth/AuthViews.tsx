@@ -16,7 +16,7 @@ import { Link, usePathname, useRouter } from "@/core/i18n/navigation";
 import type { Locale } from "@/core/i18n/routing";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
-import { CheckboxField, ErrorSummary, SelectField, TextField } from "@/shared/ui/forms";
+import { CheckboxField, ErrorSummary, TextField } from "@/shared/ui/forms";
 import { Icon } from "@/shared/ui/Icon";
 import { Container, PageHeader } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
@@ -185,7 +185,6 @@ export function RegisterView() {
       correo: z.string().email(t("errors.email")),
       password: z.string().refine(isStrongPassword, t("errors.password")),
       confirmacion: z.string(),
-      tipo_usuario: z.enum(["TURISTA", "PRESTADOR"]),
       tratamiento: z.literal(true, { error: t("errors.treatment") }),
       comercial: z.boolean().optional(),
       perfilado: z.boolean().optional(),
@@ -206,7 +205,9 @@ export function RegisterView() {
         body: {
           correo: data.correo,
           password: data.password,
-          tipo_usuario: data.tipo_usuario,
+          // M7 solo admite autorregistro TURISTA (S1): el rol PRESTADOR lo asigna la administración
+          // al aprobar la solicitud radicada en «Ser prestador» (M4).
+          tipo_usuario: "TURISTA",
           consentimientos: [
             { finalidad: "TRATAMIENTO", version_terminos, aceptado: true },
             { finalidad: "COMERCIAL", version_terminos, aceptado: !!data.comercial },
@@ -237,10 +238,7 @@ export function RegisterView() {
       <form onSubmit={onSubmit} noValidate className="space-y-6">
         <ErrorSummary errors={errors} title={tc("errorSummary")} />
         <TextField label={t("email")} name="correo" type="email" autoComplete="email" required error={errors.correo} />
-        <SelectField label={t("userType")} name="tipo_usuario" defaultValue="TURISTA" error={errors.tipo_usuario}>
-          <option value="TURISTA">{t("tourist")}</option>
-          <option value="PRESTADOR">{t("provider")}</option>
-        </SelectField>
+        <p className="border-l-4 border-ink pl-3 text-sm">{t("providerNote")}</p>
         <div>
           <TextField label={t("password")} name="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} hint={t("passwordHint")} />
           <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2" aria-label={t("passwordHint")}>
