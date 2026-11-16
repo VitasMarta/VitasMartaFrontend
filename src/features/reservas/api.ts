@@ -4,8 +4,24 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/core/api/gatewayClient";
 import { IntentKeyCache, requestReservaKey, type OperacionReserva } from "@/core/api/idempotency";
 import { routes } from "@/core/api/routes";
-import type { CrearReservaEntrada, PageResponse, ReservaRespuesta } from "@/core/api/types";
+import type { CrearReservaEntrada, OfertasRespuesta, PageResponse, ReservaRespuesta } from "@/core/api/types";
+import { useSessionStore } from "@/core/auth/sessionStore";
 import { useRef } from "react";
+
+/**
+ * Franjas reservables de un servicio (M3 `GET /reservas/ofertas/{servicio_ref}`): cupos vivos,
+ * tarifa y la política vigente que hay que aceptar. Es la fuente de verdad para reservar
+ * (M2 no proyecta franjas ni precios). Requiere sesión: solo se consulta autenticado.
+ */
+export const useOfertasReserva = (servicioRef: string) => {
+  const status = useSessionStore((s) => s.status);
+  return useQuery({
+    queryKey: ["reservas", "ofertas", servicioRef],
+    enabled: status === "authenticated" && !!servicioRef,
+    queryFn: async () => (await api.get<OfertasRespuesta>(routes.reservas.ofertas(servicioRef))).data,
+    refetchInterval: 60_000, // los cupos y las restricciones ambientales cambian en vivo
+  });
+};
 
 export type ClasificacionReserva = "ACTIVAS" | "PASADAS" | "CANCELADAS";
 

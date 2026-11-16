@@ -98,6 +98,41 @@ export interface MultimediaDTO {
 }
 
 // ── M3 · Reservas ─────────────────────────────────────────────────────────────
+/** Política vigente de una oferta de M3: `politica_ref` + `version` son los que se aceptan al reservar. */
+export interface PoliticaOferta {
+  politica_ref: string;
+  version: string;
+  contenido?: string | null;
+  horas_limite_cancelacion?: number | null;
+  penalidad_porcentaje?: number | null;
+}
+
+/** Una franja vendible (M3 `GET /reservas/ofertas/{servicio_ref}`). Instantes en UTC. */
+export interface OfertaReservable {
+  servicio_ref: string;
+  franja_ref: string;
+  inicio: string;
+  fin: string;
+  importe: string | number;
+  moneda: string;
+  unidad_tarifa?: string;
+  capacidad_total?: number | null;
+  /** Cupos libres en vivo; `null` = desconocido en este momento. */
+  disponibles: number | null;
+  requiere_aprobacion?: boolean;
+  requiere_pago_externo?: boolean;
+  plazo_pendiente_segundos?: number | null;
+  politica: PoliticaOferta;
+  reservable: boolean;
+  motivo_no_reservable?: string | null;
+  actualizada_en?: string;
+}
+
+export interface OfertasRespuesta {
+  servicio_ref: string;
+  ofertas: OfertaReservable[];
+}
+
 export interface CrearReservaEntrada {
   servicio_ref: string;
   franja_ref: string;

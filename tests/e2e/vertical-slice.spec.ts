@@ -106,9 +106,34 @@ test("reserva: login → franja → política → soft lock con cuenta regresiva
   await expect(page.getByText("Cancelada", { exact: true })).toBeVisible();
 });
 
-test("reserva restringida (409 RESERVA_RESTRINGIDA) muestra alternativas", async ({ page }) => {
+test("restricción ambiental conocida: M3 lista las franjas como no reservables con su motivo", async ({ page }) => {
   await loginAs(page, "turista@vitasmarta.co");
   await page.goto("/es-CO/atractivo/atr-008");
+  const panel = page.getByRole("complementary", { name: "Reservar este destino" });
+  await expect(panel.getByText(/Capacidad ambiental alcanzada/).first()).toBeVisible();
+  const radios = panel.getByRole("radio");
+  await expect(radios.first()).toBeDisabled();
+  expect(await radios.evaluateAll((els) => els.every((el) => (el as HTMLInputElement).disabled))).toBe(true);
+});
+
+test("restricción que llega al reservar (409 RESERVA_RESTRINGIDA) muestra alternativas", async ({ page }) => {
+  await loginAs(page, "turista@vitasmarta.co");
+  // Carrera real: la lectura de ofertas aún era reservable y M8 restringe antes del POST.
+  await page.route("**/bff/api/v1/reservas", (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({
+          status: 409,
+          contentType: "application/json",
+          body: JSON.stringify({
+            codigo: "RESERVA_RESTRINGIDA",
+            mensaje: "Este destino alcanzó su umbral crítico de capacidad y no admite nuevas reservas",
+            marca_temporal: new Date().toISOString(),
+            correlation_id: "00000000-0000-4000-8000-000000000409",
+          }),
+        })
+      : route.continue(),
+  );
+  await page.goto("/es-CO/atractivo/atr-002");
   const panel = page.getByRole("complementary", { name: "Reservar este destino" });
   await panel.getByRole("radio").first().check();
   await panel.getByLabel("Acepto la política de cancelación").check();

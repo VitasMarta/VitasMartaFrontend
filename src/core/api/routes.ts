@@ -36,6 +36,8 @@ export const routes = {
   reservas: {
     base: `${V1}/reservas`,
     claves: `${V1}/reservas/claves-idempotencia`,
+    /** Franjas reservables con cupos vivos y la política vigente a aceptar (M3, requiere sesión). */
+    ofertas: (servicioRef: string) => `${V1}/reservas/ofertas/${seg(servicioRef)}`,
     detalle: (ref: string) => `${V1}/reservas/${seg(ref)}`,
     accion: (ref: string, accion: "modificar" | "cancelar" | "confirmar" | "rechazar") =>
       `${V1}/reservas/${seg(ref)}/${accion}`,

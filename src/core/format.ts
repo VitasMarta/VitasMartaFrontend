@@ -34,6 +34,22 @@ export const formatDateTime = (iso: string | undefined | null, locale: string): 
     : new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: TZ }).format(d);
 };
 
+/** Hora local de Santa Marta (HH:mm) de un instante ISO. */
+export const formatTime = (iso: string | undefined | null, locale: string): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: TZ }).format(d);
+};
+
+/** Día calendario en Santa Marta (`YYYY-MM-DD`) de un instante ISO: agrupa franjas por fecha local. */
+export const localDayOf = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TZ }).format(d);
+};
+
 export const formatBytes = (bytes: number): string =>
   bytes > 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
 

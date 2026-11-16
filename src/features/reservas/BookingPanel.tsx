@@ -3,21 +3,31 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ApiError } from "@/core/api/errorNormalizer";
-import type { FichaCatalogo, Franja } from "@/core/api/types";
+import type { FichaCatalogo, OfertaReservable } from "@/core/api/types";
 import { useSessionStore } from "@/core/auth/sessionStore";
-import { amountOf, formatCOP, formatDate, localized } from "@/core/format";
+import { amountOf, formatCOP, formatDate, formatTime, localDayOf } from "@/core/format";
 import { useRouter, usePathname } from "@/core/i18n/navigation";
-import { useFranjas } from "@/features/catalogo/api";
 import { Button, ButtonLink } from "@/shared/ui/Button";
 import { CheckboxField, ErrorSummary, TextField } from "@/shared/ui/forms";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
-import { useCrearReserva } from "./api";
+import { useCrearReserva, useOfertasReserva } from "./api";
+import { PoliticaOfertaTexto } from "./util";
 
 const MAX_CUPOS = 10;
+
+/** Cupos que se pueden pedir en una oferta (`disponibles` null = desconocido → tope general). */
+export const cuposDe = (o: OfertaReservable | undefined): number =>
+  o?.disponibles == null ? MAX_CUPOS : Math.max(0, Math.min(MAX_CUPOS, o.disponibles));
+
+export const ofertaAgotada = (o: OfertaReservable): boolean => !o.reservable || o.disponibles === 0;
 
 /**
  * Lienzo derecho fijo de la ficha (guía §1.3-2): selector de franjas, cupos, aceptación de la
  * política de cancelación y botón para iniciar el soft lock de la reserva.
+ *
+ * Franjas, cupos vivos, tarifa y política salen de M3 (`/reservas/ofertas/{servicio_ref}`): son
+ * exactamente los que M3 valida al crear la reserva. La ficha de M2 solo aporta el precio de
+ * referencia mientras no hay sesión.
  */
 export function BookingPanel({
   atractivoId,
@@ -36,7 +46,7 @@ export function BookingPanel({
   const pathname = usePathname();
   const status = useSessionStore((s) => s.status);
   const rol = useSessionStore((s) => s.user?.rol);
-  const franjasQuery = useFranjas(atractivoId);
+  const ofertasQuery = useOfertasReserva(rol === "TURISTA" ? atractivoId : "");
   const crear = useCrearReserva();
 
   const [franjaRef, setFranjaRef] = useState("");
@@ -44,33 +54,39 @@ export function BookingPanel({
   const [acepta, setAcepta] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const ofertas = useMemo(() => ofertasQuery.data?.ofertas ?? [], [ofertasQuery.data]);
   const byDate = useMemo(() => {
-    const groups = new Map<string, Franja[]>();
-    for (const f of franjasQuery.data?.franjas ?? []) groups.set(f.fecha, [...(groups.get(f.fecha) ?? []), f]);
+    const groups = new Map<string, OfertaReservable[]>();
+    for (const o of ofertas) {
+      const day = localDayOf(o.inicio);
+      groups.set(day, [...(groups.get(day) ?? []), o]);
+    }
     return [...groups.entries()];
-  }, [franjasQuery.data]);
+  }, [ofertas]);
 
-  const selected = franjasQuery.data?.franjas.find((f) => (f.franja_ref ?? `${f.fecha}T${f.hora_inicio}`) === franjaRef);
-  const maxCupos = Math.max(1, Math.min(MAX_CUPOS, selected?.cupo ?? MAX_CUPOS));
-  const price = amountOf(ficha.precio as number | { monto: number } | null | undefined);
-  const politica = ficha.politica_cancelacion;
+  const selected = ofertas.find((o) => o.franja_ref === franjaRef);
+  const maxCupos = Math.max(1, cuposDe(selected));
+  // La política a aceptar es la de la franja elegida (antes de elegir se muestra la de la primera).
+  const politica = (selected ?? ofertas.find((o) => o.reservable) ?? ofertas[0])?.politica;
+  const importes = ofertas.map((o) => Number(o.importe)).filter((n) => Number.isFinite(n));
+  const price = importes.length ? Math.min(...importes) : amountOf(ficha.precio as number | { monto: number } | null | undefined);
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
-    if (!franjaRef) next.franja = t("errors.slot");
+    if (!selected) next.franja = t("errors.slot");
     if (!Number.isInteger(cupos) || cupos < 1 || cupos > maxCupos) next.cupos = t("errors.quantity", { max: maxCupos });
     if (!acepta) next.politica = t("errors.policy");
-    if (!politica) next.politica = t("errors.noPolicy");
+    if (selected && !selected.politica) next.politica = t("errors.noPolicy");
     setErrors(next);
-    if (Object.keys(next).length > 0 || !politica) return;
+    if (Object.keys(next).length > 0 || !selected) return;
 
     crear.mutate(
       {
-        servicio_ref: atractivoId,
-        franja_ref: franjaRef,
+        servicio_ref: selected.servicio_ref,
+        franja_ref: selected.franja_ref,
         cantidad_cupos: cupos,
-        aceptacion_politica: { aceptada: true, politica_ref: politica.politica_ref, version: politica.version },
+        aceptacion_politica: { aceptada: true, politica_ref: selected.politica.politica_ref, version: selected.politica.version },
       },
       {
         onSuccess: (reserva) => router.push(`/mis-reservas/${reserva.reserva_ref}`),
@@ -79,6 +95,7 @@ export function BookingPanel({
             if (error.codigo === "RESERVA_RESTRINGIDA") onRestricted();
             const fields = error.fieldErrors();
             if (Object.keys(fields).length > 0) setErrors(fields);
+            void ofertasQuery.refetch(); // cupos o restricción cambiaron: refresca la lista
           }
         },
       },
@@ -103,23 +120,31 @@ export function BookingPanel({
         </div>
       )}
       {status === "authenticated" && rol !== "TURISTA" && <p className="mt-6 border-l-4 border-ink pl-3">{t("onlyTourists")}</p>}
+      {status === "unknown" && <StatusBlock kind="loading" title={t("slotsLoading")} />}
 
-      {status !== "anonymous" && (status === "unknown" || rol === "TURISTA") && (
+      {status === "authenticated" && rol === "TURISTA" && (
         <form onSubmit={onSubmit} noValidate className="mt-6 space-y-6">
           <ErrorSummary errors={errors} title={tc("errorSummary")} />
 
-          {franjasQuery.isPending && <StatusBlock kind="loading" title={t("slotsLoading")} />}
-          {franjasQuery.isError && <ErrorNotice error={franjasQuery.error} referenceLabel={tc("reference")} />}
-          {franjasQuery.data && byDate.length === 0 && <StatusBlock kind="empty" title={t("noSlots")} />}
+          {ofertasQuery.isPending && <StatusBlock kind="loading" title={t("slotsLoading")} />}
+          {ofertasQuery.isError && <ErrorNotice error={ofertasQuery.error} referenceLabel={tc("reference")} />}
+          {ofertasQuery.data && byDate.length === 0 && <StatusBlock kind="empty" title={t("noSlots")} />}
 
           {byDate.map(([fecha, franjas], index) => (
             <fieldset key={fecha} className="min-w-0">
               <legend className="meta mb-2 font-semibold uppercase tracking-wider">{formatDate(fecha, locale)}</legend>
               <div className="divide-y divide-ink/15 border-y border-ink/15">
-                {franjas.map((f) => {
-                  const ref = f.franja_ref ?? `${f.fecha}T${f.hora_inicio}`;
-                  const soldOut = f.cupo <= 0 || f.estado === "AGOTADA";
+                {franjas.map((o) => {
+                  const ref = o.franja_ref;
+                  const agotada = ofertaAgotada(o);
                   const id = `franja-${ref}`;
+                  const estado = !o.reservable
+                    ? o.motivo_no_reservable || t("notBookable")
+                    : o.disponibles === 0
+                      ? t("soldOut")
+                      : o.disponibles == null
+                        ? t("spotsUnknown")
+                        : t("spotsLeft", { count: o.disponibles });
                   return (
                     <div key={ref} className="flex items-center gap-3 py-3">
                       <input
@@ -128,22 +153,23 @@ export function BookingPanel({
                         name="franja"
                         value={ref}
                         checked={franjaRef === ref}
-                        disabled={soldOut}
+                        disabled={agotada}
                         required={index === 0}
                         onChange={() => {
                           setFranjaRef(ref);
-                          setCupos((c) => Math.min(c, Math.max(1, Math.min(MAX_CUPOS, f.cupo))));
+                          setAcepta(false); // la política puede cambiar entre franjas: se vuelve a aceptar
+                          setCupos((c) => Math.min(c, Math.max(1, cuposDe(o))));
                         }}
                         className="size-5 accent-ink"
                         aria-describedby={`${id}-cupo`}
                       />
-                      <label htmlFor={id} className={soldOut ? "flex-1 text-ink/70 line-through" : "flex-1 font-medium"}>
+                      <label htmlFor={id} className={agotada ? "flex-1 text-ink/70 line-through" : "flex-1 font-medium"}>
                         <span className="tabular">
-                          {f.hora_inicio} – {f.hora_fin}
+                          {formatTime(o.inicio, locale)} – {formatTime(o.fin, locale)}
                         </span>
                       </label>
-                      <span id={`${id}-cupo`} className={soldOut ? "meta font-semibold" : "meta"}>
-                        {soldOut ? t("soldOut") : t("spotsLeft", { count: f.cupo })}
+                      <span id={`${id}-cupo`} className={agotada ? "meta font-semibold" : "meta"}>
+                        {estado}
                       </span>
                     </div>
                   );
@@ -171,10 +197,12 @@ export function BookingPanel({
             className="max-w-40"
           />
 
+          {selected?.requiere_aprobacion && <p className="meta">{t("needsApproval")}</p>}
+
           {politica && (
             <div className="border-l-4 border-ink pl-3">
               <p className="font-semibold">{t("policy")}</p>
-              <p className="mt-1 text-sm">{localized(politica.descripcion, locale)}</p>
+              <PoliticaOfertaTexto politica={politica} className="mt-1 text-sm" />
             </div>
           )}
           <CheckboxField

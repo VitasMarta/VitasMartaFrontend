@@ -6,9 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/core/api/errorNormalizer";
 import type { ReservaRespuesta } from "@/core/api/types";
 import { RequireRole } from "@/core/auth/RequireRole";
-import { amountOf, formatCOP, formatDateTime, localized } from "@/core/format";
+import { amountOf, formatCOP, formatDate, formatDateTime, formatTime, localDayOf, localized } from "@/core/format";
 import { Link } from "@/core/i18n/navigation";
-import { useFicha, useFranjas } from "@/features/catalogo/api";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
@@ -20,8 +19,9 @@ import { SlideOver } from "@/shared/ui/SlideOver";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { Tabs } from "@/shared/ui/Tabs";
 import { useUiStore } from "@/core/store/uiStore";
-import { descargarComprobante, useAccionReserva, useReserva, useReservas, type ClasificacionReserva } from "./api";
-import { ReservaStatus, isFinal, isPending } from "./util";
+import { descargarComprobante, useAccionReserva, useOfertasReserva, useReserva, useReservas, type ClasificacionReserva } from "./api";
+import { cuposDe, ofertaAgotada } from "./BookingPanel";
+import { PoliticaOfertaTexto, ReservaStatus, isFinal, isPending } from "./util";
 
 const SIZE = 10;
 const CLASES: ClasificacionReserva[] = ["ACTIVAS", "PASADAS", "CANCELADAS"];
@@ -128,25 +128,27 @@ function ModifyPanel({ reserva, open, onClose }: { reserva: ReservaRespuesta; op
   const tc = useTranslations("common");
   const locale = useLocale();
   const servicio = reserva.servicio_ref ?? "";
-  const ficha = useFicha(servicio);
-  const franjas = useFranjas(servicio);
+  // Franjas y política vigentes desde M3 (las mismas que valida al modificar).
+  const ofertas = useOfertasReserva(open ? servicio : "");
   const accion = useAccionReserva("modificar");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const politica = ficha.data?.politica_cancelacion;
+  const [franjaRef, setFranjaRef] = useState("");
+  const disponibles = (ofertas.data?.ofertas ?? []).filter((o) => !ofertaAgotada(o));
+  const elegida = disponibles.find((o) => o.franja_ref === franjaRef);
+  const politica = (elegida ?? disponibles[0])?.politica;
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
-    const franja_ref = String(f.get("franja") ?? "");
     const cupos = Number(f.get("cupos"));
     const next: Record<string, string> = {};
-    if (!franja_ref) next.franja = t("errors.slot");
-    if (!Number.isInteger(cupos) || cupos < 1) next.cupos = t("errors.quantity");
+    if (!elegida) next.franja = t("errors.slot");
+    if (!Number.isInteger(cupos) || cupos < 1 || (elegida && cupos > cuposDe(elegida))) next.cupos = t("errors.quantity");
     if (!f.get("politica")) next.politica = t("errors.policy");
     setErrors(next);
-    if (Object.keys(next).length || !politica) return;
+    if (Object.keys(next).length || !elegida) return;
     accion.mutate(
-      { reservaRef: reserva.reserva_ref, body: { servicio_ref: servicio, franja_ref, cantidad_cupos: cupos, aceptacion_politica: { aceptada: true, politica_ref: politica.politica_ref, version: politica.version } } },
+      { reservaRef: reserva.reserva_ref, body: { servicio_ref: elegida.servicio_ref, franja_ref: elegida.franja_ref, cantidad_cupos: cupos, aceptacion_politica: { aceptada: true, politica_ref: elegida.politica.politica_ref, version: elegida.politica.version } } },
       {
         onSuccess: (nueva) => {
           useUiStore.getState().push({ tone: "success", message: t("done", { code: nueva.codigo_confirmacion ?? nueva.reserva_ref }) });
@@ -160,17 +162,19 @@ function ModifyPanel({ reserva, open, onClose }: { reserva: ReservaRespuesta; op
     <SlideOver open={open} onClose={onClose} title={t("title")}>
       <form onSubmit={onSubmit} noValidate className="space-y-5">
         <ErrorSummary errors={errors} title={tc("errorSummary")} />
-        {franjas.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
-        <SelectField label={t("slot")} name="franja" defaultValue="" required error={errors.franja}>
+        {ofertas.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
+        {ofertas.isError && <ErrorNotice error={ofertas.error} referenceLabel={tc("reference")} />}
+        <SelectField label={t("slot")} name="franja" value={franjaRef} onChange={(e) => setFranjaRef(e.target.value)} required error={errors.franja}>
           <option value="" disabled>{t("choose")}</option>
-          {franjas.data?.franjas.filter((s) => s.cupo > 0).map((s) => (
-            <option key={s.franja_ref ?? `${s.fecha}${s.hora_inicio}`} value={s.franja_ref ?? `${s.fecha}T${s.hora_inicio}`}>
-              {s.fecha} · {s.hora_inicio}–{s.hora_fin} ({s.cupo})
+          {disponibles.map((o) => (
+            <option key={o.franja_ref} value={o.franja_ref}>
+              {formatDate(localDayOf(o.inicio), locale)} · {formatTime(o.inicio, locale)}–{formatTime(o.fin, locale)}
+              {o.disponibles != null ? ` (${o.disponibles})` : ""}
             </option>
           ))}
         </SelectField>
-        <TextField label={t("quantity")} name="cupos" type="number" min={1} max={10} defaultValue={reserva.cantidad_cupos ?? 1} required error={errors.cupos} className="max-w-40" />
-        {politica && <p className="border-l-4 border-ink pl-3 text-sm">{localized(politica.descripcion, locale)}</p>}
+        <TextField label={t("quantity")} name="cupos" type="number" min={1} max={cuposDe(elegida)} defaultValue={reserva.cantidad_cupos ?? 1} required error={errors.cupos} className="max-w-40" />
+        {politica && <PoliticaOfertaTexto politica={politica} className="border-l-4 border-ink pl-3 text-sm" />}
         <CheckboxField label={t("accept")} name="politica" required error={errors.politica} />
         <div className="flex gap-3">
           <Button type="submit" loading={accion.isPending}>{t("confirm")}</Button>

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { CATALOGO, politicaDe } from "../data/catalogo";
+import { CATALOGO, franjasDe, politicaDe } from "../data/catalogo";
 import { MOCK_USERS } from "../fixtures/tokens";
 import { claimsOf, errorBody, forbidden, gw, isoDay, pageOf, tinyPdf, unauthorized } from "../shared";
 
@@ -96,6 +96,42 @@ export const reservasHandlers = [
     const clave = crypto.randomUUID();
     claves.set(clave, body);
     return HttpResponse.json({ clave_idempotencia: clave, operacion: body.operacion }, { status: 201 });
+  }),
+
+  // M3 · franjas vendibles con cupos vivos y la política vigente (GET /reservas/ofertas/{servicio_ref}).
+  http.get(gw("/reservas/ofertas/:servicio"), ({ request, params }) => {
+    const claims = claimsOf(request);
+    if (!claims) return unauthorized(request);
+    if (!["TURISTA", "PRESTADOR", "ADMINISTRADOR"].includes(claims.rol)) return forbidden(request);
+    const servicio = CATALOGO.find((c) => c.id === params.servicio);
+    if (!servicio) return HttpResponse.json({ servicio_ref: params.servicio, ofertas: [] });
+    const pol = politicaDe();
+    const restringido = servicio.ocupacion >= 90;
+    const ofertas = franjasDe(servicio.id).franjas.map((f) => ({
+      servicio_ref: servicio.id,
+      franja_ref: f.franja_ref,
+      inicio: new Date(`${f.fecha}T${f.hora_inicio}:00-05:00`).toISOString(),
+      fin: new Date(`${f.fecha}T${f.hora_fin}:00-05:00`).toISOString(),
+      importe: (servicio.precio ?? 0).toFixed(2),
+      moneda: "COP",
+      unidad_tarifa: "POR_CUPO",
+      capacidad_total: 24,
+      disponibles: f.cupo,
+      requiere_aprobacion: true,
+      requiere_pago_externo: false,
+      plazo_pendiente_segundos: 1800,
+      politica: {
+        politica_ref: pol.politica_ref,
+        version: String(pol.version),
+        contenido: pol.descripcion["es-CO"],
+        horas_limite_cancelacion: 24,
+        penalidad_porcentaje: 20,
+      },
+      reservable: !restringido && f.cupo > 0,
+      motivo_no_reservable: restringido ? "Capacidad ambiental alcanzada: no se admiten nuevas reservas" : f.cupo > 0 ? null : "Sin cupos",
+      actualizada_en: new Date().toISOString(),
+    }));
+    return HttpResponse.json({ servicio_ref: servicio.id, ofertas });
   }),
 
   http.post(gw("/reservas"), async ({ request }) => {
