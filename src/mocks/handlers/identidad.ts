@@ -9,7 +9,7 @@ const consentimientos = new Map<string, Record<Finalidad, boolean>>();
 const preferencias = new Map<string, Record<string, unknown>>();
 const intereses = new Map<string, string[]>();
 const perfiles = new Map<string, Record<string, unknown>>();
-const arco: { id: string; owner: string; tipo: string; detalle?: string; estado: string; paso_actual: number; fecha_solicitud: string }[] = [];
+const arco: { solicitud_ref: string; usuario_ref: string; tipo: string; detalle: Record<string, unknown> | null; estado: string; fecha_recepcion: string; fecha_actualizacion: string; pasos: { paso: string; marca_temporal: string; responsable: string | null; resultado: string | null }[] }[] = [];
 
 const consentsOf = (sub: string) => {
   if (!consentimientos.has(sub)) consentimientos.set(sub, { TRATAMIENTO: true, COMERCIAL: false, PERFILADO: true });
@@ -109,7 +109,7 @@ export const identidadHandlers = [
   http.get(gw("/identidad/usuarios/actual/preferencias"), ({ request }) => {
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
-    return HttpResponse.json({ idioma_preferido: "es-CO", canal_autorizado: "EMAIL", idioma_autorizado: "es-CO", ...preferencias.get(c.sub) });
+    return HttpResponse.json({ idioma_preferido: "es-CO", canal_autorizado: "CORREO", idioma_autorizado: "es-CO", ...preferencias.get(c.sub) });
   }),
   http.put(gw("/identidad/usuarios/actual/preferencias"), async ({ request }) => {
     const c = claimsOf(request);
@@ -150,28 +150,33 @@ export const identidadHandlers = [
   }),
 
   // ── ARCO (Ley 1581) ─────────────────────────────────────────────────────────────────────────
+  // Forma real de M7 (`SolicitudArcoRequest`/`SolicitudArcoResponse`): detalle es un objeto y el avance son pasos[].
   http.post(gw("/identidad/usuarios/actual/solicitudes-arco"), async ({ request }) => {
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
-    const body = (await request.json()) as { tipo: string; detalle?: string };
-    const row = { id: crypto.randomUUID(), owner: c.sub, tipo: body.tipo, detalle: body.detalle, estado: "RECIBIDA", paso_actual: 1, fecha_solicitud: new Date().toISOString() };
+    const body = (await request.json()) as { tipo: string; detalle?: unknown };
+    if (body.detalle != null && (typeof body.detalle !== "object" || Array.isArray(body.detalle))) {
+      return HttpResponse.json(errorBody(request, "CUERPO_INVALIDO", "El cuerpo de la solicitud no es válido"), { status: 400 });
+    }
+    const ahora = new Date().toISOString();
+    const row = { solicitud_ref: crypto.randomUUID(), usuario_ref: c.sub, tipo: body.tipo, detalle: (body.detalle ?? null) as Record<string, unknown> | null, estado: "RECIBIDA", fecha_recepcion: ahora, fecha_actualizacion: ahora, pasos: [{ paso: "RECEPCION", marca_temporal: ahora, responsable: null, resultado: null }] };
     arco.unshift(row);
-    return HttpResponse.json(row, { status: 201 });
+    return HttpResponse.json({ mensaje: "Solicitud registrada", solicitud_ref: row.solicitud_ref }, { status: 201 });
   }),
   http.get(gw("/identidad/usuarios/actual/solicitudes-arco"), ({ request }) => {
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
-    const mine = arco.filter((a) => a.owner === c.sub);
+    const mine = arco.filter((a) => a.usuario_ref === c.sub);
     if (mine.length === 0) {
-      mine.push({ id: "arco-demo-1", owner: c.sub, tipo: "ACCESO", estado: "EN_REVISION", paso_actual: 3, fecha_solicitud: new Date(Date.now() - 4 * 86_400_000).toISOString(), detalle: "Quiero conocer qué datos tienen sobre mí." });
+      const f = new Date(Date.now() - 4 * 86_400_000).toISOString();
+      mine.push({ solicitud_ref: "arco-demo-1", usuario_ref: c.sub, tipo: "ACCESO", estado: "EN_REVISION", fecha_recepcion: f, fecha_actualizacion: f, detalle: { descripcion: "Quiero conocer qué datos tienen sobre mí." }, pasos: [{ paso: "RECEPCION", marca_temporal: f, responsable: null, resultado: null }, { paso: "VALIDACION", marca_temporal: f, responsable: null, resultado: null }, { paso: "REVISION", marca_temporal: f, responsable: null, resultado: null }] });
     }
     return HttpResponse.json(mine);
   }),
   http.get(gw("/identidad/usuarios/actual/solicitudes-arco/:id"), ({ request, params }) => {
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
-    const row = arco.find((a) => a.id === params.id) ?? { id: params.id, tipo: "ACCESO", estado: "EN_REVISION", paso_actual: 3, fecha_solicitud: new Date().toISOString() };
-    return HttpResponse.json(row);
+    return HttpResponse.json(arco.find((a) => a.solicitud_ref === params.id) ?? {});
   }),
   http.get(gw("/identidad/usuarios/actual/exportacion-datos"), ({ request }) => {
     if (!claimsOf(request)) return unauthorized(request);

@@ -98,9 +98,9 @@ function PreferenciasTab() {
       <SelectField label={t("language")} name="idioma_preferido" defaultValue={q.data.idioma_preferido}>
         {LOCALES.map((l) => <option key={l} value={l}>{tl(l)}</option>)}
       </SelectField>
-      <SelectField label={t("channel")} name="canal_autorizado" defaultValue={String(q.data.canal_autorizado ?? "EMAIL")} hint={t("channelHint")}>
-        <option value="EMAIL">{t("email")}</option>
-        <option value="NINGUNO">{t("none")}</option>
+      {/* M7: en el piloto el único canal autorizado es CORREO (otro valor responde 400). */}
+      <SelectField label={t("channel")} name="canal_autorizado" defaultValue="CORREO" hint={t("channelHint")}>
+        <option value="CORREO">{t("email")}</option>
       </SelectField>
       <Button type="submit" loading={save.isPending}>{tc("save")}</Button>
     </form>
@@ -216,7 +216,8 @@ function ArcoTab() {
   const q = useQuery({ queryKey: ["arco"], queryFn: async () => (await api.get<SolicitudArco[]>(routes.identidad.arco)).data });
   const [errors, setErrors] = useState<FieldErrors>({});
   const create = useMutation({
-    mutationFn: async (body: { tipo: string; detalle: string }) => (await api.post<SolicitudArco>(routes.identidad.arco, { body })).data,
+    // M7 (`SolicitudArcoRequest`): { tipo, detalle: { ... } } — el detalle es un objeto.
+    mutationFn: async (body: { tipo: string; detalle: string }) => (await api.post<{ solicitud_ref: string }>(routes.identidad.arco, { body: { tipo: body.tipo, detalle: { descripcion: body.detalle } } })).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["arco"] });
       useUiStore.getState().push({ tone: "success", message: t("created") });
@@ -251,13 +252,13 @@ function ArcoTab() {
         {q.data?.length === 0 && <StatusBlock kind="empty" title={t("none")} />}
         <ul role="list" className="mt-4 divide-y divide-ink/15 border-y border-ink/15">
           {q.data?.map((s) => (
-            <li key={s.id} className="py-5">
+            <li key={s.solicitud_ref} className="py-5">
               <p className="flex flex-wrap items-center justify-between gap-2">
                 <strong>{t(`types.${s.tipo}`)}</strong>
-                <span className="meta">{formatDate(s.fecha_solicitud, locale)} · <StatusTag tone={s.estado === "CERRADA" ? "good" : "info"}>{s.estado}</StatusTag></span>
+                <span className="meta">{formatDate(s.fecha_recepcion, locale)} · <StatusTag tone={s.estado === "CERRADA" ? "good" : "info"}>{s.estado}</StatusTag></span>
               </p>
-              {s.detalle && <p className="mt-1 text-ink/90">{s.detalle}</p>}
-              <div className="mt-3"><Stepper label={t("progress")} steps={steps} current={s.paso_actual ?? 1} /></div>
+              {typeof s.detalle?.descripcion === "string" && <p className="mt-1 text-ink/90">{s.detalle.descripcion}</p>}
+              <div className="mt-3"><Stepper label={t("progress")} steps={steps} current={Math.min(steps.length, Math.max(1, s.pasos?.length ?? 1))} /></div>
             </li>
           ))}
         </ul>

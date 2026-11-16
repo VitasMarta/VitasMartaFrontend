@@ -198,14 +198,15 @@ export interface ConsentimientoEstado {
   version_terminos?: string;
   fecha?: string;
 }
+/** M7 `SolicitudArcoResponse`: `detalle` es un objeto y el avance se lleva en `pasos[]`. */
 export interface SolicitudArco {
-  id: string;
+  solicitud_ref: string;
   tipo: "ACCESO" | "RECTIFICACION" | "CANCELACION" | "OPOSICION";
-  detalle?: string;
+  detalle?: Record<string, unknown> | null;
   estado: string;
-  /** SUPUESTO: paso actual (1..5) del trámite. */
-  paso_actual?: number;
-  fecha_solicitud?: string;
+  fecha_recepcion?: string;
+  fecha_actualizacion?: string;
+  pasos?: { paso: string; marca_temporal: string; responsable?: string | null; resultado?: string | null }[];
 }
 /** M7 `UsuarioListaResponse` (admin): estado ∈ PENDIENTE_VERIFICACION | ACTIVA | BLOQUEADA | SEUDONIMIZADA. */
 export interface UsuarioAdmin {
