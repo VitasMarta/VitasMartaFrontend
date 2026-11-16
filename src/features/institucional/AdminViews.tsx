@@ -596,7 +596,9 @@ export function ProviderTypesView() {
 }
 
 // ── Credenciales de integración (API keys por tenant) ───────────────────────────────────────────
-interface Credencial { id: string; tenant_id: string; prefijo: string; estado: string; creada: string }
+/** M4 `CredencialRespuesta` (la `clave` solo viene una vez, al crear). */
+interface Credencial { id: string; tenant_id: string; nombre: string; prefijo: string; scopes: string[]; activo: boolean; created_at: string; revoked_at?: string | null }
+const SCOPES_CREDENCIAL = ["disponibilidad:escribir", "disponibilidad:leer"] as const;
 export function CredentialsView() {
   const t = useTranslations("admin.credentials");
   const tc = useTranslations("common");
@@ -606,11 +608,15 @@ export function CredentialsView() {
   const [secret, setSecret] = useState<string | null>(null);
   useDocumentTitle(t("title"));
   const list = useQuery({ queryKey: ["m4", "credenciales", tenant], enabled: !!tenant, queryFn: async () => toList<Credencial>((await api.get(routes.prestadores.admin.credenciales, { tenantId: tenant })).data).items.filter((c) => c.tenant_id === tenant) });
+  // M4 (`CredencialCreacion`): { nombre, scopes[] } con scopes recurso:leer|escribir; revocar = POST …/revocar.
+  const [nombre, setNombre] = useState("");
+  const [scopes, setScopes] = useState<string[]>(["disponibilidad:escribir"]);
   const emit = useMutation({
-    mutationFn: async () => (await api.post<{ api_key: string }>(routes.prestadores.admin.credenciales, { tenantId: tenant, body: {} })).data,
-    onSuccess: (d) => { setSecret(d.api_key); qc.invalidateQueries({ queryKey: ["m4", "credenciales"] }); },
+    meta: { silent: true },
+    mutationFn: async () => (await api.post<{ clave: string }>(routes.prestadores.admin.credenciales, { tenantId: tenant, body: { nombre: nombre.trim(), scopes } })).data,
+    onSuccess: (d) => { setSecret(d.clave); setNombre(""); qc.invalidateQueries({ queryKey: ["m4", "credenciales"] }); },
   });
-  const revoke = useMutation({ mutationFn: async (id: string) => api.delete(routes.prestadores.admin.credencial(id), { tenantId: tenant }), onSuccess: () => { toast("success", t("revoked")); qc.invalidateQueries({ queryKey: ["m4", "credenciales"] }); } });
+  const revoke = useMutation({ mutationFn: async (id: string) => api.post(`${routes.prestadores.admin.credencial(id)}/revocar`, { tenantId: tenant }), onSuccess: () => { toast("success", t("revoked")); qc.invalidateQueries({ queryKey: ["m4", "credenciales"] }); } });
   return (
     <>
       <PageHeader title={t("title")} description={t("description")} />
@@ -619,8 +625,16 @@ export function CredentialsView() {
           <SelectField label={t("provider")} name="tenant" value={tenant} onChange={(e) => { setTenant(e.target.value); setSecret(null); }}>
             {providers.data?.items.map((p) => <option key={p.id} value={p.id}>{p.razon_social}</option>)}
           </SelectField>
-          <Button onClick={() => emit.mutate()} loading={emit.isPending} disabled={!tenant}>{t("emit")}</Button>
+          <TextField label={t("name")} name="nombre_credencial" value={nombre} onChange={(e) => setNombre(e.target.value)} hint={t("nameHint")} />
+          <fieldset className="flex flex-wrap gap-x-6">
+            <legend className="mb-1 text-sm font-semibold">{t("scopes")}</legend>
+            {SCOPES_CREDENCIAL.map((sc) => (
+              <CheckboxField key={sc} label={t(`scopeNames.${sc.replace(":", "_")}`)} name={`scope_${sc.replace(":", "_")}`} checked={scopes.includes(sc)} onChange={(e) => setScopes((v) => (e.target.checked ? [...v, sc] : v.filter((x) => x !== sc)))} />
+            ))}
+          </fieldset>
+          <Button onClick={() => emit.mutate()} loading={emit.isPending} disabled={!tenant || !nombre.trim() || scopes.length === 0}>{t("emit")}</Button>
         </div>
+        {emit.isError && <div className="mb-6"><ErrorNotice error={emit.error} referenceLabel={tc("reference")} /></div>}
         {secret && (
           <div role="alert" className="mb-6 border-y-2 border-emerald bg-mist px-4 py-4">
             <p className="font-semibold">{t("copyNow")}</p>
@@ -631,10 +645,10 @@ export function CredentialsView() {
         {list.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
         {list.data && (
           <EditorialTable caption={t("title")} rows={list.data} rowKey={(r) => r.id} empty={t("empty")} columns={[
-            { key: "p", header: t("prefix"), cell: (r) => <span className="font-mono">{r.prefijo}…</span> },
-            { key: "c", header: t("created"), cell: (r) => formatDateTime(r.creada, locale) },
-            { key: "e", header: tc("status"), cell: (r) => <StatusTag tone={r.estado === "activa" ? "good" : "bad"}>{t(`states.${r.estado}`)}</StatusTag> },
-            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.estado === "activa" && <button type="button" className="text-link font-semibold text-critical" onClick={() => revoke.mutate(r.id)}>{t("revoke")}<span className="sr-only"> {r.prefijo}</span></button> },
+            { key: "n", header: t("name"), cell: (r) => <span><strong>{r.nombre}</strong><span className="meta block font-mono text-ink/80">{r.prefijo}… · {r.scopes.join(", ")}</span></span> },
+            { key: "c", header: t("created"), cell: (r) => formatDateTime(r.created_at, locale) },
+            { key: "e", header: tc("status"), cell: (r) => <StatusTag tone={r.activo ? "good" : "bad"}>{t(`states.${r.activo ? "activa" : "revocada"}`)}</StatusTag> },
+            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.activo && <button type="button" className="text-link font-semibold text-critical" onClick={() => revoke.mutate(r.id)}>{t("revoke")}<span className="sr-only"> {r.prefijo}</span></button> },
           ]} />
         )}
       </Container>
