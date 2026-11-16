@@ -1,0 +1,62 @@
+{
+  "title": "Mi perfil",
+  "description": "Administra tus datos, preferencias, consentimientos y derechos como titular.",
+  "tabs": {
+    "profile": "Datos personales",
+    "preferences": "Preferencias",
+    "interests": "Intereses",
+    "consents": "Consentimientos",
+    "arco": "Derechos ARCO",
+    "data": "Mis datos"
+  },
+  "profile": {
+    "email": "Correo electrónico",
+    "emailHint": "El correo no se puede cambiar desde aquí.",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "phone": "Teléfono",
+    "country": "País de residencia",
+    "saved": "Tus datos fueron actualizados",
+    "errors": { "required": "Este campo es obligatorio" }
+  },
+  "preferences": {
+    "language": "Idioma de la interfaz",
+    "channel": "Canal de comunicación autorizado",
+    "channelHint": "Solo usaremos el canal que elijas para avisos de tus reservas.",
+    "email": "Correo electrónico",
+    "none": "Ninguno"
+  },
+  "interests": {
+    "legend": "Intereses turísticos",
+    "hint": "Estas categorías alimentan tus recomendaciones personalizadas.",
+    "saved": "Tus intereses fueron actualizados"
+  },
+  "consents": {
+    "intro": "Puedes cambiar estas autorizaciones en cualquier momento.",
+    "grantedMsg": "Activaste: {purpose}",
+    "revokedMsg": "Desactivaste: {purpose}",
+    "purposes": {
+      "TRATAMIENTO": { "title": "Tratamiento de datos personales", "hint": "Necesario para usar tu cuenta; no se puede desactivar sin eliminarla." },
+      "COMERCIAL": { "title": "Comunicaciones comerciales", "hint": "Ofertas y novedades de prestadores y de la plataforma." },
+      "PERFILADO": { "title": "Permitir recomendaciones personalizadas con IA", "hint": "Si lo apagas, verás sugerencias generales sin perfilado." }
+    }
+  },
+  "arco": {
+    "new": "Nueva solicitud",
+    "type": "Tipo de derecho",
+    "types": { "ACCESO": "Acceso", "RECTIFICACION": "Rectificación", "CANCELACION": "Cancelación", "OPOSICION": "Oposición" },
+    "detail": "Detalle de tu solicitud",
+    "detailHint": "Describe qué datos o tratamiento te interesa.",
+    "submit": "Enviar solicitud",
+    "requests": "Mis solicitudes",
+    "none": "Aún no has registrado solicitudes.",
+    "created": "Registramos tu solicitud ARCO",
+    "progress": "Progreso del trámite",
+    "steps": { "1": "Recibida", "2": "Identidad verificada", "3": "En revisión", "4": "Resuelta", "5": "Cerrada" },
+    "errors": { "detail": "Describe tu solicitud con al menos 10 caracteres" }
+  },
+  "data": {
+    "body": "Descarga un PDF legible con los datos personales que tenemos sobre ti.",
+    "download": "Descargar mis datos (PDF)"
+  }
+}

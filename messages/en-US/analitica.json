@@ -1,0 +1,59 @@
+{
+  "title": "Tourism analytics",
+  "description": "Demand, occupancy and trends of Santa Marta tourism offer.",
+  "period": "Period",
+  "compareWith": "Compare with",
+  "none": "No comparison",
+  "month": "Month (occupancy)",
+  "occupancy": { "title": "Occupancy rate", "rate": "Occupancy rate", "base": "Past confirmed bookings" },
+  "demand": {
+    "topConsulted": "Most viewed",
+    "attractions": "Most viewed attractions",
+    "activities": "Most booked activities",
+    "peaks": "High-demand periods",
+    "label": "Item",
+    "consultations": "Views",
+    "bookings": "Bookings"
+  },
+  "trend": { "title": "Booking trend", "chart": "Bookings per week", "value": "Bookings" },
+  "heat": { "title": "Visitor flow heat map", "description": "Relative intensity by time slot. Time zone: {tz}.", "attraction": "Attraction" },
+  "export": {
+    "title": "Export report",
+    "format": "Format",
+    "request": "Export {format}",
+    "states": { "ENCOLADO": "Report queued…", "GENERANDO": "Generating the report…" },
+    "failed": "We could not generate the report. Try again.",
+    "download": "Download ready report",
+    "expires": "Available until {date}",
+    "expired": "The file expired. Generate a new report."
+  },
+  "sustainability": {
+    "title": "Sustainability",
+    "description": "Read-only aggregated view of occupancy and alerts per attraction.",
+    "period": "Period",
+    "attractions": "Attractions",
+    "peak": "Peak occupancy",
+    "preventive": "Preventive alerts",
+    "critical": "Critical alerts",
+    "indicators": "Indicators per attraction",
+    "aggregateNote": "Aggregated data; time zone {tz}.",
+    "attraction": "Attraction",
+    "occupancy": "Peak occupancy",
+    "average": "Average",
+    "flow": "Tourist flow distribution"
+  },
+  "pipeline": {
+    "title": "Reports pipeline",
+    "lag": "Consumption lag",
+    "pending": "Pending messages",
+    "lastReplay": "Last replay",
+    "queues": "Queues",
+    "queue": "Queue",
+    "replay": "Reprocess events (replay)",
+    "origin": "Origin",
+    "from": "From",
+    "to": "To",
+    "run": "Start replay",
+    "started": "Replay started: {count} estimated events"
+  }
+}

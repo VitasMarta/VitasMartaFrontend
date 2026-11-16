@@ -1,0 +1,97 @@
+{
+  "booking": {
+    "title": "Book spots",
+    "from": "From",
+    "perPerson": "per person",
+    "loginRequired": "Sign in as a tourist to book your spot.",
+    "loginToBook": "Sign in to book",
+    "onlyTourists": "Only tourist accounts can create bookings.",
+    "slotsLoading": "Loading available time slots…",
+    "noSlots": "There are no available time slots for now.",
+    "soldOut": "Sold out",
+    "spotsLeft": "{count, plural, one {# spot} other {# spots}}",
+    "quantity": "Number of spots",
+    "policy": "Cancellation policy",
+    "accept": "I accept the cancellation policy",
+    "submit": "Book spots",
+    "submitting": "Booking…",
+    "retryHint": "If the connection dropped, press the button again: your booking will not be duplicated.",
+    "errors": {
+      "slot": "Choose a time slot",
+      "quantity": "Enter between 1 and {max} spots",
+      "policy": "You must accept the cancellation policy",
+      "noPolicy": "We could not load the cancellation policy. Reload the page."
+    }
+  },
+  "countdown": {
+    "title": "Your spot is on hold",
+    "expired": "The hold time has ended",
+    "lastMinute": "Less than one minute left",
+    "remaining": "Time left: {clock}"
+  },
+  "states": {
+    "CONFIRMADA": "Confirmed",
+    "PENDIENTE_CONFIRMACION": "Pending confirmation",
+    "PENDIENTE": "Pending",
+    "CANCELADA": "Cancelled",
+    "RECHAZADA": "Rejected",
+    "MODIFICADA": "Modified",
+    "EXPIRADA": "Expired",
+    "CHECK_IN": "Checked in"
+  },
+  "list": {
+    "title": "My bookings",
+    "description": "Review, change or cancel your bookings and download your vouchers.",
+    "tabs": { "ACTIVAS": "Active", "PASADAS": "Past", "CANCELADAS": "Cancelled" },
+    "empty": {
+      "ACTIVAS": "You have no active bookings.",
+      "PASADAS": "You have no past bookings yet.",
+      "CANCELADAS": "You have no cancelled bookings."
+    },
+    "code": "Code",
+    "service": "Service",
+    "date": "Date",
+    "spots": "Spots",
+    "total": "Total"
+  },
+  "detail": {
+    "title": "Booking details",
+    "back": "← Back to my bookings",
+    "voucher": "Download voucher",
+    "modify": "Change",
+    "cancel": "Cancel booking",
+    "code": "Code",
+    "penalty": "A {pct}% penalty was applied for cancelling outside the free window.",
+    "noPenalty": "Cancelled without penalty.",
+    "start": "Start",
+    "end": "End",
+    "spots": "Spots",
+    "total": "Total",
+    "policy": "Cancellation policy",
+    "original": "Original booking",
+    "replacement": "Replaced by"
+  },
+  "cancel": {
+    "title": "Cancel booking",
+    "generic": "Review this booking cancellation policy before continuing.",
+    "reason": "Reason for cancelling",
+    "reasonRequired": "Briefly tell us the reason",
+    "confirm": "Confirm cancellation",
+    "done": "Your booking was cancelled without penalty.",
+    "donePenalty": "Your booking was cancelled with a {pct}% penalty."
+  },
+  "modify": {
+    "title": "Change booking",
+    "slot": "New time slot",
+    "choose": "Choose a time slot",
+    "quantity": "Number of spots",
+    "accept": "I accept the current cancellation policy",
+    "confirm": "Confirm change",
+    "done": "Booking changed. Your new code is {code}.",
+    "errors": {
+      "slot": "Choose a time slot",
+      "quantity": "Enter at least 1 spot",
+      "policy": "You must accept the policy"
+    }
+  }
+}
