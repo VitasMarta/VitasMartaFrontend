@@ -26,6 +26,12 @@ const C = {
   warn: rgb(token("color-warn")),
   warnText: rgb(token("color-warn-text")),
   crit: rgb(token("color-crit")),
+  action: rgb(token("color-accion")),
+  actionStrong: rgb(token("color-accion-fuerte")),
+  onAction: rgb(token("color-sobre-accion")),
+  card: rgb(token("color-tarjeta")),
+  page: rgb(token("color-pagina")),
+  line: rgb(token("color-linea")),
 };
 
 // [descripción, primer plano, fondo, mínimo]  (4.5 = texto normal · 3 = texto grande / componentes de UI)
@@ -50,6 +56,22 @@ const PAIRS = [
   ["Anillo de foco Tinta sobre Base", C.ink, C.base, 3],
   ["Anillo de foco Tinta sobre Rosa Niebla", C.ink, C.mist, 3],
   ["Anillo de foco Rosa Niebla sobre Tinta (cabecera/pie)", C.mist, C.ink, 3],
+  // Rediseño con tarjetas
+  ["Texto sobre botón de acción", C.onAction, C.action, 4.5],
+  ["Texto sobre botón de acción (hover)", C.onAction, C.actionStrong, 4.5],
+  ["Enlace de acción sobre tarjeta", C.action, C.card, 4.5],
+  ["Enlace de acción sobre página", C.action, C.page, 4.5],
+  ["Texto Tinta sobre tarjeta", C.ink, C.card, 4.5],
+  ["Texto Tinta sobre página", C.ink, C.page, 4.5],
+  ["Texto Tinta/80 sobre tarjeta (metadatos)", blend(C.ink, C.card, 0.8), C.card, 4.5],
+  ["Texto Esmeralda-texto sobre tarjeta", C.emeraldText, C.card, 4.5],
+  ["Texto Coral sobre tarjeta", C.crit, C.card, 4.5],
+  ["Texto Ámbar-texto sobre tarjeta", C.warnText, C.card, 4.5],
+  ["Marco Esmeralda del buscador sobre tarjeta", C.emerald, C.card, 3],
+  ["Texto blanco sobre Tinta (cabecera)", C.onAction, C.ink, 4.5],
+  ["Anillo de foco Tinta sobre tarjeta", C.ink, C.card, 3],
+  ["Borde de campo Tinta/60 sobre tarjeta", blend(C.ink, C.card, 0.6), C.card, 3],
+  ["Texto de ayuda Tinta/70 sobre tarjeta (placeholder)", blend(C.ink, C.card, 0.7), C.card, 4.5],
 ];
 
 let failed = 0;

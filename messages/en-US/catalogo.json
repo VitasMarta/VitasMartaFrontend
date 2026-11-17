@@ -21,6 +21,7 @@
     "explore": "Explore destination"
   },
   "search": {
+    "apply": "Apply filters",
     "title": "Explore the catalog",
     "description": "Filter by category, price or proximity. Your filters are kept when you change the order.",
     "text": "Search",
@@ -92,5 +93,8 @@
     "title": "Less crowded alternatives",
     "currentOccupancy": "Current occupancy of this destination: {value}%",
     "view": "View alternative"
-  }
+  },
+  "card": {"from":"From","perPerson":"per person","viewAvailability":"See availability","noPrice":"Ask for the price","photoOf":"Photo of {name}","noPhoto":"No photos yet"},
+  "bar": {"where":"Where do you want to go?","wherePlaceholder":"Tayrona, Minca, museums, beaches…","category":"Category","anyCategory":"All categories","submit":"Search"},
+  "layout": {"filterBy":"Filter by","budget":"Your budget (COP)","found":"{count, plural, =0 {No destinations} one {# destination found} other {# destinations found}}","breadcrumbHome":"Home","breadcrumbSearch":"Search results","heroKicker":"Santa Marta · Colombia","bookNow":"Book now","viewMap":"View on map","highlights":"Highlights","about":"About this destination","moreTitle":"More destinations for you","location":"Location"}
 }

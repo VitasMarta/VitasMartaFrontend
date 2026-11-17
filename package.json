@@ -11,11 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "pnpm build && playwright test",
-    "check:no-cards": "node scripts/check-no-cards.mjs",
     "check:gateway-only": "node scripts/check-gateway-only.mjs",
     "check:palette": "node scripts/check-palette.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
-    "check": "pnpm lint && pnpm typecheck && pnpm check:no-cards && pnpm check:gateway-only && pnpm check:palette && pnpm check:contrast && pnpm test"
+    "check": "pnpm lint && pnpm typecheck && pnpm check:gateway-only && pnpm check:palette && pnpm check:contrast && pnpm test"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",

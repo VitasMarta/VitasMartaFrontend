@@ -4,14 +4,15 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { formatDateTime, localized } from "@/core/format";
-import { usePathname, useRouter } from "@/core/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/core/i18n/navigation";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
 import { SelectField, TextField } from "@/shared/ui/forms";
-import { Band, Container, PageHeader } from "@/shared/ui/layout";
+import { Container } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { useBusqueda, useCategorias, type BusquedaFiltros } from "./api";
-import { CatalogRows } from "./components";
+import { ResultadoCard } from "./cards";
+import { SearchBar } from "./SearchBar";
 
 const ORDERS: NonNullable<BusquedaFiltros["orden"]>[] = ["relevancia", "nombre", "distancia", "precio", "popularidad", "sostenibilidad"];
 
@@ -43,6 +44,7 @@ function serialize(f: BusquedaFiltros): string {
 /** Catálogo (M2): filtros en la URL, cambiar `orden` conserva los filtros activos (RF-01-6). */
 export function SearchView() {
   const t = useTranslations("catalogo.search");
+  const tl = useTranslations("catalogo.layout");
   const tc = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
@@ -104,32 +106,78 @@ export function SearchView() {
 
   return (
     <>
-      <PageHeader title={t("title")} description={t("description")} />
+      <section className="on-ink bg-ink pb-12 pt-4 text-on-action">
+        <Container>
+          <h1 className="sr-only">{t("title")}</h1>
+        </Container>
+      </section>
+      <Container className="-mt-10">
+        <SearchBar
+          texto={filtros.texto}
+          categoria={filtros.categorias?.length === 1 ? filtros.categorias[0] : undefined}
+          onSearch={(v) => apply({ texto: v.texto, categorias: v.categoria ? [v.categoria] : [] })}
+        />
+      </Container>
 
-      <Band tone="base" className="border-b border-ink/15">
-        <Container className="py-6">
-          <form key={formKey} onSubmit={onSubmit} role="search" aria-label={t("title")} className="grid gap-4 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end">
-            <TextField label={t("text")} name="texto" type="search" defaultValue={filtros.texto} placeholder={t("textPlaceholder")} />
-            <TextField label={t("priceMin")} name="precio_minimo" type="number" min={0} step={1000} defaultValue={filtros.precio_minimo} />
-            <TextField label={t("priceMax")} name="precio_maximo" type="number" min={0} step={1000} defaultValue={filtros.precio_maximo} />
+      <Container className="pt-5">
+        <nav aria-label="breadcrumb" className="meta">
+          <ol className="flex flex-wrap items-center gap-2 text-ink/80">
+            <li><Link href="/" className="text-link">{tl("breadcrumbHome")}</Link></li>
+            <li aria-hidden="true">›</li>
+            <li aria-current="page">{tl("breadcrumbSearch")}</li>
+          </ol>
+        </nav>
+      </Container>
+
+      <Container className="grid gap-6 py-5 lg:grid-cols-[280px_1fr]">
+        {/* ── Filtros ── */}
+        <aside aria-labelledby="filtros-title" className="card h-fit self-start">
+          <h2 id="filtros-title" className="border-b border-line px-4 py-3 !text-lg">{tl("filterBy")}</h2>
+          <form key={formKey} onSubmit={onSubmit} aria-label={tl("filterBy")} className="space-y-4 border-b border-line p-4">
+            <p className="font-semibold">{tl("budget")}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <TextField label={t("priceMin")} name="precio_minimo" type="number" min={0} step={1000} defaultValue={filtros.precio_minimo} />
+              <TextField label={t("priceMax")} name="precio_maximo" type="number" min={0} step={1000} defaultValue={filtros.precio_maximo} />
+            </div>
             <TextField label={t("radius")} name="radio_km" type="number" min={1} defaultValue={filtros.radio_km} hint={filtros.lat ? t("locationActive") : undefined} />
-            <Button type="submit">{tc("search")}</Button>
+            <input type="hidden" name="texto" value={filtros.texto ?? ""} />
+            <Button type="submit" variant="secondary" className="w-full">{t("apply")}</Button>
+            <Button variant="ghost" onClick={useLocation} loading={locating} className="w-full">
+              {locating ? t("locating") : t("useLocation")}
+            </Button>
+            {geoError && (
+              <p role="alert" className="text-sm font-medium text-critical">
+                {geoError}
+              </p>
+            )}
           </form>
+          <fieldset className="min-w-0 p-4">
+            <legend className="mb-2 px-0 font-semibold">{t("categories")}</legend>
+            <div className="flex flex-col">
+              {categorias.data?.map((c) => (
+                <label key={c.slug} className="inline-flex min-h-11 cursor-pointer items-center gap-3">
+                  <input type="checkbox" className="size-5 accent-action" checked={cats.includes(c.slug)} onChange={() => toggleCategoria(c.slug)} />
+                  {localized(c.nombre, locale)}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {hasFilters && (
+            <div className="border-t border-line p-4">
+              <Button variant="ghost" className="w-full" onClick={() => router.replace(pathname, { scroll: false })}>
+                {t("clearAll")}
+              </Button>
+            </div>
+          )}
+        </aside>
 
-          <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
-            <fieldset className="min-w-0">
-              <legend className="mb-2 text-sm font-semibold">{t("categories")}</legend>
-              <div className="flex flex-wrap gap-x-6 gap-y-2">
-                {categorias.data?.map((c) => (
-                  <label key={c.slug} className="inline-flex min-h-11 cursor-pointer items-center gap-2">
-                    <input type="checkbox" className="size-5 accent-ink" checked={cats.includes(c.slug)} onChange={() => toggleCategoria(c.slug)} />
-                    {localized(c.nombre, locale)}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <div className="flex flex-wrap items-end gap-4">
+        {/* ── Resultados ── */}
+        <section aria-labelledby="resultados-title" className="min-w-0">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 id="resultados-title" aria-live="polite" className="!text-2xl">
+              {first ? tl("found", { count: first.total }) : t("title")}
+            </h2>
+            <div className="flex flex-wrap items-end gap-3">
               <SelectField label={t("orderBy")} name="orden" value={filtros.orden ?? "relevancia"} onChange={(e) => apply({ orden: e.target.value as BusquedaFiltros["orden"] })}>
                 {ORDERS.map((o) => (
                   <option key={o} value={o}>
@@ -138,55 +186,43 @@ export function SearchView() {
                 ))}
               </SelectField>
               <label className="inline-flex min-h-11 items-center gap-2">
-                <input type="checkbox" className="size-5 accent-ink" checked={!!filtros.descendente} onChange={(e) => apply({ descendente: e.target.checked || undefined })} />
+                <input type="checkbox" className="size-5 accent-action" checked={!!filtros.descendente} onChange={(e) => apply({ descendente: e.target.checked || undefined })} />
                 {t("descending")}
               </label>
-              <Button variant="secondary" onClick={useLocation} loading={locating}>
-                {locating ? t("locating") : t("useLocation")}
-              </Button>
-              {hasFilters && (
-                <Button variant="ghost" onClick={() => router.replace(pathname, { scroll: false })}>
-                  {t("clearAll")}
-                </Button>
-              )}
             </div>
           </div>
-          {geoError && (
-            <p role="alert" className="mt-2 text-sm font-medium text-critical">
-              {geoError}
+          {first?.desde_cache && first.frescura_ultima_actualizacion && (
+            <p role="status" className="mt-3 border-l-4 border-preventive pl-3 text-sm font-medium">
+              {t("cacheNotice", { date: formatDateTime(first.frescura_ultima_actualizacion, locale) })}
             </p>
           )}
-        </Container>
-      </Band>
 
-      <Container className="py-6">
-        <p aria-live="polite" className="meta mb-3">
-          {first ? t("results", { count: first.total }) : " "}
-        </p>
-        {first?.desde_cache && first.frescura_ultima_actualizacion && (
-          <p role="status" className="mb-4 border-l-4 border-preventive pl-3 text-sm font-medium">
-            {t("cacheNotice", { date: formatDateTime(first.frescura_ultima_actualizacion, locale) })}
-          </p>
-        )}
+          <div className="mt-4">
+            {busqueda.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
+            {busqueda.isError && <ErrorNotice error={busqueda.error} referenceLabel={tc("reference")} />}
+            {first && items.length === 0 && (
+              <StatusBlock kind="empty" title={t("empty")}>
+                <p>{t("emptyHint")}</p>
+              </StatusBlock>
+            )}
+            {items.length > 0 && (
+              <ul role="list" aria-label={t("title")} className="space-y-4">
+                {items.map((item) => (
+                  <ResultadoCard key={item.id} item={item} />
+                ))}
+              </ul>
+            )}
+          </div>
 
-        {busqueda.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
-        {busqueda.isError && <ErrorNotice error={busqueda.error} referenceLabel={tc("reference")} />}
-        {first && items.length === 0 && (
-          <StatusBlock kind="empty" title={t("empty")}>
-            <p>{t("emptyHint")}</p>
-          </StatusBlock>
-        )}
+          {busqueda.hasNextPage && (
+            <div className="py-8 text-center">
+              <Button variant="secondary" onClick={() => busqueda.fetchNextPage()} loading={busqueda.isFetchingNextPage}>
+                {t("loadMore")}
+              </Button>
+            </div>
+          )}
+        </section>
       </Container>
-
-      {items.length > 0 && <CatalogRows items={items} label={t("title")} />}
-
-      {busqueda.hasNextPage && (
-        <Container className="py-8 text-center">
-          <Button variant="secondary" onClick={() => busqueda.fetchNextPage()} loading={busqueda.isFetchingNextPage}>
-            {t("loadMore")}
-          </Button>
-        </Container>
-      )}
     </>
   );
 }

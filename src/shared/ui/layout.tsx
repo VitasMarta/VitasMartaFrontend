@@ -11,13 +11,14 @@ export function Band({
   children,
   className,
   ...rest
-}: { tone?: "base" | "mist" | "ink"; children: ReactNode; className?: string } & React.HTMLAttributes<HTMLElement>) {
+}: { tone?: "base" | "mist" | "ink" | "card"; children: ReactNode; className?: string } & React.HTMLAttributes<HTMLElement>) {
   return (
     <section
       className={cn(
         "w-full",
         tone === "mist" && "bg-mist",
         tone === "base" && "bg-base",
+        tone === "card" && "bg-card",
         tone === "ink" && "on-ink bg-ink text-mist",
         className,
       )}
@@ -33,17 +34,17 @@ export function PageHeader({
   eyebrow,
   description,
   actions,
-  tone = "mist",
+  tone = "card",
 }: {
   title: ReactNode;
   eyebrow?: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
-  tone?: "base" | "mist";
+  tone?: "base" | "mist" | "card";
 }) {
   return (
-    <Band tone={tone} className="border-b border-ink/15">
-      <Container className="flex flex-col gap-4 py-10 sm:flex-row sm:items-end sm:justify-between">
+    <Band tone={tone} className="border-b border-line">
+      <Container className="flex flex-col gap-4 py-8 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           {eyebrow && <p className="meta mb-2 uppercase tracking-wider text-ink/80">{eyebrow}</p>}
           <h1>{title}</h1>

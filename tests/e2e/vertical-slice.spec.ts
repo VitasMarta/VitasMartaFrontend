@@ -20,17 +20,17 @@ async function loginAs(page: Page, correo: string) {
   await expect(page).not.toHaveURL(/\/login/);
 }
 
-test("portada: skip link, banda sin cards y sin violaciones de accesibilidad", async ({ page }) => {
+test("portada: skip link, buscador destacado, tarjetas de destinos y sin violaciones de accesibilidad", async ({ page }) => {
   await page.goto("/es-CO");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Santa Marta");
   // Skip link: primer elemento enfocable del DOM
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Saltar al contenido principal" })).toBeFocused();
-  await expect(page.getByRole("list", { name: "Destinos populares" }).getByRole("listitem")).toHaveCount(5);
-
-  // Zero-Cards: ningún elemento de la página proyecta sombra
-  const shadows = await page.evaluate(() => [...document.querySelectorAll("*")].filter((el) => getComputedStyle(el).boxShadow !== "none").length);
-  expect(shadows).toBe(0);
+  await expect(page.getByRole("search")).toBeVisible();
+  // Una tarjeta por destino (rejilla), cada una enlaza a su ficha.
+  const tarjetas = page.getByRole("list", { name: "Destinos populares" }).getByRole("listitem");
+  await expect(tarjetas).toHaveCount(8);
+  await expect(tarjetas.first().getByRole("link")).toHaveAttribute("href", /\/atractivo\//);
   // Tipografía Poppins en el cuerpo
   expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toMatch(/poppins/i);
   await expectNoA11yViolations(page);
@@ -38,7 +38,7 @@ test("portada: skip link, banda sin cards y sin violaciones de accesibilidad", a
 
 test("catálogo: filtros por URL, orden conserva filtros y paginación por cursor", async ({ page }) => {
   await page.goto("/es-CO/buscar");
-  await expect(page.getByText("8 resultados")).toBeVisible();
+  await expect(page.getByText("8 destinos encontrados")).toBeVisible();
 
   await page.getByRole("checkbox", { name: "Naturaleza" }).check();
   await expect(page).toHaveURL(/categorias=naturaleza/);

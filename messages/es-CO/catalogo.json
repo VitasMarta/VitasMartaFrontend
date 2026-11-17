@@ -21,6 +21,7 @@
     "explore": "Explorar destino"
   },
   "search": {
+    "apply": "Aplicar filtros",
     "title": "Explorar el catálogo",
     "description": "Filtra por categoría, precio o cercanía. Tus filtros se conservan al cambiar el orden.",
     "text": "Buscar",
@@ -92,5 +93,8 @@
     "title": "Alternativas con menos congestión",
     "currentOccupancy": "Ocupación actual de este destino: {value} %",
     "view": "Ver alternativa"
-  }
+  },
+  "card": {"from":"Desde","perPerson":"por persona","viewAvailability":"Ver disponibilidad","noPrice":"Consulta el precio","photoOf":"Foto de {name}","noPhoto":"Sin fotos todavía"},
+  "bar": {"where":"¿A dónde quieres ir?","wherePlaceholder":"Tayrona, Minca, museos, playas…","category":"Categoría","anyCategory":"Todas las categorías","submit":"Buscar"},
+  "layout": {"filterBy":"Filtrar por","budget":"Tu presupuesto (COP)","found":"{count, plural, =0 {Sin destinos} one {# destino encontrado} other {# destinos encontrados}}","breadcrumbHome":"Inicio","breadcrumbSearch":"Resultados de la búsqueda","heroKicker":"Santa Marta · Colombia","bookNow":"Reserva ahora","viewMap":"Ver en el mapa","highlights":"Puntos fuertes","about":"Sobre este destino","moreTitle":"Más destinos para ti","location":"Ubicación"}
 }

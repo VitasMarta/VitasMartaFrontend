@@ -5,54 +5,42 @@ import { localized } from "@/core/format";
 import { Link } from "@/core/i18n/navigation";
 import { useSessionStore } from "@/core/auth/sessionStore";
 import { useDocumentTitle } from "@/shared/hooks";
-import { Button } from "@/shared/ui/Button";
 import { Icon } from "@/shared/ui/Icon";
-import { Band, Container } from "@/shared/ui/layout";
+import { Container } from "@/shared/ui/layout";
 import { StatusBlock } from "@/shared/ui/StatusBlock";
 import { useBusqueda, useCategorias } from "./api";
-import { CatalogRows, RecommendationsBand } from "./components";
+import { DestinoGrid } from "./cards";
+import { RecommendationsBand } from "./components";
+import { SearchBar } from "./SearchBar";
 
-/** Portada editorial (IU-01): hero + buscador, banda de IA (M6), categorías y destinos populares. */
+/** Portada: banda de marca con el buscador destacado, recomendaciones IA (M6), categorías y destinos (M2). */
 export function HomeView() {
   const t = useTranslations("catalogo.home");
+  const tl = useTranslations("catalogo.layout");
   const tc = useTranslations("common");
   const locale = useLocale();
   const status = useSessionStore((s) => s.status);
   const categorias = useCategorias();
-  const popular = useBusqueda({ orden: "popularidad" }, 5);
+  const popular = useBusqueda({ orden: "popularidad" }, 8);
   useDocumentTitle(t("title"));
 
   return (
     <>
-      <Band tone="mist">
-        <Container className="grid gap-8 py-14 lg:grid-cols-[3fr_2fr] lg:items-end">
-          <div>
-            <p className="meta uppercase tracking-wider text-ink/80">Santa Marta · Colombia</p>
-            <h1 className="mt-3">{t("title")}</h1>
-            <p className="mt-4 max-w-2xl text-lg">{t("subtitle")}</p>
-          </div>
-          <form action={`/${locale}/buscar`} method="get" role="search" aria-label={t("searchLabel")}>
-            <label htmlFor="home-search" className="block text-sm font-semibold">
-              {t("searchLabel")}
-            </label>
-            <div className="mt-2 flex gap-2">
-              <input
-                id="home-search"
-                name="texto"
-                type="search"
-                placeholder={t("searchPlaceholder")}
-                className="min-h-11 w-full border-b-2 border-ink bg-base px-3 py-2 placeholder:text-ink/60"
-              />
-              <Button type="submit">{tc("search")}</Button>
-            </div>
-          </form>
+      {/* Continúa el color de la cabecera; el buscador se monta sobre el borde inferior de la banda. */}
+      <section className="on-ink bg-ink pb-16 text-on-action">
+        <Container className="pt-10">
+          <p className="meta uppercase tracking-wider">{tl("heroKicker")}</p>
+          <h1 className="mt-2 max-w-4xl !text-on-action">{t("title")}</h1>
+          <p className="mt-3 max-w-3xl text-lg">{t("subtitle")}</p>
         </Container>
-      </Band>
+      </section>
+      <Container className="-mt-10">
+        <SearchBar />
+      </Container>
 
-      <RecommendationsBand />
       {status === "anonymous" && (
         <Container className="pt-6">
-          <p className="inline-flex flex-wrap items-center gap-2 border-l-4 border-emerald pl-3">
+          <p className="card inline-flex flex-wrap items-center gap-2 px-4 py-3">
             <Icon name="spark" className="text-emerald-ink" />
             {t("loginForAi")}{" "}
             <Link href="/login" className="text-link font-semibold">
@@ -62,14 +50,17 @@ export function HomeView() {
         </Container>
       )}
 
-      <Container className="py-10">
-        <h2 className="border-t-2 border-ink pt-4 !text-2xl">{t("categoriesTitle")}</h2>
-        <ul role="list" className="mt-4 flex flex-wrap divide-x divide-ink/15 border-y border-ink/15">
+      <RecommendationsBand />
+
+      <Container className="pt-10">
+        <h2 className="!text-2xl">{t("categoriesTitle")}</h2>
+        <ul role="list" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {categorias.data
             ?.filter((c) => c.primer_nivel)
             .map((c) => (
-              <li key={c.slug} className="flex-1">
-                <Link href={`/buscar?categorias=${c.slug}`} className="flex min-h-14 items-center justify-center px-6 py-3 text-center font-semibold hover:bg-mist">
+              <li key={c.slug}>
+                <Link href={`/buscar?categorias=${c.slug}`} className="card card-hover flex min-h-16 items-center justify-center gap-2 px-4 py-3 text-center font-semibold">
+                  <Icon name="leaf" className="text-emerald-ink" />
                   {localized(c.nombre, locale)}
                 </Link>
               </li>
@@ -77,9 +68,9 @@ export function HomeView() {
         </ul>
       </Container>
 
-      <section aria-labelledby="popular-title">
+      <section aria-labelledby="popular-title" className="pt-10">
         <Container>
-          <div className="flex flex-wrap items-end justify-between gap-3 border-t-2 border-ink pt-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="popular-title" className="!text-2xl">
                 {t("popularTitle")}
@@ -90,11 +81,11 @@ export function HomeView() {
               {t("viewAll")}
             </Link>
           </div>
+          <div className="mt-4">
+            {popular.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
+            {popular.data && <DestinoGrid items={popular.data.pages[0].items} label={t("popularTitle")} />}
+          </div>
         </Container>
-        <div className="mt-4">
-          {popular.isPending && <Container><StatusBlock kind="loading" title={tc("loading")} /></Container>}
-          {popular.data && <CatalogRows items={popular.data.pages[0].items} label={t("popularTitle")} />}
-        </div>
       </section>
     </>
   );

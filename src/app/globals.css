@@ -15,9 +15,23 @@
   /* Derivados autorizados (RNF-07): versiones oscurecidas SOLO para texto pequeño / iconos. */
   --color-emerald-text: #006b3f;
   --color-warn-text: #92400e;
+
+  /* Rediseño (tarjetas): azul de acción para botones y enlaces, superficie de tarjeta y líneas suaves. */
+  --color-accion: #1a5fd6;
+  --color-accion-fuerte: #144aa8;
+  --color-sobre-accion: #ffffff;
+  --color-tarjeta: #ffffff;
+  --color-linea: #d5dae3;
+  --color-pagina: #f5f6f8;
 }
 
 @theme inline {
+  --color-action: var(--color-accion);
+  --color-action-strong: var(--color-accion-fuerte);
+  --color-on-action: var(--color-sobre-accion);
+  --color-card: var(--color-tarjeta);
+  --color-line: var(--color-linea);
+  --color-page: var(--color-pagina);
   --color-mist: var(--color-primary-mist);
   --color-ink: var(--color-secondary-ink);
   --color-emerald: var(--color-tertiary-emerald);
@@ -34,7 +48,7 @@ html {
 }
 
 body {
-  background-color: var(--color-surface-base);
+  background-color: var(--color-pagina);
   color: var(--color-secondary-ink);
   font-family: var(--font-poppins), sans-serif;
   font-size: 1rem;
@@ -80,6 +94,7 @@ h4 {
   font-variant-numeric: tabular-nums;
 }
 a.text-link {
+  color: var(--color-accion);
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
@@ -113,7 +128,30 @@ a.text-link:hover {
   top: 0.5rem;
 }
 
-/* ── Fila editorial (Zero-Cards): solo línea divisoria + fondo en hover/foco ──── */
+/* ── Tarjetas (rediseño): superficie blanca, borde suave, esquinas redondeadas y sombra leve ── */
+.card {
+  background-color: var(--color-tarjeta);
+  border: 1px solid var(--color-linea);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(29, 43, 92, 0.06), 0 2px 8px rgba(29, 43, 92, 0.06);
+}
+.card-hover {
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.card-hover:hover,
+.card-hover:focus-within {
+  border-color: var(--color-accion);
+  box-shadow: 0 4px 16px rgba(29, 43, 92, 0.14);
+}
+/* Marco del buscador destacado (Esmeralda: componente de UI, contraste >= 3:1 sobre blanco). */
+.search-frame {
+  background-color: var(--color-tertiary-emerald);
+  border-radius: 0.6rem;
+  padding: 4px;
+  box-shadow: 0 6px 20px rgba(29, 43, 92, 0.18);
+}
+
+/* ── Fila editorial (paneles internos): solo línea divisoria + fondo en hover/foco ──── */
 .editorial-row {
   border-bottom: 1px solid rgba(29, 43, 92, 0.15);
   transition: background-color 150ms ease;

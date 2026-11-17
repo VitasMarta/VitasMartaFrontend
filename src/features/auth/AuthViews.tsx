@@ -18,19 +18,23 @@ import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
 import { CheckboxField, ErrorSummary, TextField } from "@/shared/ui/forms";
 import { Icon } from "@/shared/ui/Icon";
-import { Container, PageHeader } from "@/shared/ui/layout";
+import { Container } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { PASSWORD_RULES, formValues, isStrongPassword, validate, type FieldErrors } from "@/shared/validate";
 
+/** Columna centrada y angosta (inicio de sesión, registro, verificación, recuperación). */
 function AuthShell({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  const t = useTranslations("auth.shell");
   useDocumentTitle(title);
   return (
-    <>
-      <PageHeader title={title} description={description} />
-      <Container className="py-10">
-        <div className="max-w-xl">{children}</div>
-      </Container>
-    </>
+    <Container className="py-12">
+      <div className="mx-auto max-w-md">
+        <h1 className="!text-3xl">{title}</h1>
+        {description && <p className="mt-3 text-ink/90">{description}</p>}
+        <div className="mt-6">{children}</div>
+        <p className="meta mt-10 border-t border-line pt-6 text-center text-ink/80">{t("legal")}</p>
+      </div>
+    </Container>
   );
 }
 
@@ -122,24 +126,28 @@ export function LoginView() {
           <TextField label={t("email")} name="correo" type="email" autoComplete="username" required error={errors.correo} />
           <TextField label={t("password")} name="password" type="password" autoComplete="current-password" required error={errors.password} />
           {failure != null && (locked ? <StatusBlock kind="error" title={t("locked")} /> : <ErrorNotice error={failure} referenceLabel={tc("reference")} />)}
-          <Button type="submit" loading={busy} className="w-full sm:w-auto">
+          <Button type="submit" loading={busy} className="w-full !min-h-12 text-lg">
             {busy ? t("submitting") : t("submit")}
           </Button>
-          <p className="text-sm">
+
+          <div className="flex items-center gap-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-line" />
+            <span className="text-sm text-ink/80">{t("or")}</span>
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <p className="sr-only">{t("or")}</p>
+          <div className="flex justify-center gap-4">
+            {(["google", "facebook"] as const).map((p) => (
+              <a key={p} href={`${BFF_BASE}${routes.identidad.oauthInicio(p)}`} className="card card-hover inline-flex min-h-16 min-w-24 flex-col items-center justify-center gap-1 px-4 font-semibold">
+                <span aria-hidden="true" className="text-2xl font-bold text-action">{p === "google" ? "G" : "f"}</span>
+                <span className="text-sm">{t(`oauth.${p}`)}</span>
+              </a>
+            ))}
+          </div>
+          <p className="text-center">
             <Link href="/recuperar" className="text-link font-semibold">{t("forgot")}</Link>
           </p>
-
-          <div className="border-t border-ink/15 pt-6">
-            <p className="mb-3 font-semibold">{t("or")}</p>
-            <div className="flex flex-wrap gap-3">
-              {(["google", "facebook"] as const).map((p) => (
-                <a key={p} href={`${BFF_BASE}${routes.identidad.oauthInicio(p)}`} className="inline-flex min-h-11 items-center border-2 border-ink px-5 font-semibold hover:bg-mist">
-                  {t(`oauth.${p}`)}
-                </a>
-              ))}
-            </div>
-          </div>
-          <p className="border-t border-ink/15 pt-6">
+          <p className="text-center">
             {t("noAccount")}{" "}
             <Link href="/registro" className="text-link font-semibold">{t("createAccount")}</Link>
           </p>
@@ -260,7 +268,7 @@ export function RegisterView() {
         </fieldset>
 
         {failure != null && !Object.keys(errors).length && <ErrorNotice error={failure} referenceLabel={tc("reference")} />}
-        <Button type="submit" loading={busy}>{busy ? t("submitting") : t("submit")}</Button>
+        <Button type="submit" loading={busy} className="w-full !min-h-12 text-lg">{busy ? t("submitting") : t("submit")}</Button>
         <p>
           {t("haveAccount")} <Link href="/login" className="text-link font-semibold">{t("goLogin")}</Link>
         </p>

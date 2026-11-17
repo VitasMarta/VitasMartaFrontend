@@ -14,7 +14,7 @@ interface FieldBase {
 const idOf = (name: string, id?: string) => id ?? `field-${name}`;
 
 const CONTROL =
-  "block w-full border-ink bg-base text-ink placeholder:text-ink/60 disabled:opacity-60 aria-[invalid=true]:border-critical";
+  "block w-full rounded-md border border-ink/60 bg-card text-ink placeholder:text-ink/70 hover:border-ink focus-visible:border-action disabled:opacity-60 aria-[invalid=true]:border-2 aria-[invalid=true]:border-critical";
 
 function FieldShell({
   label,
@@ -70,7 +70,7 @@ export function TextField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "border-b-2 px-2 py-2.5")}
+        className={cn(CONTROL, "min-h-11 px-3 py-2.5")}
       />
     </FieldShell>
   );
@@ -96,7 +96,7 @@ export function TextAreaField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "border-2 px-3 py-2")}
+        className={cn(CONTROL, "px-3 py-2")}
       />
     </FieldShell>
   );
@@ -122,7 +122,7 @@ export function SelectField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "border-2 px-2 py-2.5")}
+        className={cn(CONTROL, "min-h-11 px-3 py-2.5")}
       >
         {children}
       </select>

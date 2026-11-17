@@ -48,6 +48,11 @@ export interface ItemResultadoBusqueda {
   descripcion_corta?: Localized;
   categorias?: string[];
   precio?: number | { monto: number; moneda?: string } | null;
+  /** M2 real: rango de precios de las tarifas del prestador. */
+  precio_minimo?: number | null;
+  precio_maximo?: number | null;
+  lat?: number | null;
+  lng?: number | null;
   distancia_km?: number | null;
   imagen_url?: string | null;
   sostenibilidad?: { ocupacion_estimada?: number; nivel_saturacion?: NivelSaturacion } | number | null;

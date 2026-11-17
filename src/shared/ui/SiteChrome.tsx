@@ -12,7 +12,7 @@ import { canAccess, type Area } from "@/core/auth/rbacGuard";
 import { useSessionStore } from "@/core/auth/sessionStore";
 import { useUiStore } from "@/core/store/uiStore";
 import { cn } from "./cn";
-import { ButtonLink } from "./Button";
+import { ButtonLink, buttonClass } from "./Button";
 
 /** Enlace "Saltar al contenido principal": primer elemento del DOM (RNF-07-2). */
 export function SkipLink() {
@@ -58,8 +58,8 @@ export function LocaleSwitcher() {
           aria-pressed={l === locale}
           onClick={() => change(l)}
           className={cn(
-            "min-h-11 min-w-11 px-2 text-sm font-semibold uppercase tracking-wide hover:bg-mist/20",
-            l === locale ? "bg-mist text-ink hover:bg-mist" : "text-mist",
+            "min-h-10 min-w-10 rounded-md px-2 text-sm font-semibold uppercase tracking-wide hover:bg-on-action/10",
+            l === locale ? "bg-card text-ink hover:bg-card" : "text-on-action",
           )}
         >
           {l.slice(0, 2)}
@@ -111,55 +111,52 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="on-ink bg-ink text-mist">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-2 sm:px-6 lg:px-8">
-        <Link href="/" className="py-2 text-xl font-bold tracking-tight">
+    <header className="on-ink bg-ink text-on-action">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 pt-3 sm:px-6 lg:px-8">
+        <Link href="/" className="py-2 text-2xl font-bold tracking-tight">
           VITASMARTA
           <span className="sr-only"> — {t("home")}</span>
         </Link>
 
-        <nav aria-label={t("nav.label")} className="order-last w-full lg:order-none lg:w-auto">
-          <ul role="list" className="flex flex-wrap gap-x-1">
-            {visible.map((item) => (
-              <li key={item.key}>
-                <Link
-                  href={item.href}
-                  aria-current={isActive(item.href) ? "page" : undefined}
-                  className={cn(
-                    "inline-flex min-h-11 items-center px-3 text-sm font-semibold hover:bg-mist/20",
-                    isActive(item.href) && "underline decoration-2 underline-offset-8",
-                  )}
-                >
-                  {t(`nav.${item.key}`)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <LocaleSwitcher />
           {status === "authenticated" && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="min-h-11 border-2 border-mist px-4 text-sm font-semibold hover:bg-mist hover:text-ink"
-            >
+            <button type="button" onClick={onLogout} className={buttonClass("inverse", "!min-h-10 !py-1.5 text-sm")}>
               {t("nav.logout")}
             </button>
           )}
           {status === "anonymous" && (
             <>
-              <Link href="/login" className="inline-flex min-h-11 items-center px-3 text-sm font-semibold hover:bg-mist/20">
-                {t("nav.login")}
-              </Link>
-              <ButtonLink href="/registro" variant="secondary" className="!border-mist !text-mist hover:!bg-mist hover:!text-ink !py-1.5 text-sm">
+              <ButtonLink href="/registro" variant="inverse" className="!min-h-10 !bg-card !py-1.5 text-sm !text-action hover:!bg-page">
                 {t("nav.register")}
+              </ButtonLink>
+              <ButtonLink href="/login" variant="inverse" className="!min-h-10 !bg-card !py-1.5 text-sm !text-action hover:!bg-page">
+                {t("nav.login")}
               </ButtonLink>
             </>
           )}
         </div>
       </div>
+
+      {/* Navegación por áreas en "pastillas" (la activa con borde). */}
+      <nav aria-label={t("nav.label")} className="mx-auto max-w-7xl px-4 pb-3 pt-2 sm:px-6 lg:px-8">
+        <ul role="list" className="flex flex-wrap gap-2">
+          {visible.map((item) => (
+            <li key={item.key}>
+              <Link
+                href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold transition-colors",
+                  isActive(item.href) ? "border-on-action bg-on-action/10" : "border-transparent hover:bg-on-action/10",
+                )}
+              >
+                {t(`nav.${item.key}`)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </header>
   );
 }
@@ -167,7 +164,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   const t = useTranslations("common.footer");
   return (
-    <footer className="on-ink mt-16 bg-ink text-mist">
+    <footer className="on-ink mt-16 bg-ink text-on-action">
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 md:grid-cols-[2fr_1fr] lg:px-8">
         <div>
           <p className="text-lg font-bold">VITASMARTA</p>
@@ -175,7 +172,7 @@ export function SiteFooter() {
         </div>
         <p className="text-sm md:text-right">{t("data")}</p>
       </div>
-      <p className="border-t border-mist/30 px-4 py-4 text-center text-sm">{t("rights", { year: new Date().getFullYear() })}</p>
+      <p className="border-t border-on-action/30 px-4 py-4 text-center text-sm">{t("rights", { year: new Date().getFullYear() })}</p>
     </footer>
   );
 }
