@@ -101,6 +101,9 @@
     "tooLarge": "El archivo supera el máximo de {max} MB"
   },
   "slots": {
+    "noPolicyTitle": "Aún no puedes ofrecer horarios",
+    "noPolicyBody": "Para que los turistas puedan reservar estas franjas necesitas una política de cancelación. Puedes registrar las franjas desde ya, pero no se mostrarán como disponibles hasta que la guardes.",
+    "noPolicyLink": "Crear mi política de cancelación",
     "title": "Franjas de disponibilidad",
     "new": "Nueva franja",
     "edit": "Editar franja",
@@ -209,6 +212,7 @@
     "m9Value": "Reservas"
   },
   "business": {
+    "policyMissing": "Aún no tienes política de cancelación. Sin ella no puedes ofrecer horarios: tus franjas no se muestran como disponibles y los turistas no pueden reservar. Revisa los valores sugeridos y guárdalos.",
     "title": "Mi negocio",
     "description": "Perfil, reglas de confirmación y política de cancelación.",
     "tabs": { "profile": "Perfil", "booking": "Reservas", "policy": "Cancelación" },

@@ -17,15 +17,18 @@ export function Tabs({
   tabs,
   label,
   value,
+  defaultValue,
   onChange,
 }: {
   tabs: TabItem[];
   label: string;
   value?: string;
+  /** Pestaña inicial (no controlada); si no existe se usa la primera. */
+  defaultValue?: string;
   onChange?: (id: string) => void;
 }) {
   const base = useId();
-  const [internal, setInternal] = useState(tabs[0]?.id);
+  const [internal, setInternal] = useState(tabs.some((x) => x.id === defaultValue) ? defaultValue : tabs[0]?.id);
   const active = value ?? internal;
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
 

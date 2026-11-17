@@ -604,7 +604,7 @@ function PolicyTab() {
   return (
     <form key={d.version ?? "nueva"} className="max-w-2xl space-y-6" onSubmit={onSubmit}>
       {conflict && <ConflictStrip onReload={reload} />}
-      {q.data === null && <p role="status" className="border-l-4 border-ink pl-3">{t("notCreatedYet")}</p>}
+      {q.data === null && <p role="alert" className="border-l-4 border-preventive pl-3 font-semibold text-preventive-ink">{t("policyMissing")}</p>}
       <SelectField label={t("policyType")} name="tipo" defaultValue={d.tipo}>
         {["flexible", "moderada", "estricta"].map((x) => <option key={x} value={x}>{t(`policyTypes.${x}`)}</option>)}
       </SelectField>
@@ -624,11 +624,12 @@ function PolicyTab() {
 export function BusinessView() {
   const t = useTranslations("prestador.business");
   useDocumentTitle(t("title"));
+  const tab = useSearchParams().get("tab") ?? undefined;
   return (
     <RequireRole area="prestador">
       <PageHeader title={t("title")} description={t("description")} />
       <Container className="py-8">
-        <Tabs label={t("title")} tabs={[
+        <Tabs label={t("title")} defaultValue={tab} tabs={[
           { id: "perfil", label: t("tabs.profile"), content: <ProfileTab /> },
           { id: "reservas", label: t("tabs.booking"), content: <BookingConfigTab /> },
           { id: "politica", label: t("tabs.policy"), content: <PolicyTab /> },

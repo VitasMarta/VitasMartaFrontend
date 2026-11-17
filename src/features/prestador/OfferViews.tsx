@@ -16,6 +16,7 @@ import { Container, PageHeader } from "@/shared/ui/layout";
 import { Pagination } from "@/shared/ui/Pagination";
 import { SlideOver } from "@/shared/ui/SlideOver";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
+import { Icon } from "@/shared/ui/Icon";
 import { Tabs } from "@/shared/ui/Tabs";
 import {
   PAGE_SIZE,
@@ -28,6 +29,7 @@ import {
   useMultimediaActions,
   useMultimediaM4,
   useOferta,
+  usePoliticaCancelacion,
   subirMultimedia,
   type FranjaM4,
 } from "./api";
@@ -392,11 +394,27 @@ function MediaPanel({ content }: { content: Contenido }) {
   );
 }
 
+/** Sin política de cancelación M4 no ofrece las franjas a Reservas: el turista no ve horarios. */
+function SinPoliticaAviso() {
+  const t = useTranslations("prestador.slots");
+  return (
+    <div role="alert" className="mb-6 rounded-md border border-l-4 border-line border-l-preventive bg-card p-4">
+      <p className="flex items-center gap-2 font-semibold text-preventive-ink">
+        <Icon name="alert" />
+        {t("noPolicyTitle")}
+      </p>
+      <p className="mt-1 text-ink/90">{t("noPolicyBody")}</p>
+      <Link href="/mi-negocio?tab=politica" className="mt-3 inline-block font-semibold text-link">{t("noPolicyLink")}</Link>
+    </div>
+  );
+}
+
 function SlotsPanel({ content }: { content: Contenido }) {
   const t = useTranslations("prestador.slots");
   const tc = useTranslations("common");
   const locale = useLocale();
   const q = useFranjasM4(content.id);
+  const politica = usePoliticaCancelacion();
   const actions = useFranjaActions(content.id);
   const [panel, setPanel] = useState<{ mode: "new" } | { mode: "edit"; slot: FranjaM4 } | null>(null);
   const [error, setError] = useState<string>();
@@ -416,6 +434,7 @@ function SlotsPanel({ content }: { content: Contenido }) {
 
   return (
     <div>
+      {politica.data === null && <SinPoliticaAviso />}
       <div className="mb-4 flex justify-end"><Button onClick={() => setPanel({ mode: "new" })}>{t("new")}</Button></div>
       {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
       {q.data && (

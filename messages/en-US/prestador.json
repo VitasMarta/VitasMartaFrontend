@@ -101,6 +101,9 @@
     "tooLarge": "The file exceeds the {max} MB limit"
   },
   "slots": {
+    "noPolicyTitle": "You can't offer time slots yet",
+    "noPolicyBody": "Tourists can only book these time slots once you have a cancellation policy. You can register slots now, but they won't be shown as available until you save it.",
+    "noPolicyLink": "Create my cancellation policy",
     "title": "Availability time slots",
     "new": "New time slot",
     "edit": "Edit time slot",
@@ -209,6 +212,7 @@
     "m9Value": "Bookings"
   },
   "business": {
+    "policyMissing": "You don't have a cancellation policy yet. Without it you can't offer time slots: your slots are not shown as available and tourists can't book. Review the suggested values and save them.",
     "title": "My business",
     "description": "Profile, confirmation rules and cancellation policy.",
     "tabs": { "profile": "Profile", "booking": "Bookings", "policy": "Cancellation" },

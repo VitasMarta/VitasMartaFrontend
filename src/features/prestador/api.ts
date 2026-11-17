@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
 import { newClientKey } from "@/core/api/idempotency";
 import { routes } from "@/core/api/routes";
@@ -99,6 +100,25 @@ export function useMultimediaActions(id: string, version: number) {
     }),
   };
 }
+
+/**
+ * Política de cancelación del prestador; `null` si aún no la ha creado (M4 responde 404).
+ * Sin política M4 no publica la oferta de las franjas a M3, así que nadie puede reservarlas.
+ * Comparte la clave ["m4", "politica"] con el formulario de Mi negocio: al guardarla, el aviso
+ * desaparece sin recargar.
+ */
+export const usePoliticaCancelacion = () =>
+  useQuery({
+    queryKey: ["m4", "politica"],
+    queryFn: async (): Promise<Record<string, unknown> | null> => {
+      try {
+        return (await api.get<Record<string, unknown>>(routes.prestadores.politicaCancelacion)).data;
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null;
+        throw e;
+      }
+    },
+  });
 
 export interface FranjaM4 {
   id: string;
