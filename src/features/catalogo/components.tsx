@@ -116,7 +116,7 @@ export function Gallery({ media, name }: { media: MultimediaDTO[]; name: string 
 
 // ── Atributos dinámicos JSONB (M2 §8.1): solo se renderiza lo que existe ────────────────────────
 // Claves propias de la ficha y metadatos de la respuesta de M2 (idioma, frescura, caché): no son atributos del destino.
-const CORE_KEYS = new Set(["id", "tipo", "nombre", "descripcion", "categorias", "ubicacion", "precio", "sostenibilidad", "politica_cancelacion", "atributos", "idioma", "frescura", "desde_cache"]);
+const CORE_KEYS = new Set(["id", "tipo", "nombre", "descripcion", "categorias", "ubicacion", "precio", "sostenibilidad", "politica_cancelacion", "atributos", "multimedia", "idioma", "frescura", "desde_cache"]);
 
 export const isPresent = (v: unknown): boolean => {
   if (v === null || v === undefined || v === "") return false;
@@ -187,7 +187,7 @@ export function DynamicAttributes({ ficha }: { ficha: FichaCatalogo }) {
               <Icon name="check" className="shrink-0 text-emerald-ink" />
               {t.has(`attributes.${key}`) ? t(`attributes.${key}`) : prettyKey(key)}
             </dt>
-            <dd className="pl-7 text-ink/90">{format(value)}</dd>
+            <dd className="break-words pl-7 text-ink/90">{format(value)}</dd>
           </div>
         ))}
       </dl>
