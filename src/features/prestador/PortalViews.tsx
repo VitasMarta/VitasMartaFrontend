@@ -257,7 +257,7 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
           <p>{prestador.motivo_estado}</p>
         </div>
       )}
-      <ol className="divide-y divide-line rounded-md border border-line bg-card">
+      <ol className="divide-y divide-line rounded-md border border-line bg-card px-4">
         {historial.map((h, i) => (
           <li key={i} className="py-3"><strong>{t.has(`statuses.${h.estado_destino}`) ? t(`statuses.${h.estado_destino}`) : h.estado_destino}</strong> <span className="meta text-ink/80">· {formatDate(h.ocurrido_en, locale)}{h.motivo ? ` · ${h.motivo}` : ""}</span></li>
         ))}

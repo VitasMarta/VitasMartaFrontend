@@ -231,7 +231,7 @@ function EditorialPanel({ tipo, content }: { tipo: Tipo; content: Contenido }) {
       <section aria-labelledby="hist" className="card p-5 sm:p-6 card p-5 sm:p-6">
         <h2 id="hist" className="mb-1 !text-xl">{t("history")}</h2>
         {hist.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
-        <ol className="mt-3 divide-y divide-line rounded-md border border-line bg-card">
+        <ol className="mt-3 divide-y divide-line rounded-md border border-line bg-card px-4">
           {hist.data?.items.map((h, i) => (
             <li key={i} className="py-3">
               <p className="font-medium">{h.estado_origen} → {h.estado_destino}</p>
@@ -287,7 +287,7 @@ function MediaPanel({ content }: { content: Contenido }) {
     <div className="max-w-3xl space-y-6">
       {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
       {q.data?.length === 0 && <StatusBlock kind="empty" title={t("none")} />}
-      <ul role="list" className="divide-y divide-line rounded-md border border-line bg-card">
+      <ul role="list" className="divide-y divide-line rounded-md border border-line bg-card px-4">
         {q.data?.map((m, i) => (
           <li key={m.id} className="flex flex-wrap items-center gap-4 py-3">
             {m.tipo === "foto" ? (

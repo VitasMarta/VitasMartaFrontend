@@ -273,7 +273,7 @@ function ArcoTab() {
         {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
         {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
         {q.data?.length === 0 && <StatusBlock kind="empty" title={t("none")} />}
-        <ul role="list" className="mt-4 divide-y divide-line rounded-md border border-line bg-card">
+        <ul role="list" className="mt-4 divide-y divide-line rounded-md border border-line bg-card px-4">
           {q.data?.map((s) => (
             <li key={s.solicitud_ref} className="py-5">
               <p className="flex flex-wrap items-center justify-between gap-2">
