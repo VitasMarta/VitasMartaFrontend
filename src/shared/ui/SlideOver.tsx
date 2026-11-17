@@ -84,7 +84,7 @@ export function SlideOver({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative flex h-screen w-full max-w-lg flex-col overflow-y-auto border-l-2 border-ink bg-mist p-6 sm:p-8"
+        className="relative flex h-screen w-full max-w-lg flex-col overflow-y-auto border-l border-line bg-card p-6 shadow-xl sm:p-8"
       >
         <div className="mb-6 flex items-start justify-between gap-4">
           <h2 id={titleId} className="!text-2xl">
@@ -94,7 +94,7 @@ export function SlideOver({
             type="button"
             data-close-button
             onClick={() => closeRef.current()}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-ink hover:bg-base"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-ink hover:bg-page"
             aria-label={t("close")}
           >
             <Icon name="x" size={22} />

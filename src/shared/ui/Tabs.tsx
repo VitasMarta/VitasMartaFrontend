@@ -50,7 +50,7 @@ export function Tabs({
 
   return (
     <div>
-      <div role="tablist" aria-label={label} className="flex flex-wrap gap-x-6 border-b-2 border-ink">
+      <div role="tablist" aria-label={label} className="flex flex-wrap gap-x-2 border-b border-line">
         {tabs.map((tab, i) => {
           const selected = tab.id === active;
           return (
@@ -68,8 +68,8 @@ export function Tabs({
               onClick={() => select(tab.id)}
               onKeyDown={(e) => onKeyDown(e, i)}
               className={cn(
-                "-mb-0.5 min-h-11 border-b-4 px-1 py-2 font-semibold transition-colors hover:bg-mist",
-                selected ? "border-ink" : "border-transparent text-ink/80",
+                "-mb-px min-h-11 rounded-t-md border-b-[3px] px-4 py-2 font-semibold transition-colors hover:bg-card",
+                selected ? "border-action text-action" : "border-transparent text-ink/80",
               )}
             >
               {tab.label}

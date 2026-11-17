@@ -75,7 +75,7 @@ export function Section({
   return (
     <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className={cn("py-8", className)}>
       {(title || actions) && (
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-t-2 border-ink pt-4">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             {title && (
               <h2 id={id ? `${id}-title` : undefined} className="!text-2xl">
@@ -96,8 +96,8 @@ export function Section({
 export function SplitLayout({ left, right, rightLabel }: { left: ReactNode; right: ReactNode; rightLabel: string }) {
   return (
     <div className="lg:grid lg:grid-cols-[60fr_40fr]">
-      <div className="min-w-0 px-4 py-8 sm:px-8 lg:border-r lg:border-ink/15">{left}</div>
-      <aside aria-label={rightLabel} className="bg-mist px-4 py-8 sm:px-8 lg:sticky lg:top-0 lg:max-h-screen lg:self-start lg:overflow-y-auto">
+      <div className="min-w-0 px-4 py-8 sm:px-8 lg:border-r lg:border-line">{left}</div>
+      <aside aria-label={rightLabel} className="bg-card px-4 py-8 sm:px-8 lg:sticky lg:top-0 lg:max-h-screen lg:self-start lg:overflow-y-auto">
         {right}
       </aside>
     </div>
@@ -113,10 +113,10 @@ export function MetricRibbon({
   items: { label: string; value: ReactNode; delta?: ReactNode }[];
 }) {
   return (
-    <section aria-label={label} className="bg-mist">
-      <dl className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-ink/15 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))]">
+    <section aria-label={label}>
+      <dl className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 sm:grid-cols-2 sm:px-6 lg:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] lg:px-8">
         {items.map((item) => (
-          <div key={item.label} className="px-6 py-6">
+          <div key={item.label} className="card px-5 py-5">
             <dt className="meta uppercase tracking-wider text-ink/80">{item.label}</dt>
             <dd className="mt-1 text-[2.5rem] font-bold leading-none tabular text-ink">{item.value}</dd>
             {item.delta && <dd className="meta mt-2 text-emerald-ink">{item.delta}</dd>}
@@ -130,7 +130,7 @@ export function MetricRibbon({
 /** Lista de definición tipográfica (atributos JSONB, resúmenes). */
 export function DefinitionRows({ rows }: { rows: { term: ReactNode; value: ReactNode }[] }) {
   return (
-    <dl className="divide-y divide-ink/15 border-y border-ink/15">
+    <dl className="divide-y divide-line rounded-md border border-line bg-card px-4">
       {rows.map((row, i) => (
         <div key={i} className="flex flex-col gap-1 py-3 sm:flex-row sm:justify-between sm:gap-8">
           <dt className="font-medium text-ink/80">{row.term}</dt>

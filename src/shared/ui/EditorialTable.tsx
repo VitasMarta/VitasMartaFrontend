@@ -29,11 +29,11 @@ export function EditorialTable<T>({
   className?: string;
 }) {
   return (
-    <div className={cn("w-full overflow-x-auto", className)}>
+    <div className={cn("card w-full overflow-x-auto", className)}>
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="bg-mist">
+          <tr className="border-b border-line bg-page">
             {columns.map((c) => (
               <th
                 key={c.key}
@@ -50,7 +50,7 @@ export function EditorialTable<T>({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-ink/10 align-top hover:bg-mist/60 focus-within:bg-mist/60">
+            <tr key={rowKey(row)} className="border-b border-line align-top last:border-b-0 hover:bg-page focus-within:bg-page">
               {columns.map((c) => (
                 <td key={c.key} className={cn("px-4 py-3", c.align === "right" && "text-right tabular", c.className)}>
                   {c.cell(row)}

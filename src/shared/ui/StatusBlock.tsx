@@ -22,7 +22,7 @@ export function StatusBlock({
       <div role="status" aria-live="polite" className={cn("space-y-3 py-8", className)}>
         <span className="sr-only">{title}</span>
         <div aria-hidden="true" className="space-y-3">
-          <div className="h-4 w-2/3 animate-pulse bg-ink/15" />
+          <div className="h-4 w-2/3 animate-pulse rounded bg-ink/15" />
           <div className="h-4 w-1/2 animate-pulse bg-ink/15" />
           <div className="h-4 w-3/5 animate-pulse bg-ink/15" />
         </div>
@@ -32,7 +32,7 @@ export function StatusBlock({
   return (
     <div
       role={kind === "error" ? "alert" : "status"}
-      className={cn("border-l-4 py-4 pl-4", kind === "error" ? "border-critical" : "border-ink/30", className)}
+      className={cn("rounded-md border border-l-4 border-line bg-card p-4", kind === "error" ? "border-l-critical" : "border-l-ink/30", className)}
     >
       <p className={cn("flex items-center gap-2 font-semibold", kind === "error" && "text-critical")}>
         {kind === "error" && <Icon name="alert" />}
@@ -48,7 +48,7 @@ export function ErrorNotice({ error, referenceLabel }: { error: unknown; referen
   const message = error instanceof Error ? error.message : String(error);
   const reference = error instanceof ApiError ? error.correlationId : undefined;
   return (
-    <div role="alert" className="border-l-4 border-critical py-2 pl-4">
+    <div role="alert" className="rounded-md border border-l-4 border-line border-l-critical bg-card p-4">
       <p className="flex items-center gap-2 font-semibold text-critical">
         <Icon name="alert" />
         {message}

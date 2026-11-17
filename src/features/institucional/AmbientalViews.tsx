@@ -127,14 +127,14 @@ function CapacityTab({ id }: { id: string }) {
         <Button type="submit" loading={save.isPending}>{t("publishVersion")}</Button>
       </form>
 
-      <section aria-labelledby="versions"><h3 id="versions" className="border-t-2 border-ink pt-4 !text-xl">{t("versions")}</h3>
+      <section aria-labelledby="versions" className="card p-5 sm:p-6 card p-5 sm:p-6"><h3 id="versions" className="mb-1 !text-xl">{t("versions")}</h3>
         {versions.data && <EditorialTable caption={t("versions")} rows={versions.data} rowKey={(v) => String(v.version)} columns={[
           { key: "v", header: "v", align: "right", cell: (v) => v.version },
           { key: "c", header: tc("date"), cell: (v) => formatDateTime(v.fecha_creacion, locale) },
           { key: "d", header: t("validity"), cell: (v) => `${formatDate(v.vigencia_desde, locale)} → ${formatDate(v.vigencia_hasta, locale)}` }, { key: "r", header: t("responsible"), cell: (v) => v.responsable },
         ]} />}
       </section>
-      <section aria-labelledby="changes"><h3 id="changes" className="border-t-2 border-ink pt-4 !text-xl">{t("changes")}</h3>
+      <section aria-labelledby="changes" className="card p-5 sm:p-6 card p-5 sm:p-6"><h3 id="changes" className="mb-1 !text-xl">{t("changes")}</h3>
         {log.data && <EditorialTable caption={t("changes")} rows={log.data} empty={t("noChanges")} rowKey={(r) => `${r.version_resultante}-${r.campo}`} columns={[
           { key: "v", header: "v", align: "right", cell: (r) => r.version_resultante }, { key: "f", header: t("field"), cell: (r) => r.campo },
           { key: "a", header: t("before"), cell: (r) => r.valor_anterior ?? "—" }, { key: "d", header: t("after"), cell: (r) => r.valor_modificado ?? "—" },
@@ -295,7 +295,7 @@ export function EnvironmentAdminView() {
             { id: "practicas", label: t("tabs.practices"), content: <GoodPracticesTab id={id} /> },
           ]} />
         )}
-        <section aria-labelledby="ret" className="mt-14"><h2 id="ret" className="border-t-2 border-ink pt-4 !text-2xl">{t("retention.title")}</h2><p className="mb-4 mt-1 text-ink/80">{t("retention.description")}</p><RetentionPanel /></section>
+        <section aria-labelledby="ret" className="card mt-8 p-5 sm:p-6"><h2 id="ret" className="mb-1 !text-2xl">{t("retention.title")}</h2><p className="mb-4 mt-1 text-ink/80">{t("retention.description")}</p><RetentionPanel /></section>
       </Container>
     </>
   );

@@ -69,8 +69,8 @@ function ExportManager({ periodo }: { periodo: string }) {
   };
 
   return (
-    <section aria-labelledby="export-title" className="border-y-2 border-ink bg-mist">
-      <div className="mx-auto max-w-7xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+    <section aria-labelledby="export-title" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <div className="card space-y-4 p-5 sm:p-6">
         <h2 id="export-title" className="!text-2xl">{t("title")}</h2>
         <div className="flex flex-wrap items-end gap-4">
           <SelectField label={t("format")} name="formato" value={formato} onChange={(e) => setFormato(e.target.value as "PDF" | "CSV")}><option value="PDF">PDF</option><option value="CSV">CSV</option></SelectField>
@@ -148,31 +148,31 @@ export function AnalyticsView() {
         ]} />
       )}
 
-      <Container className="space-y-12 py-10">
+      <Container className="space-y-6 py-8">
         {(demanda.isPending) && <StatusBlock kind="loading" title={tc("loading")} />}
         {demanda.isError && <ErrorNotice error={demanda.error} referenceLabel={tc("reference")} />}
         {d && (
           <>
-            <section aria-labelledby="top1"><h2 id="top1" className="border-t-2 border-ink pt-4 !text-2xl">{t("demand.attractions")}</h2>
+            <section aria-labelledby="top1" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="top1" className="mb-1 !text-2xl">{t("demand.attractions")}</h2>
               <div className="mt-3"><RankBars caption={t("demand.attractions")} labelHeader={t("demand.label")} valueHeader={t("demand.consultations")} format={(n) => formatNumber(n, locale)} rows={d.atractivos_mas_consultados.map((r) => ({ key: r.referencia, label: r.etiqueta, value: r.valor, note: r.variacion == null ? null : String(r.variacion) }))} /></div>
             </section>
-            <section aria-labelledby="top2"><h2 id="top2" className="border-t-2 border-ink pt-4 !text-2xl">{t("demand.activities")}</h2>
+            <section aria-labelledby="top2" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="top2" className="mb-1 !text-2xl">{t("demand.activities")}</h2>
               <div className="mt-3"><RankBars caption={t("demand.activities")} labelHeader={t("demand.label")} valueHeader={t("demand.bookings")} format={(n) => formatNumber(n, locale)} rows={d.actividades_mas_reservadas.map((r) => ({ key: r.referencia, label: r.etiqueta, value: r.valor, note: r.variacion == null ? null : String(r.variacion) }))} /></div>
             </section>
             {d.periodos_alta_demanda && d.periodos_alta_demanda.length > 0 && (
-              <section aria-labelledby="peak"><h2 id="peak" className="border-t-2 border-ink pt-4 !text-2xl">{t("demand.peaks")}</h2>
+              <section aria-labelledby="peak" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="peak" className="mb-1 !text-2xl">{t("demand.peaks")}</h2>
                 <div className="mt-3"><RankBars caption={t("demand.peaks")} labelHeader={t("demand.label")} valueHeader={t("demand.bookings")} format={(n) => formatNumber(n, locale)} rows={d.periodos_alta_demanda.map((p) => ({ key: p.periodo, label: p.periodo, value: p.valor }))} /></div>
               </section>
             )}
           </>
         )}
         {tendencia.data && (
-          <section aria-labelledby="trend"><h2 id="trend" className="border-t-2 border-ink pt-4 !text-2xl">{t("trend.title")}</h2>
+          <section aria-labelledby="trend" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="trend" className="mb-1 !text-2xl">{t("trend.title")}</h2>
             <div className="mt-4"><TrendChart label={t("trend.chart")} valueLabel={t("trend.value")} data={tendencia.data.puntos.map((p) => ({ x: (p.periodo ?? p.etiqueta ?? "").slice(5), y: p.valor }))} /></div>
           </section>
         )}
         {calor.data && (
-          <section aria-labelledby="heat"><h2 id="heat" className="border-t-2 border-ink pt-4 !text-2xl">{t("heat.title")}</h2><p className="mb-3 mt-1 text-ink/80">{t("heat.description", { tz: calor.data.zona_horaria ?? "America/Bogota" })}</p>
+          <section aria-labelledby="heat" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="heat" className="mb-1 !text-2xl">{t("heat.title")}</h2><p className="mb-3 mt-1 text-ink/80">{t("heat.description", { tz: calor.data.zona_horaria ?? "America/Bogota" })}</p>
             <Heatmap caption={t("heat.title")} rowHeader={t("heat.attraction")} cells={calor.data.celdas.map((c) => ({ row: c.etiqueta, col: c.subperiodo, value: c.intensidad }))} />
           </section>
         )}
@@ -203,8 +203,8 @@ export function SustainabilityView() {
       {q.data && (
         <>
           <MetricRibbon label={t("title")} items={[{ label: t("attractions"), value: rows.length }, { label: t("peak"), value: `${peak} %` }, { label: t("preventive"), value: preventive }, { label: t("critical"), value: critical }]} />
-          <Container className="space-y-12 py-10">
-            <section aria-labelledby="ind"><h2 id="ind" className="border-t-2 border-ink pt-4 !text-2xl">{t("indicators")}</h2><p className="mb-3 mt-1 text-sm text-ink/80">{t("aggregateNote", { tz: q.data.zona_horaria })}</p>
+          <Container className="space-y-6 py-8">
+            <section aria-labelledby="ind" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="ind" className="mb-1 !text-2xl">{t("indicators")}</h2><p className="mb-3 mt-1 text-sm text-ink/80">{t("aggregateNote", { tz: q.data.zona_horaria })}</p>
               <EditorialTable caption={t("indicators")} rows={rows} rowKey={(r) => r.atractivo_ref} columns={[
                 { key: "n", header: t("attraction"), cell: (r) => <strong>{r.etiqueta_atractivo ?? r.atractivo_ref}</strong> },
                 { key: "o", header: t("occupancy"), cell: (r) => <SustainabilityIndicator level={levelFromOccupancy(r.ocupacion_estimada_consolidada.maximo)} occupancy={r.ocupacion_estimada_consolidada.maximo} /> },
@@ -212,7 +212,7 @@ export function SustainabilityView() {
                 { key: "p", header: t("preventive"), align: "right", cell: (r) => r.alertas_del_periodo.preventivas }, { key: "c", header: t("critical"), align: "right", cell: (r) => r.alertas_del_periodo.criticas },
               ]} />
             </section>
-            <section aria-labelledby="flow"><h2 id="flow" className="border-t-2 border-ink pt-4 !text-2xl">{t("flow")}</h2>
+            <section aria-labelledby="flow" className="card p-5 sm:p-6 card p-5 sm:p-6"><h2 id="flow" className="mb-1 !text-2xl">{t("flow")}</h2>
               <div className="mt-3"><Heatmap caption={t("flow")} rowHeader={t("attraction")} cells={rows.flatMap((r) => Object.entries(r.distribucion_flujo_turistico).map(([col, value]) => ({ row: r.etiqueta_atractivo ?? r.atractivo_ref, col, value })))} /></div>
             </section>
           </Container>
@@ -242,7 +242,7 @@ export function PipelinePanel() {
           {q.data.colas && <EditorialTable caption={t("queues")} rows={q.data.colas} rowKey={(c) => c.nombre} columns={[{ key: "n", header: t("queue"), cell: (c) => <span className="font-mono">{c.nombre}</span> }, { key: "p", header: t("pending"), align: "right", cell: (c) => c.pendientes }]} />}
         </>
       )}
-      <form className="flex max-w-3xl flex-wrap items-end gap-4 border-t-2 border-ink pt-6" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); replay.mutate({ origen: f.get("origen"), desde: f.get("desde") || undefined, hasta: f.get("hasta") || undefined }); }}>
+      <form className="card p-5 sm:p-6 flex max-w-3xl flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); replay.mutate({ origen: f.get("origen"), desde: f.get("desde") || undefined, hasta: f.get("hasta") || undefined }); }}>
         <h3 className="w-full !text-xl">{t("replay")}</h3>
         <SelectField label={t("origin")} name="origen" defaultValue="TODOS">{["TODOS", "RESERVAS", "AMBIENTAL", "OFERTA", "CATALOGO"].map((o) => <option key={o} value={o}>{o}</option>)}</SelectField>
         <TextField label={t("from")} name="desde" type="date" /><TextField label={t("to")} name="hasta" type="date" />

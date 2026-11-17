@@ -269,11 +269,11 @@ function ArcoTab() {
       </form>
 
       <section aria-labelledby="arco-list">
-        <h2 id="arco-list" className="border-t-2 border-ink pt-4 !text-2xl">{t("requests")}</h2>
+        <h2 id="arco-list" className="mb-1 !text-2xl">{t("requests")}</h2>
         {q.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
         {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
         {q.data?.length === 0 && <StatusBlock kind="empty" title={t("none")} />}
-        <ul role="list" className="mt-4 divide-y divide-ink/15 border-y border-ink/15">
+        <ul role="list" className="mt-4 divide-y divide-line rounded-md border border-line bg-card">
           {q.data?.map((s) => (
             <li key={s.solicitud_ref} className="py-5">
               <p className="flex flex-wrap items-center justify-between gap-2">

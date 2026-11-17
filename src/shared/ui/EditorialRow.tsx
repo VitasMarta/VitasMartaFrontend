@@ -38,10 +38,10 @@ export function EditorialRow({
   imageUrl,
 }: EditorialRowProps) {
   return (
-    <li className="editorial-row relative">
-      <article className="mx-auto grid max-w-7xl grid-cols-[auto_1fr] gap-x-5 gap-y-3 px-4 py-6 sm:px-6 md:grid-cols-[auto_1fr_auto] lg:px-8">
+    <li className="card card-hover relative flex">
+      <article className="grid w-full grid-cols-[auto_1fr] content-between gap-x-4 gap-y-3 p-5">
         {index !== undefined && (
-          <span aria-hidden="true" className="tabular pt-1 text-2xl font-semibold text-ink/80">
+          <span aria-hidden="true" className="tabular inline-flex size-10 items-center justify-center rounded-full bg-page text-sm font-bold text-action">
             {String(index).padStart(2, "0")}
           </span>
         )}
@@ -61,14 +61,14 @@ export function EditorialRow({
           {badge}
           {meta && <div className="meta text-ink/80">{meta}</div>}
         </div>
-        <div className="col-span-2 flex flex-wrap items-center gap-x-6 gap-y-2 md:col-span-1 md:flex-col md:items-end md:justify-center">
+        <div className="col-span-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line pt-3">
           {imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- dominio del CDN (R2) aún sin definir en next.config
-            <img src={imageUrl} alt="" loading="lazy" decoding="async" className="hidden h-16 w-28 object-cover md:block" />
+            <img src={imageUrl} alt="" loading="lazy" decoding="async" className="hidden h-16 w-28 rounded object-cover md:block" />
           )}
           {price && <p className="tabular text-lg font-semibold">{price}</p>}
           {indicator}
-          <span className="inline-flex items-center gap-1 font-semibold text-ink underline underline-offset-4">
+          <span className="ml-auto inline-flex items-center gap-1 font-semibold text-action">
             {actionLabel}
             <Icon name="arrow" />
           </span>
@@ -81,7 +81,7 @@ export function EditorialRow({
 /** Contenedor semántico de filas: `<ul role="list">` (guía §4-2). */
 export function EditorialList({ children, label }: { children: ReactNode; label: string }) {
   return (
-    <ul role="list" aria-label={label} className="border-t border-ink/15">
+    <ul role="list" aria-label={label} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {children}
     </ul>
   );

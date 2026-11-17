@@ -191,7 +191,7 @@ export function SwitchField({
 }) {
   const fid = idOf(name);
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-ink/15 py-4">
+    <div className="flex items-start justify-between gap-4 border-b border-line py-4">
       <div>
         <label htmlFor={fid} className="block font-semibold">
           {label}
@@ -222,7 +222,7 @@ export function ErrorSummary({ errors, title }: { errors: Record<string, string>
   const entries = Object.entries(errors);
   if (entries.length === 0) return null;
   return (
-    <div role="alert" className="border-l-4 border-critical bg-mist p-4">
+    <div role="alert" className="rounded-md border border-l-4 border-line border-l-critical bg-card p-4">
       <p className="font-semibold text-critical">{title}</p>
       <ul className="mt-2 list-disc pl-5">
         {entries.map(([name, message]) => (

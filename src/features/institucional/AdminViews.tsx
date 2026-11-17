@@ -41,13 +41,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const items = ["usuarios", "matriz", "auditoria", "prestadores", "moderacion", "tipos", "credenciales", "ambiental"] as const;
   return (
     <RequireRole area="admin">
-      <nav aria-label={t("label")} className="border-b border-ink/15 bg-base">
-        <ul role="list" className="mx-auto flex max-w-7xl flex-wrap gap-x-1 px-4 sm:px-6 lg:px-8">
+      <nav aria-label={t("label")} className="border-b border-line bg-card">
+        <ul role="list" className="mx-auto flex max-w-7xl flex-wrap gap-2 px-4 py-3 sm:px-6 lg:px-8">
           {items.map((i) => {
             const active = pathname === `/admin/${i}` || pathname.startsWith(`/admin/${i}/`);
             return (
               <li key={i}>
-                <Link href={`/admin/${i}`} aria-current={active ? "page" : undefined} className={cn("inline-flex min-h-11 items-center border-b-4 px-3 text-sm font-semibold hover:bg-mist", active ? "border-ink" : "border-transparent text-ink/80")}>
+                <Link href={`/admin/${i}`} aria-current={active ? "page" : undefined} className={cn("inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-semibold", active ? "border-action bg-action text-on-action" : "border-line text-ink hover:border-action hover:text-action")}>
                   {t(i)}
                 </Link>
               </li>
@@ -67,7 +67,7 @@ export function AdminHomeView() {
   return (
     <>
       <PageHeader title={t("title")} description={t("description")} />
-      <div className="mt-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <EditorialList label={t("title")}>
           {items.map((i, n) => (
             <EditorialRow key={i} index={n + 1} title={t(`sections.${i}.title`)} summary={t(`sections.${i}.desc`)} href={`/admin/${i}`} actionLabel={t("open")} />
@@ -636,7 +636,7 @@ export function CredentialsView() {
         </div>
         {emit.isError && <div className="mb-6"><ErrorNotice error={emit.error} referenceLabel={tc("reference")} /></div>}
         {secret && (
-          <div role="alert" className="mb-6 border-y-2 border-emerald bg-mist px-4 py-4">
+          <div role="alert" className="mb-6 rounded-md border border-l-4 border-emerald bg-card px-4 py-4">
             <p className="font-semibold">{t("copyNow")}</p>
             <p className="mt-2 break-all font-mono text-lg">{secret}</p>
             <Button className="mt-3" variant="secondary" onClick={() => navigator.clipboard?.writeText(secret).then(() => toast("success", t("copied")))}>{t("copy")}</Button>

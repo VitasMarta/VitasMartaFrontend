@@ -6,10 +6,10 @@ import { cn } from "./cn";
 import { Icon } from "./Icon";
 
 const TONE: Record<BannerTone, string> = {
-  info: "bg-mist border-ink",
-  success: "bg-mist border-emerald",
-  warn: "bg-mist border-preventive",
-  error: "bg-mist border-critical",
+  info: "bg-card border-ink",
+  success: "bg-card border-emerald",
+  warn: "bg-card border-preventive",
+  error: "bg-card border-critical",
 };
 
 /** Avisos tipo banner superior (guía §2.1): tira de ancho completo, nunca una caja flotante. */

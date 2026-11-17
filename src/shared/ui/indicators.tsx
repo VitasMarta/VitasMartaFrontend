@@ -32,8 +32,8 @@ export function SustainabilityIndicator({ level, occupancy }: { level: NivelSatu
         {occupancy !== undefined && <span className="tabular"> · {Math.round(occupancy)} %</span>}
       </span>
       {occupancy !== undefined && (
-        <span aria-hidden="true" className="block h-1.5 w-36 bg-ink/15">
-          <span className={cn("block h-full", fill)} style={{ width: `${Math.min(100, Math.max(0, occupancy))}%` }} />
+        <span aria-hidden="true" className="block h-1.5 w-36 overflow-hidden rounded-full bg-ink/15">
+          <span className={cn("block h-full rounded-full", fill)} style={{ width: `${Math.min(100, Math.max(0, occupancy))}%` }} />
         </span>
       )}
     </span>
@@ -52,7 +52,7 @@ const TONE_CLASS: Record<Tone, string> = {
 /** Etiqueta de estado en línea (punto + texto; sin caja). */
 export function StatusTag({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
   return (
-    <span className={cn("meta inline-flex items-center gap-1.5 font-semibold", TONE_CLASS[tone])}>
+    <span className={cn("meta inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-2.5 py-0.5 font-semibold", TONE_CLASS[tone])}>
       <span aria-hidden="true" className="inline-block size-2 rounded-full bg-current" />
       {children}
     </span>
@@ -70,10 +70,10 @@ export function ProgressBar({ label, value, indeterminate }: { label: string; va
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={indeterminate ? undefined : Math.round(value ?? 0)}
-        className="h-2 w-full bg-ink/15"
+        className="h-2 w-full overflow-hidden rounded-full bg-ink/15"
       >
         <div
-          className={cn("h-full bg-ink", indeterminate && "w-1/3 animate-pulse")}
+          className={cn("h-full rounded-full bg-action", indeterminate && "w-1/3 animate-pulse")}
           style={indeterminate ? undefined : { width: `${value ?? 0}%` }}
         />
       </div>
@@ -89,7 +89,7 @@ export function Stepper({ steps, current, label }: { steps: string[]; current: n
         const done = i + 1 < current;
         const active = i + 1 === current;
         return (
-          <li key={step} aria-current={active ? "step" : undefined} className={cn("border-t-4 pt-2", done || active ? "border-ink" : "border-ink/15")}>
+          <li key={step} aria-current={active ? "step" : undefined} className={cn("border-t-4 pt-2", done || active ? "border-action" : "border-ink/15")}>
             <span className="meta block">{String(i + 1).padStart(2, "0")}</span>
             <span className={cn("block text-sm", active ? "font-bold" : done ? "font-medium" : "text-ink/80")}>{step}</span>
           </li>

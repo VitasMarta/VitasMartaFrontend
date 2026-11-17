@@ -75,14 +75,14 @@ export function RankBars({
     <table className="w-full border-collapse text-left">
       <caption className="sr-only">{caption}</caption>
       <thead>
-        <tr className="bg-mist">
+        <tr className="border-b border-line bg-page">
           <th scope="col" className="meta px-3 py-2 text-xs uppercase tracking-wider text-ink/80">{labelHeader}</th>
           <th scope="col" className="meta px-3 py-2 text-xs uppercase tracking-wider text-ink/80">{valueHeader}</th>
         </tr>
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={r.key} className="border-b border-ink/10">
+          <tr key={r.key} className="border-b border-line">
             <th scope="row" className="w-2/5 px-3 py-3 text-left font-medium">
               <span className="tabular mr-2 text-ink/80">{String(i + 1).padStart(2, "0")}</span>
               {r.label}
@@ -123,7 +123,7 @@ export function Heatmap({
       <table className="w-full border-collapse text-left">
         <caption className="sr-only">{caption}</caption>
         <thead>
-          <tr className="bg-mist">
+          <tr className="border-b border-line bg-page">
             <th scope="col" className="meta px-3 py-2 text-xs uppercase tracking-wider text-ink/80">{rowHeader}</th>
             {cols.map((c) => (
               <th key={c} scope="col" className="meta px-3 py-2 text-center text-xs uppercase tracking-wider text-ink/80">{c}</th>
@@ -132,7 +132,7 @@ export function Heatmap({
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r} className="border-b border-ink/10">
+            <tr key={r} className="border-b border-line">
               <th scope="row" className="px-3 py-2 text-left font-medium">{r}</th>
               {cols.map((c) => {
                 const v = at(r, c);

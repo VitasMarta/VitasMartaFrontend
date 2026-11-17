@@ -233,7 +233,7 @@ export function ReservationDetailView({ reservaRef }: { reservaRef: string }) {
         {query.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
         {query.isError && <ErrorNotice error={query.error} referenceLabel={tc("reference")} />}
         {r && (
-          <div className="max-w-3xl space-y-6">
+          <div className="card max-w-3xl space-y-6 p-5 sm:p-6">
             <p className="flex items-center gap-4">
               <ReservaStatus estado={r.estado} />
               {r.codigo_confirmacion && <span className="meta">{t("code")}: <strong className="font-mono">{r.codigo_confirmacion}</strong></span>}

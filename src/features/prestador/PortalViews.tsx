@@ -181,8 +181,8 @@ function SolicitudForm({ onCreated, resendId, inicial }: { onCreated: (id: strin
   return (
     <form onSubmit={onSubmit} noValidate className="max-w-3xl space-y-8">
       <ErrorSummary errors={errors} title={tc("errorSummary")} />
-      <fieldset className="grid gap-6 sm:grid-cols-2">
-        <legend className="mb-4 w-full border-b-2 border-ink pb-2 text-xl font-semibold">{t("business")}</legend>
+      <fieldset className="card p-5 sm:p-6 grid gap-6 sm:grid-cols-2">
+        <legend className="float-left col-span-full mb-0 w-full border-b border-line pb-2 text-xl font-semibold">{t("business")}</legend>
         {!resendId && (
           <>
             <SelectField label={t("type")} name="tipo" defaultValue="" required error={errors.tipo}>
@@ -205,8 +205,8 @@ function SolicitudForm({ onCreated, resendId, inicial }: { onCreated: (id: strin
         <TextAreaField label={t("descEs")} name="descripcion_es" required={!resendId} defaultValue={inicial?.descripcion?.es} error={errors.descripcion_es} className="sm:col-span-2" />
         <TextAreaField label={t("descEn")} name="descripcion_en" required={!resendId} defaultValue={inicial?.descripcion?.en} error={errors.descripcion_en} className="sm:col-span-2" />
       </fieldset>
-      <fieldset className="grid gap-6 sm:grid-cols-2">
-        <legend className="mb-4 w-full border-b-2 border-ink pb-2 text-xl font-semibold">{t("legalRep")}</legend>
+      <fieldset className="card p-5 sm:p-6 grid gap-6 sm:grid-cols-2">
+        <legend className="float-left col-span-full mb-0 w-full border-b border-line pb-2 text-xl font-semibold">{t("legalRep")}</legend>
         <TextField label={t("repName")} name="rep_nombre" required error={errors.rep_nombre} />
         <TextField label={t("repDocument")} name="rep_documento" required error={errors.rep_documento} />
         <TextField label={t("repEmail")} name="rep_email" type="email" required error={errors.rep_email} />
@@ -257,7 +257,7 @@ function SolicitudStatus({ id, onNew }: { id: string; onNew: () => void }) {
           <p>{prestador.motivo_estado}</p>
         </div>
       )}
-      <ol className="divide-y divide-ink/15 border-y border-ink/15">
+      <ol className="divide-y divide-line rounded-md border border-line bg-card">
         {historial.map((h, i) => (
           <li key={i} className="py-3"><strong>{t.has(`statuses.${h.estado_destino}`) ? t(`statuses.${h.estado_destino}`) : h.estado_destino}</strong> <span className="meta text-ink/80">· {formatDate(h.ocurrido_en, locale)}{h.motivo ? ` · ${h.motivo}` : ""}</span></li>
         ))}
@@ -400,7 +400,7 @@ export function CheckinView() {
     <RequireRole area="prestador">
       <PageHeader title={t("title")} description={t("description")} />
       <Container className="py-8">
-        <form onSubmit={onSubmit} className="max-w-xl space-y-4">
+        <form onSubmit={onSubmit} className="card max-w-xl space-y-4 p-5 sm:p-6">
           <TextField label={t("code")} name="codigo_qr" autoComplete="off" hint={t("hint")} required />
           <Button type="submit" loading={validar.isPending}>{t("validate")}</Button>
         </form>
@@ -416,8 +416,8 @@ export function CheckinView() {
         </div>
         {history.length > 0 && (
           <section aria-labelledby="ci-hist" className="mt-8 max-w-xl">
-            <h2 id="ci-hist" className="border-t-2 border-ink pt-4 !text-xl">{t("recent")}</h2>
-            <ul role="list" className="mt-2 divide-y divide-ink/15">
+            <h2 id="ci-hist" className="mb-1 !text-xl">{t("recent")}</h2>
+            <ul role="list" className="mt-2 divide-y divide-line">
               {history.map((h, i) => (
                 <li key={i} className="py-2"><StatusTag tone={h.valido ? "good" : "bad"}>{h.valido ? t("valid") : t("invalid")}</StatusTag> <span className="meta text-ink/80">· {formatDateTime(h.validado_en, locale)} · {h.reserva_id ?? "—"}</span></li>
               ))}
@@ -509,7 +509,7 @@ function useVersioned(key: string, path: string) {
 function ConflictStrip({ onReload }: { onReload: () => void }) {
   const t = useTranslations("prestador.editor");
   return (
-    <div role="alert" className="border-y-2 border-preventive bg-mist px-4 py-3">
+    <div role="alert" className="rounded-md border border-l-4 border-preventive bg-card px-4 py-3">
       <p className="font-semibold">{t("conflictTitle")}</p>
       <p className="mt-1 text-sm">{t("conflictHelp")}</p>
       <Button className="mt-3" variant="secondary" onClick={onReload}>{t("reload")}</Button>
