@@ -1,0 +1,59 @@
+{
+  "title": "Analítica turística",
+  "description": "Demanda, ocupación y tendencias de la oferta turística de Santa Marta.",
+  "period": "Periodo",
+  "compareWith": "Comparar con",
+  "none": "Sin comparación",
+  "month": "Mes (ocupación)",
+  "occupancy": { "title": "Tasa de ocupación", "rate": "Tasa de ocupación", "base": "Reservas confirmadas pasadas", "provider": "Prestador", "chooseProvider": "Elige un prestador", "providerId": "Identificador del prestador", "providerIdHint": "UUID del prestador (lo entrega la administración).", "needProvider": "La tasa de ocupación es por prestador: elige uno para verla." },
+  "demand": {
+    "topConsulted": "Más consultado",
+    "attractions": "Atractivos más consultados",
+    "activities": "Actividades más reservadas",
+    "peaks": "Periodos de alta demanda",
+    "label": "Elemento",
+    "consultations": "Consultas",
+    "bookings": "Reservas"
+  },
+  "trend": { "title": "Tendencia de reservas", "chart": "Reservas por semana", "value": "Reservas" },
+  "heat": { "title": "Mapa de calor de afluencia", "description": "Intensidad relativa por franja horaria. Zona horaria: {tz}.", "attraction": "Atractivo" },
+  "export": {
+    "title": "Exportar reporte",
+    "format": "Formato",
+    "request": "Exportar {format}",
+    "states": { "ENCOLADO": "Reporte en cola…", "GENERANDO": "Generando el reporte…" },
+    "failed": "No fue posible generar el reporte. Inténtalo de nuevo.",
+    "download": "Descargar reporte listo",
+    "expires": "Disponible hasta {date}",
+    "expired": "El archivo expiró. Genera un nuevo reporte."
+  },
+  "sustainability": {
+    "title": "Sostenibilidad",
+    "description": "Vista agregada de solo lectura de la ocupación y las alertas por atractivo.",
+    "period": "Periodo",
+    "attractions": "Atractivos",
+    "peak": "Ocupación máxima",
+    "preventive": "Alertas preventivas",
+    "critical": "Alertas críticas",
+    "indicators": "Indicadores por atractivo",
+    "aggregateNote": "Datos agregados; zona horaria {tz}.",
+    "attraction": "Atractivo",
+    "occupancy": "Ocupación máxima",
+    "average": "Promedio",
+    "flow": "Distribución del flujo turístico"
+  },
+  "pipeline": {
+    "title": "Pipeline de reportes",
+    "lag": "Retraso de consumo",
+    "pending": "Mensajes pendientes",
+    "lastReplay": "Último replay",
+    "queues": "Colas",
+    "queue": "Cola",
+    "replay": "Reprocesar eventos (replay)",
+    "origin": "Origen",
+    "from": "Desde",
+    "to": "Hasta",
+    "run": "Iniciar replay",
+    "started": "Replay iniciado: {count} eventos estimados"
+  }
+}

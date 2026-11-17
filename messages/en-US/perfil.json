@@ -1,0 +1,68 @@
+{
+  "title": "My profile",
+  "description": "Manage your data, preferences, consents and rights as a data subject.",
+  "tabs": {
+    "profile": "Personal data",
+    "preferences": "Preferences",
+    "interests": "Interests",
+    "consents": "Consents",
+    "arco": "ARCO rights",
+    "data": "My data"
+  },
+  "profile": {
+    "email": "Email address",
+    "emailHint": "The email cannot be changed from here.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "country": "Country of residence",
+    "saved": "Your data was updated",
+    "errors": { "required": "This field is required" }
+  },
+  "preferences": {
+    "language": "Interface language",
+    "channel": "Authorized communication channel",
+    "channelHint": "We will only use the channel you choose for notices about your bookings.",
+    "email": "Email",
+    "none": "None"
+  },
+  "interests": {
+    "legend": "Travel interests",
+    "hint": "These categories feed your personalized recommendations.",
+    "notReadable": "We cannot show the interests you already saved yet. When you save, your selection replaces the previous one.",
+    "saved": "Your interests were updated"
+  },
+  "consents": {
+    "intro": "You can change these authorizations at any time.",
+    "grantedMsg": "You turned on: {purpose}",
+    "revokedMsg": "You turned off: {purpose}",
+    "purposes": {
+      "TRATAMIENTO": { "title": "Personal data processing", "hint": "Required to use your account; it cannot be turned off without deleting it." },
+      "COMERCIAL": { "title": "Commercial communications", "hint": "Offers and news from providers and the platform." },
+      "PERFILADO": { "title": "Allow personalized AI recommendations", "hint": "If you turn it off, you will see general suggestions without profiling." }
+    }
+  },
+  "arco": {
+    "new": "New request",
+    "type": "Type of right",
+    "types": { "ACCESO": "Access", "RECTIFICACION": "Rectification", "CANCELACION": "Cancellation", "OPOSICION": "Opposition" },
+    "detail": "Request details",
+    "detailHint": "Describe which data or processing you are interested in.",
+    "submit": "Submit request",
+    "requests": "My requests",
+    "none": "You have not registered any requests yet.",
+    "created": "We registered your ARCO request",
+    "progress": "Request progress",
+    "steps": { "1": "Received", "2": "Identity verified", "3": "Under review", "4": "Resolved", "5": "Closed" },
+    "field": "Data to correct",
+    "fields": { "nombre_visible": "Display name", "idioma_preferido": "Preferred language", "idioma_autorizado": "Authorized language" },
+    "newValue": "Correct value",
+    "purpose": "Use you object to",
+    "purposes": { "COMERCIAL": "Commercial communications", "PERFILADO": "Artificial intelligence profiling" },
+    "errors": { "detail": "Describe your request with at least 10 characters", "newValue": "Enter the correct value" }
+  },
+  "data": {
+    "body": "Download a readable PDF with the personal data we hold about you.",
+    "download": "Download my data (PDF)"
+  }
+}

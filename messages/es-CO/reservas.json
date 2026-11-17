@@ -1,0 +1,109 @@
+{
+  "nextAction": { "ESPERAR_CONFIRMACION": "Esperando a que el prestador confirme tu reserva.", "CONTACTAR_PRESTADOR": "Contacta al prestador para completar el pago.", "DESCARGAR_COMPROBANTE": "Ya puedes descargar tu comprobante.", "CONSULTAR_ESTADO": "Estamos procesando tu reserva.", "CONSULTAR_HISTORIAL": "Puedes consultarla en tu historial." },
+  "booking": {
+    "createdPending": "¡Reserva solicitada! Tu código es {code}. El prestador debe confirmarla; mientras tanto tu cupo queda retenido.",
+    "createdConfirmed": "¡Reserva confirmada! Tu código es {code}. Ya puedes descargar tu comprobante.",
+    "title": "Reservar cupos",
+    "from": "Desde",
+    "perPerson": "por persona",
+    "loginRequired": "Inicia sesión como turista para reservar tu cupo.",
+    "loginToBook": "Iniciar sesión para reservar",
+    "onlyTourists": "Solo las cuentas de turista pueden crear reservas.",
+    "slotsLoading": "Cargando franjas disponibles…",
+    "noSlots": "No hay franjas disponibles por ahora.",
+    "soldOut": "Agotada",
+    "spotsLeft": "{count, plural, one {# cupo} other {# cupos}}",
+    "spotsUnknown": "Cupos por confirmar",
+    "notBookable": "No admite reservas por ahora",
+    "needsApproval": "El prestador debe confirmar esta reserva; te avisaremos por correo.",
+    "policyTerms": "Cancelación sin costo hasta {horas} horas antes del inicio; después se aplica una penalidad del {pct} %.",
+    "policyRef": "Política vigente, versión {version}.",
+    "quantity": "Cantidad de cupos",
+    "policy": "Política de cancelación",
+    "accept": "Acepto la política de cancelación",
+    "submit": "Reservar cupos",
+    "submitting": "Reservando…",
+    "retryHint": "Si se cortó la conexión, vuelve a pulsar el botón: no se duplicará tu reserva.",
+    "errors": {
+      "slot": "Elige una franja horaria",
+      "quantity": "Indica entre 1 y {max} cupos",
+      "policy": "Debes aceptar la política de cancelación",
+      "noPolicy": "No pudimos cargar la política de cancelación. Recarga la página."
+    }
+  },
+  "countdown": {
+    "title": "Tu cupo está retenido",
+    "expired": "El tiempo de retención terminó",
+    "lastMinute": "Queda menos de un minuto",
+    "remaining": "Tiempo restante: {clock}"
+  },
+  "states": {
+    "CONFIRMADA": "Confirmada",
+    "PENDIENTE_CONFIRMACION": "Pendiente de confirmación",
+    "PENDIENTE_CONFIRMACION_PRESTADOR": "Pendiente de confirmación",
+    "PENDIENTE_PAGO_EXTERNO": "Pendiente de pago",
+    "SOLICITADA": "Solicitada",
+    "COMPLETADA": "Completada",
+    "PENDIENTE": "Pendiente",
+    "CANCELADA": "Cancelada",
+    "RECHAZADA": "Rechazada",
+    "MODIFICADA": "Modificada",
+    "EXPIRADA": "Expirada",
+    "CHECK_IN": "Check-in realizado"
+  },
+  "list": {
+    "title": "Mis reservas",
+    "description": "Consulta, modifica o cancela tus reservas y descarga tus comprobantes.",
+    "tabs": { "ACTIVAS": "Activas", "PASADAS": "Pasadas", "CANCELADAS": "Canceladas" },
+    "empty": {
+      "ACTIVAS": "No tienes reservas activas.",
+      "PASADAS": "Aún no tienes reservas pasadas.",
+      "CANCELADAS": "No tienes reservas canceladas."
+    },
+    "code": "Código",
+    "service": "Servicio",
+    "date": "Fecha",
+    "spots": "Cupos",
+    "total": "Total"
+  },
+  "detail": {
+    "title": "Detalle de la reserva",
+    "back": "← Volver a mis reservas",
+    "voucher": "Descargar comprobante",
+    "modify": "Modificar",
+    "cancel": "Cancelar reserva",
+    "code": "Código",
+    "penalty": "Se aplicó una penalidad del {pct} % por cancelar fuera del plazo gratuito.",
+    "noPenalty": "Cancelación sin penalidad.",
+    "start": "Inicio",
+    "end": "Fin",
+    "spots": "Cupos",
+    "total": "Total",
+    "policy": "Política de cancelación",
+    "original": "Reserva original",
+    "replacement": "Reemplazada por"
+  },
+  "cancel": {
+    "title": "Cancelar reserva",
+    "generic": "Revisa la política de cancelación de esta reserva antes de continuar.",
+    "reason": "Motivo de la cancelación",
+    "reasonRequired": "Cuéntanos brevemente el motivo",
+    "confirm": "Confirmar cancelación",
+    "done": "Tu reserva fue cancelada sin penalidad.",
+    "donePenalty": "Tu reserva fue cancelada con una penalidad del {pct} %."
+  },
+  "modify": {
+    "title": "Modificar reserva",
+    "slot": "Nueva franja",
+    "choose": "Elige una franja",
+    "quantity": "Cantidad de cupos",
+    "accept": "Acepto la política de cancelación vigente",
+    "confirm": "Confirmar cambio",
+    "done": "Reserva modificada. Tu nuevo código es {code}.",
+    "errors": {
+      "slot": "Elige una franja",
+      "quantity": "Indica al menos 1 cupo",
+      "policy": "Debes aceptar la política"
+    }
+  }
+}

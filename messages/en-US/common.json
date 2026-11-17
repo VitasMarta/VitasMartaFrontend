@@ -1,0 +1,86 @@
+{
+  "savedChanges": "Changes saved",
+  "skip": "Skip to main content",
+  "home": "Go to home",
+  "loading": "Loading…",
+  "close": "Close",
+  "reference": "Support reference",
+  "retry": "Try again",
+  "cancel": "Cancel",
+  "save": "Save",
+  "saving": "Saving…",
+  "back": "Back",
+  "search": "Search",
+  "clear": "Clear",
+  "actions": "Actions",
+  "optional": "optional",
+  "none": "No data to show",
+  "yes": "Yes",
+  "no": "No",
+  "continue": "Continue",
+  "confirm": "Confirm",
+  "download": "Download",
+  "edit": "Edit",
+  "delete": "Delete",
+  "details": "View details",
+  "status": "Status",
+  "date": "Date",
+  "name": "Name",
+  "errorSummary": "Please review the highlighted fields",
+  "forbidden": {
+    "title": "You do not have access to this section",
+    "body": "Your current role is not allowed to view this screen.",
+    "home": "Back to home"
+  },
+  "notFound": {
+    "title": "We could not find this page",
+    "body": "The address does not exist or was moved."
+  },
+  "error": {
+    "title": "Something went wrong",
+    "body": "An unexpected error occurred. You can try again."
+  },
+  "nav": {
+    "menu": "Menu",
+    "signedInAs": "Signed in as",
+    "label": "Main navigation",
+    "explore": "Explore",
+    "myReservations": "My bookings",
+    "myProfile": "My profile",
+    "becomeProvider": "Become a provider",
+    "myOffer": "My offer",
+    "myBusiness": "My business",
+    "receivedReservations": "Received bookings",
+    "checkin": "QR check-in",
+    "myIndicators": "My indicators",
+    "admin": "Administration",
+    "monitoring": "Monitoring",
+    "analytics": "Analytics",
+    "sustainability": "Sustainability",
+    "login": "Sign in",
+    "register": "Create account",
+    "logout": "Sign out"
+  },
+  "locale": {
+    "label": "Language",
+    "es-CO": "Español (Colombia)",
+    "en-US": "English (United States)"
+  },
+  "footer": {
+    "tagline": "Integrated digital platform for sustainable tourism management in Santa Marta.",
+    "data": "We process your data under Colombian Law 1581 of 2012. You can exercise your ARCO rights from your profile.",
+    "rights": "© {year} VITASMARTA. All rights reserved."
+  },
+  "saturation": {
+    "NOMINAL": "Nominal occupancy",
+    "RECOMENDACION": "Moderation advised",
+    "PREVENTIVO": "Preventive level",
+    "CRITICO": "Critical level"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "status": "Page {page} of {pages} · {total} results"
+  }
+}

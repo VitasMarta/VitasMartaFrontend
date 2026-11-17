@@ -1,0 +1,189 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   VITASMARTA · Sistema de diseño (guía §1). Única fuente de colores del proyecto.
+   El script `pnpm check:contrast` valida estos tokens contra WCAG 2.1 AA.
+   ────────────────────────────────────────────────────────────────────────────── */
+:root {
+  --color-primary-mist: #f4e1de; /* Rosa Niebla · superficie principal */
+  --color-secondary-ink: #1d2b5c; /* Azul Tinta · texto, títulos, estructura */
+  --color-tertiary-emerald: #00a060; /* Esmeralda · gráficos, acentos amplios, sellos */
+  --color-surface-base: #fdfbfa; /* Blanco cálido · lectura densa */
+  --color-warn: #b45309; /* Ámbar · umbral preventivo (gráficos) */
+  --color-crit: #b91c1c; /* Coral · umbral crítico */
+
+  /* Derivados autorizados (RNF-07): versiones oscurecidas SOLO para texto pequeño / iconos. */
+  --color-emerald-text: #006b3f;
+  --color-warn-text: #92400e;
+
+  /* Rediseño (tarjetas): azul de acción para botones y enlaces, superficie de tarjeta y líneas suaves. */
+  --color-accion: #1a5fd6;
+  --color-accion-fuerte: #144aa8;
+  --color-sobre-accion: #ffffff;
+  --color-tarjeta: #ffffff;
+  --color-linea: #d5dae3;
+  --color-pagina: #f5f6f8;
+}
+
+@theme inline {
+  --color-action: var(--color-accion);
+  --color-action-strong: var(--color-accion-fuerte);
+  --color-on-action: var(--color-sobre-accion);
+  --color-card: var(--color-tarjeta);
+  --color-line: var(--color-linea);
+  --color-page: var(--color-pagina);
+  --color-mist: var(--color-primary-mist);
+  --color-ink: var(--color-secondary-ink);
+  --color-emerald: var(--color-tertiary-emerald);
+  --color-emerald-ink: var(--color-emerald-text);
+  --color-base: var(--color-surface-base);
+  --color-preventive: var(--color-warn);
+  --color-preventive-ink: var(--color-warn-text);
+  --color-critical: var(--color-crit);
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background-color: var(--color-pagina);
+  color: var(--color-secondary-ink);
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Tipografía (guía §1.2): Poppins en toda la interfaz ─────────────────────── */
+h1,
+h2,
+h3,
+h4 {
+  color: var(--color-secondary-ink);
+  font-family: inherit;
+}
+h1 {
+  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+h2 {
+  font-weight: 600;
+  font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+  line-height: 1.2;
+}
+h3 {
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+h4 {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.meta {
+  font-weight: 500;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+a.text-link {
+  color: var(--color-accion);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a.text-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* ── Foco de teclado accesible (RNF-07-2). Tinta sobre claro, Rosa Niebla sobre Tinta ── */
+*:focus-visible {
+  outline: 3px solid var(--color-secondary-ink);
+  outline-offset: 2px;
+}
+.on-ink *:focus-visible,
+.on-ink:focus-visible {
+  outline-color: var(--color-primary-mist);
+}
+
+/* ── Skip link ───────────────────────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--color-secondary-ink);
+  color: var(--color-primary-mist);
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* ── Tarjetas (rediseño): superficie blanca, borde suave, esquinas redondeadas y sombra leve ── */
+.card {
+  background-color: var(--color-tarjeta);
+  border: 1px solid var(--color-linea);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(29, 43, 92, 0.06), 0 2px 8px rgba(29, 43, 92, 0.06);
+}
+.card-hover {
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.card-hover:hover,
+.card-hover:focus-within {
+  border-color: var(--color-accion);
+  box-shadow: 0 4px 16px rgba(29, 43, 92, 0.14);
+}
+/* Formularios de los portales: cada pestaña con formulario se presenta como tarjeta. */
+[role="tabpanel"] > form:not(:has(.card)) {
+  background-color: var(--color-tarjeta);
+  border: 1px solid var(--color-linea);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px rgba(29, 43, 92, 0.06), 0 2px 8px rgba(29, 43, 92, 0.06);
+  padding: 1.5rem;
+}
+/* Marco del buscador destacado (Esmeralda: componente de UI, contraste >= 3:1 sobre blanco). */
+.search-frame {
+  background-color: var(--color-tertiary-emerald);
+  border-radius: 0.6rem;
+  padding: 4px;
+  box-shadow: 0 6px 20px rgba(29, 43, 92, 0.18);
+}
+
+/* ── Fila editorial (paneles internos): solo línea divisoria + fondo en hover/foco ──── */
+.editorial-row {
+  border-bottom: 1px solid rgba(29, 43, 92, 0.15);
+  transition: background-color 150ms ease;
+}
+.editorial-row:hover,
+.editorial-row:focus-within {
+  background-color: var(--color-primary-mist);
+}
+
+.sr-only-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
