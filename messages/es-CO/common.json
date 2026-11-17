@@ -41,6 +41,8 @@
     "body": "Ocurrió un error inesperado. Puedes intentarlo de nuevo."
   },
   "nav": {
+    "menu": "Menú",
+    "signedInAs": "Sesión iniciada como",
     "label": "Navegación principal",
     "explore": "Explorar",
     "myReservations": "Mis reservas",

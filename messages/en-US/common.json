@@ -41,6 +41,8 @@
     "body": "An unexpected error occurred. You can try again."
   },
   "nav": {
+    "menu": "Menu",
+    "signedInAs": "Signed in as",
     "label": "Main navigation",
     "explore": "Explore",
     "myReservations": "My bookings",
