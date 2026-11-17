@@ -11,7 +11,7 @@ import { RequireRole } from "@/core/auth/RequireRole";
 import { formatDate, formatDateTime, localized, rangoDias } from "@/core/format";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
-import { Button } from "@/shared/ui/Button";
+import { Button, actionButtonClass } from "@/shared/ui/Button";
 import { TrendChart } from "@/shared/ui/charts";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
 import { ErrorSummary, SelectField, SwitchField, TextAreaField, TextField } from "@/shared/ui/forms";
@@ -354,7 +354,7 @@ function AlertsTab() {
             { key: "o", header: t("occupancy"), align: "right", cell: (a) => (a.ocupacion_al_cruce == null ? "—" : `${Math.round(Number(a.ocupacion_al_cruce))} %`) },
             { key: "f", header: tc("date"), cell: (a) => formatDateTime(a.marca_temporal_activacion, locale) },
             { key: "e", header: tc("status"), cell: (a) => t(`states.${a.estado}`) }, { key: "r", header: t("responsible"), cell: (a) => a.usuario_cierre ?? a.usuario_reconocimiento ?? a.usuario_responsable ?? "—" },
-            { key: "x", header: <span className="sr-only">{tc("actions")}</span>, cell: (a) => a.estado !== "CERRADA" && <button type="button" className="text-link font-semibold" onClick={() => { setPanel({ alert: a, action: a.estado === "ACTIVA" ? "reconocimiento" : "cierre" }); setError(undefined); }}>{a.estado === "ACTIVA" ? t("acknowledge") : t("close")}<span className="sr-only"> {a.atractivo_ref}</span></button> },
+            { key: "x", header: <span className="sr-only">{tc("actions")}</span>, cell: (a) => a.estado !== "CERRADA" && <button type="button" className={actionButtonClass()} onClick={() => { setPanel({ alert: a, action: a.estado === "ACTIVA" ? "reconocimiento" : "cierre" }); setError(undefined); }}>{a.estado === "ACTIVA" ? t("acknowledge") : t("close")}<span className="sr-only"> {a.atractivo_ref}</span></button> },
           ]} />
           <Pagination page={page} pageSize={10} total={q.data.totalElements ?? q.data.total_elements ?? 0} onChange={setPage} />
         </>

@@ -52,7 +52,7 @@ const TONE_CLASS: Record<Tone, string> = {
 /** Etiqueta de estado en línea (punto + texto; sin caja). */
 export function StatusTag({ tone = "neutral", children }: { tone?: Tone; children: React.ReactNode }) {
   return (
-    <span className={cn("meta inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-2.5 py-0.5 font-semibold", TONE_CLASS[tone])}>
+    <span className={cn("meta inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-card px-2.5 py-0.5 font-semibold", TONE_CLASS[tone])}>
       <span aria-hidden="true" className="inline-block size-2 rounded-full bg-current" />
       {children}
     </span>

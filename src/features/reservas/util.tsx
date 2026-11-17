@@ -43,5 +43,17 @@ export function PoliticaOfertaTexto({ politica, className }: { politica: Politic
   );
 }
 
+/**
+ * M3 devuelve `siguiente_accion` como código (ESPERAR_CONFIRMACION, CONTACTAR_PRESTADOR…).
+ * Se traduce; si no es un código conocido (p. ej. una frase de los mocks), se muestra tal cual.
+ */
+export function textoSiguienteAccion(
+  t: { has: (k: string) => boolean; (k: string): string },
+  accion: string | null | undefined,
+): string | undefined {
+  if (!accion) return undefined;
+  return t.has(`nextAction.${accion}`) ? t(`nextAction.${accion}`) : /^[A-Z_]+$/.test(accion) ? undefined : accion;
+}
+
 export const isPending = (estado: string) => estado.toUpperCase().startsWith("PENDIENTE") || estado.toUpperCase() === "SOLICITADA";
 export const isFinal = (estado: string) => ["CANCELADA", "RECHAZADA", "MODIFICADA", "EXPIRADA", "COMPLETADA"].includes(estado.toUpperCase());

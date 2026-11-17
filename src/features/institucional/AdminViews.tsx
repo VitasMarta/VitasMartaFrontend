@@ -17,7 +17,7 @@ import { PAGE_SIZE, useOferta } from "@/features/prestador/api";
 import { TIPOS, type Contenido, type Tipo } from "@/features/prestador/offer";
 import { cn } from "@/shared/ui/cn";
 import { useDocumentTitle } from "@/shared/hooks";
-import { Button } from "@/shared/ui/Button";
+import { Button, actionButtonClass } from "@/shared/ui/Button";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
 import { EditorialList, EditorialRow } from "@/shared/ui/EditorialRow";
 import { CheckboxField, SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
@@ -140,9 +140,9 @@ export function UsersView() {
                   header: <span className="sr-only">{tc("actions")}</span>,
                   cell: (u) => (
                     <span className="flex flex-wrap gap-x-4 gap-y-1">
-                      <button type="button" className="text-link font-semibold" onClick={() => openRole(u)}>{t("changeRole")}<span className="sr-only"> {u.correo}</span></button>
-                      {u.estado === "BLOQUEADA" && <button type="button" className="text-link font-semibold" onClick={() => unlock.mutate(u.usuario_ref)}>{t("unlock")}<span className="sr-only"> {u.correo}</span></button>}
-                      <button type="button" className="text-link font-semibold text-critical" onClick={() => setPanel({ user: u, action: "delete" })}>{tc("delete")}<span className="sr-only"> {u.correo}</span></button>
+                      <button type="button" className={actionButtonClass()} onClick={() => openRole(u)}>{t("changeRole")}<span className="sr-only"> {u.correo}</span></button>
+                      {u.estado === "BLOQUEADA" && <button type="button" className={actionButtonClass()} onClick={() => unlock.mutate(u.usuario_ref)}>{t("unlock")}<span className="sr-only"> {u.correo}</span></button>}
+                      <button type="button" className={actionButtonClass("danger")} onClick={() => setPanel({ user: u, action: "delete" })}>{tc("delete")}<span className="sr-only"> {u.correo}</span></button>
                     </span>
                   ),
                 },
@@ -336,7 +336,7 @@ function OutboxPanel() {
           { key: "f", header: tc("date"), cell: (r) => formatDateTime(r.ocurrido_en, locale) },
           { key: "s", header: tc("status"), cell: (r) => <StatusTag tone={r.estado === "fallido" ? "bad" : r.estado === "publicado" ? "good" : "warn"}>{r.estado}</StatusTag> },
           { key: "i", header: t("attempts"), align: "right", cell: (r) => r.intentos },
-          { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.estado === "fallido" && <button type="button" className="text-link font-semibold" onClick={() => retry.mutate(r.id)}>{t("retry")}<span className="sr-only"> {r.event_type}</span></button> },
+          { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.estado === "fallido" && <button type="button" className={actionButtonClass()} onClick={() => retry.mutate(r.id)}>{t("retry")}<span className="sr-only"> {r.event_type}</span></button> },
         ]} />
       )}
     </div>
@@ -412,7 +412,7 @@ export function ProvidersView() {
               { key: "n", header: t("name"), cell: (p) => <span><strong>{p.razon_social}</strong><span className="meta block text-ink/80">{p.email}</span></span> },
               { key: "t", header: t("type"), cell: (p) => p.tipo },
               { key: "e", header: tc("status"), cell: (p) => <StatusTag tone={ESTADO_TONE[p.estado] ?? "neutral"}>{t(`states.${p.estado}`)}</StatusTag> },
-              { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (p) => <button type="button" className="text-link font-semibold" onClick={() => { setPanel(p); setAction(PROVIDER_ACTIONS[p.estado]?.[0] ?? ""); setError(undefined); }}>{t("manage")}<span className="sr-only"> {p.razon_social}</span></button> },
+              { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (p) => <button type="button" className={actionButtonClass()} onClick={() => { setPanel(p); setAction(PROVIDER_ACTIONS[p.estado]?.[0] ?? ""); setError(undefined); }}>{t("manage")}<span className="sr-only"> {p.razon_social}</span></button> },
             ]} />
             <Pagination base={1} page={page} pageSize={SIZE} total={q.data.total} onChange={setPage} />
           </>
@@ -503,7 +503,7 @@ export function ModerationView() {
               { key: "n", header: t("name"), cell: (r) => <span className="font-semibold">{localized(r.nombre, locale)}</span> },
               { key: "e", header: tc("status"), cell: (r) => <EstadoTag estado={r.estado} /> },
               { key: "v", header: t("version"), align: "right", cell: (r) => r.version },
-              { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => <button type="button" className="text-link font-semibold" onClick={() => { setPanel(r); setError(undefined); }}>{t("review")}<span className="sr-only"> {localized(r.nombre, locale)}</span></button> },
+              { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => <button type="button" className={actionButtonClass()} onClick={() => { setPanel(r); setError(undefined); }}>{t("review")}<span className="sr-only"> {localized(r.nombre, locale)}</span></button> },
             ]} />
             <Pagination base={1} page={page} pageSize={PAGE_SIZE} total={list.data.total} onChange={setPage} />
           </>
@@ -577,7 +577,7 @@ export function ProviderTypesView() {
             { key: "c", header: t("code"), cell: (r) => <span className="font-mono">{r.codigo}</span> }, { key: "n", header: t("name"), cell: (r) => <strong>{r.nombre}</strong> },
             { key: "p", header: t("properties"), cell: (r) => Object.keys((r.atributos_schema.properties as object) ?? {}).join(", ") || "—" },
             { key: "v", header: tc("status"), cell: (r) => <StatusTag tone={r.activo ? "good" : "neutral"}>{r.activo ? t("active") : t("inactive")}</StatusTag> },
-            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => <button type="button" className="text-link font-semibold" onClick={() => { setPanel(r); setErrors({}); }}>{tc("edit")}<span className="sr-only"> {r.nombre}</span></button> },
+            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => <button type="button" className={actionButtonClass()} onClick={() => { setPanel(r); setErrors({}); }}>{tc("edit")}<span className="sr-only"> {r.nombre}</span></button> },
           ]} />
         )}
       </Container>
@@ -648,7 +648,7 @@ export function CredentialsView() {
             { key: "n", header: t("name"), cell: (r) => <span><strong>{r.nombre}</strong><span className="meta block font-mono text-ink/80">{r.prefijo}… · {r.scopes.join(", ")}</span></span> },
             { key: "c", header: t("created"), cell: (r) => formatDateTime(r.created_at, locale) },
             { key: "e", header: tc("status"), cell: (r) => <StatusTag tone={r.activo ? "good" : "bad"}>{t(`states.${r.activo ? "activa" : "revocada"}`)}</StatusTag> },
-            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.activo && <button type="button" className="text-link font-semibold text-critical" onClick={() => revoke.mutate(r.id)}>{t("revoke")}<span className="sr-only"> {r.prefijo}</span></button> },
+            { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.activo && <button type="button" className={actionButtonClass("danger")} onClick={() => revoke.mutate(r.id)}>{t("revoke")}<span className="sr-only"> {r.prefijo}</span></button> },
           ]} />
         )}
       </Container>

@@ -8,7 +8,7 @@ import { formatBytes, formatDate, localized } from "@/core/format";
 import { Link, useRouter } from "@/core/i18n/navigation";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
-import { Button, ButtonLink } from "@/shared/ui/Button";
+import { Button, ButtonLink, actionButtonClass } from "@/shared/ui/Button";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
 import { CheckboxField, ErrorSummary, SelectField, TextAreaField, TextField } from "@/shared/ui/forms";
 import { StatusTag, type Tone } from "@/shared/ui/indicators";
@@ -452,9 +452,9 @@ function SlotsPanel({ content }: { content: Contenido }) {
               key: "a",
               header: <span className="sr-only">{tc("actions")}</span>,
               cell: (r) => (
-                <span className="flex gap-3">
-                  <button type="button" className="text-link font-semibold" onClick={() => setPanel({ mode: "edit", slot: r })}>{tc("edit")}</button>
-                  <button type="button" className="text-link font-semibold text-critical" onClick={() => actions.remove.mutate(r.id)}>{tc("delete")}</button>
+                <span className="flex gap-2">
+                  <button type="button" className={actionButtonClass()} onClick={() => setPanel({ mode: "edit", slot: r })}>{tc("edit")}</button>
+                  <button type="button" className={actionButtonClass("danger")} onClick={() => actions.remove.mutate(r.id)}>{tc("delete")}</button>
                 </span>
               ),
             },

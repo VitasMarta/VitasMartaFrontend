@@ -21,6 +21,23 @@ const VARIANTS: Record<ButtonVariant, string> = {
 export const buttonClass = (variant: ButtonVariant = "primary", className?: string) =>
   cn(BASE, VARIANTS[variant], className);
 
+/**
+ * Acciones dentro de filas de tabla: botón compacto con contorno fino, sin peso visual hasta el
+ * hover. `positive` para la acción principal (confirmar), `danger` para las destructivas.
+ */
+export type ActionTone = "neutral" | "positive" | "danger";
+const ACTION_TONES: Record<ActionTone, string> = {
+  neutral: "border-line text-ink hover:border-ink/40 hover:bg-page",
+  positive: "border-emerald/60 text-emerald-ink hover:bg-emerald/10",
+  danger: "border-line text-critical hover:border-critical/50 hover:bg-critical/5",
+};
+export const actionButtonClass = (tone: ActionTone = "neutral", className?: string) =>
+  cn(
+    "inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border bg-card px-3.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+    ACTION_TONES[tone],
+    className,
+  );
+
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; loading?: boolean };
 
 export function Button({ variant = "primary", loading, className, children, disabled, type = "button", ...props }: ButtonProps) {

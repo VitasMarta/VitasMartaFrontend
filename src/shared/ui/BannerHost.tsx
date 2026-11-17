@@ -3,13 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useUiStore, type BannerTone } from "@/core/store/uiStore";
 import { cn } from "./cn";
-import { Icon } from "./Icon";
+import { Icon, type IconName } from "./Icon";
 
-const TONE: Record<BannerTone, string> = {
-  info: "bg-card border-ink",
-  success: "bg-card border-emerald",
-  warn: "bg-card border-preventive",
-  error: "bg-card border-critical",
+const TONE: Record<BannerTone, { barra: string; chip: string; icono: IconName }> = {
+  info: { barra: "border-l-ink", chip: "bg-ink/10 text-ink", icono: "spark" },
+  success: { barra: "border-l-emerald", chip: "bg-emerald/15 text-emerald-ink", icono: "check" },
+  warn: { barra: "border-l-preventive", chip: "bg-preventive/15 text-preventive-ink", icono: "alert" },
+  error: { barra: "border-l-critical", chip: "bg-critical/10 text-critical", icono: "alert" },
 };
 
 /** Avisos tipo banner superior (guía §2.1): tira de ancho completo, nunca una caja flotante. */
@@ -21,14 +21,15 @@ export function BannerHost() {
   return (
     <div aria-live="polite" aria-atomic="false" className="sticky top-0 z-40">
       {banners.map((b) => (
-        <div key={b.id} role={b.tone === "error" ? "alert" : "status"} className={cn("border-b-2", TONE[b.tone])}>
-          <div className="mx-auto flex max-w-7xl items-start justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-            <p className="font-medium">
-              {b.tone === "error" && <Icon name="alert" className="mr-2 inline text-critical" />}
-              {b.tone === "success" && <Icon name="check" className="mr-2 inline text-emerald-ink" />}
+        <div key={b.id} role={b.tone === "error" ? "alert" : "status"} className="border-b border-line bg-card shadow-sm">
+          <div className={cn("mx-auto flex max-w-7xl items-center gap-3 border-l-4 px-4 py-3 sm:px-6 lg:px-8", TONE[b.tone].barra)}>
+            <span aria-hidden="true" className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full", TONE[b.tone].chip)}>
+              <Icon name={TONE[b.tone].icono} size={16} />
+            </span>
+            <p className="min-w-0 flex-1 font-medium">
               {b.message}
               {b.reference && (
-                <span className="meta ml-2 text-ink/80">
+                <span className="meta mt-0.5 block text-ink/70">
                   {t("reference")}: <span className="font-mono">{b.reference}</span>
                 </span>
               )}
@@ -36,7 +37,7 @@ export function BannerHost() {
             <button
               type="button"
               onClick={() => dismiss(b.id)}
-              className="inline-flex min-h-9 min-w-9 shrink-0 items-center justify-center hover:bg-base"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink/70 hover:bg-page hover:text-ink"
               aria-label={t("close")}
             >
               <Icon name="x" />

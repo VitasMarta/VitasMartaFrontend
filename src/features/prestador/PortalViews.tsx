@@ -15,7 +15,7 @@ import { formatCOP, formatDate, formatDateTime, formatNumber, localized, rangoMe
 import { useRouter } from "@/core/i18n/navigation";
 import { useUiStore } from "@/core/store/uiStore";
 import { useDocumentTitle } from "@/shared/hooks";
-import { Button } from "@/shared/ui/Button";
+import { Button, actionButtonClass } from "@/shared/ui/Button";
 import { TrendChart } from "@/shared/ui/charts";
 import { EditorialTable } from "@/shared/ui/EditorialTable";
 import { CheckboxField, ErrorSummary, SelectField, SwitchField, TextAreaField, TextField } from "@/shared/ui/forms";
@@ -329,14 +329,14 @@ export function ReceivedReservationsView() {
                   header: <span className="sr-only">{tc("actions")}</span>,
                   cell: (r) =>
                     r.estado === "pendiente_confirmacion" || r.estado === "confirmada" ? (
-                      <span className="flex flex-wrap gap-x-4 gap-y-1">
+                      <span className="flex gap-2">
                         {r.estado === "pendiente_confirmacion" && (
                           <>
-                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "confirmar" })}>{t("actions.confirmar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
-                            <button type="button" className="text-link font-semibold" onClick={() => setPanel({ row: r, accion: "rechazar" })}>{t("actions.rechazar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
+                            <button type="button" className={actionButtonClass("positive")} onClick={() => setPanel({ row: r, accion: "confirmar" })}>{t("actions.confirmar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
+                            <button type="button" className={actionButtonClass()} onClick={() => setPanel({ row: r, accion: "rechazar" })}>{t("actions.rechazar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
                           </>
                         )}
-                        <button type="button" className="text-link font-semibold text-critical" onClick={() => setPanel({ row: r, accion: "cancelar" })}>{t("actions.cancelar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
+                        <button type="button" className={actionButtonClass("danger")} onClick={() => setPanel({ row: r, accion: "cancelar" })}>{t("actions.cancelar")}<span className="sr-only"> {codigoCorto(r.id)}</span></button>
                       </span>
                     ) : null,
                 },
@@ -483,6 +483,7 @@ export function IndicatorsView() {
 type Versioned = { version: number; [k: string]: unknown };
 function useVersioned(key: string, path: string) {
   const qc = useQueryClient();
+  const tc = useTranslations("common");
   // 404 = el prestador aún no la ha creado (configuración/política nuevas): se edita sobre valores por defecto.
   const q = useQuery({
     queryKey: ["m4", key],
@@ -500,7 +501,7 @@ function useVersioned(key: string, path: string) {
     meta: { silent: true },
     mutationFn: async ({ method, body }: { method: "patch" | "put"; body: Record<string, unknown> }) =>
       (await api[method]<Versioned>(path, { body: { ...(q.data?.version != null ? { version_esperada: q.data.version } : {}), ...body } })).data,
-    onSuccess: () => { setConflict(false); qc.invalidateQueries({ queryKey: ["m4", key] }); useUiStore.getState().push({ tone: "success", message: "✓" }); },
+    onSuccess: () => { setConflict(false); qc.invalidateQueries({ queryKey: ["m4", key] }); useUiStore.getState().push({ tone: "success", message: tc("savedChanges") }); },
     onError: (e) => { if (e instanceof ApiError && e.isVersionConflict) setConflict(true); else if (e instanceof ApiError) useUiStore.getState().push({ tone: "error", message: e.message, reference: e.correlationId }); },
   });
   return { q, save, conflict, reload: () => { setConflict(false); return q.refetch(); } };

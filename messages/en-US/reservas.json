@@ -1,5 +1,8 @@
 {
+  "nextAction": { "ESPERAR_CONFIRMACION": "Waiting for the provider to confirm your booking.", "CONTACTAR_PRESTADOR": "Contact the provider to complete the payment.", "DESCARGAR_COMPROBANTE": "You can now download your voucher.", "CONSULTAR_ESTADO": "We are processing your booking.", "CONSULTAR_HISTORIAL": "You can find it in your history." },
   "booking": {
+    "createdPending": "Booking requested! Your code is {code}. The provider must confirm it; meanwhile your spot is on hold.",
+    "createdConfirmed": "Booking confirmed! Your code is {code}. You can now download your voucher.",
     "title": "Book spots",
     "from": "From",
     "perPerson": "per person",

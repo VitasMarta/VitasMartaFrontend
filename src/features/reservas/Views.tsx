@@ -21,7 +21,7 @@ import { Tabs } from "@/shared/ui/Tabs";
 import { useUiStore } from "@/core/store/uiStore";
 import { descargarComprobante, useAccionReserva, useOfertasReserva, useReserva, useReservas, type ClasificacionReserva } from "./api";
 import { cuposDe, ofertaAgotada } from "./BookingPanel";
-import { PoliticaOfertaTexto, ReservaStatus, isFinal, isPending } from "./util";
+import { PoliticaOfertaTexto, ReservaStatus, isFinal, isPending, textoSiguienteAccion } from "./util";
 
 const SIZE = 10;
 const CLASES: ClasificacionReserva[] = ["ACTIVAS", "PASADAS", "CANCELADAS"];
@@ -191,6 +191,7 @@ function ModifyPanel({ reserva, open, onClose }: { reserva: ReservaRespuesta; op
 
 export function ReservationDetailView({ reservaRef }: { reservaRef: string }) {
   const t = useTranslations("reservas.detail");
+  const tr = useTranslations("reservas");
   const tc = useTranslations("common");
   const locale = useLocale();
   const queryClient = useQueryClient();
@@ -214,7 +215,7 @@ export function ReservationDetailView({ reservaRef }: { reservaRef: string }) {
   return (
     <RequireRole area="turista">
       {r?.vence_en && isPending(r.estado) && (
-        <CountdownBar deadline={r.vence_en} instruction={r.siguiente_accion} onExpire={() => queryClient.invalidateQueries({ queryKey: ["reservas"] })} />
+        <CountdownBar deadline={r.vence_en} instruction={textoSiguienteAccion(tr, r.siguiente_accion)} onExpire={() => queryClient.invalidateQueries({ queryKey: ["reservas"] })} />
       )}
       <PageHeader
         title={r ? localized(r.servicio_nombre, locale) || t("title") : t("title")}
@@ -238,7 +239,7 @@ export function ReservationDetailView({ reservaRef }: { reservaRef: string }) {
               <ReservaStatus estado={r.estado} />
               {r.codigo_confirmacion && <span className="meta">{t("code")}: <strong className="font-mono">{r.codigo_confirmacion}</strong></span>}
             </p>
-            {r.siguiente_accion && isPending(r.estado) && <p role="status" className="border-l-4 border-emerald pl-3 font-medium">{r.siguiente_accion}</p>}
+            {textoSiguienteAccion(tr, r.siguiente_accion) && isPending(r.estado) && <p role="status" className="border-l-4 border-emerald pl-3 font-medium">{textoSiguienteAccion(tr, r.siguiente_accion)}</p>}
             {r.instrucciones_pago_externo && <p className="border-l-4 border-ink pl-3">{r.instrucciones_pago_externo}</p>}
             {r.estado === "CANCELADA" && (
               <p role="status" className="border-l-4 border-preventive pl-3 font-medium">

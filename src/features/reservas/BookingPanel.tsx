@@ -7,11 +7,12 @@ import type { FichaCatalogo, OfertaReservable } from "@/core/api/types";
 import { useSessionStore } from "@/core/auth/sessionStore";
 import { amountOf, formatCOP, formatDate, formatTime, localDayOf } from "@/core/format";
 import { useRouter, usePathname } from "@/core/i18n/navigation";
+import { useUiStore } from "@/core/store/uiStore";
 import { Button, ButtonLink } from "@/shared/ui/Button";
 import { CheckboxField, ErrorSummary, TextField } from "@/shared/ui/forms";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { useCrearReserva, useOfertasReserva } from "./api";
-import { PoliticaOfertaTexto } from "./util";
+import { PoliticaOfertaTexto, isPending } from "./util";
 
 const MAX_CUPOS = 10;
 
@@ -91,7 +92,12 @@ export function BookingPanel({
         aceptacion_politica: { aceptada: true, politica_ref: selected.politica.politica_ref, version: selected.politica.version },
       },
       {
-        onSuccess: (reserva) => router.push(`/mis-reservas/${reserva.reserva_ref}`),
+        onSuccess: (reserva) => {
+          // Código corto: el mismo que ve el prestador en Reservas recibidas.
+          const code = reserva.reserva_ref.slice(0, 8).toUpperCase();
+          useUiStore.getState().push({ tone: "success", message: t(isPending(reserva.estado) ? "createdPending" : "createdConfirmed", { code }) });
+          router.push(`/mis-reservas/${reserva.reserva_ref}`);
+        },
         onError: (error) => {
           if (error instanceof ApiError) {
             if (error.codigo === "RESERVA_RESTRINGIDA") onRestricted();

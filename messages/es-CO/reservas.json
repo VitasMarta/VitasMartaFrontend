@@ -1,5 +1,8 @@
 {
+  "nextAction": { "ESPERAR_CONFIRMACION": "Esperando a que el prestador confirme tu reserva.", "CONTACTAR_PRESTADOR": "Contacta al prestador para completar el pago.", "DESCARGAR_COMPROBANTE": "Ya puedes descargar tu comprobante.", "CONSULTAR_ESTADO": "Estamos procesando tu reserva.", "CONSULTAR_HISTORIAL": "Puedes consultarla en tu historial." },
   "booking": {
+    "createdPending": "¡Reserva solicitada! Tu código es {code}. El prestador debe confirmarla; mientras tanto tu cupo queda retenido.",
+    "createdConfirmed": "¡Reserva confirmada! Tu código es {code}. Ya puedes descargar tu comprobante.",
     "title": "Reservar cupos",
     "from": "Desde",
     "perPerson": "por persona",
