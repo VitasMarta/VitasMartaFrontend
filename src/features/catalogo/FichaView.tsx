@@ -87,8 +87,37 @@ export function FichaView({ id }: { id: string }) {
         </a>
       </header>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_320px]">
-        <Gallery media={media.data ?? []} name={name} />
+      {/* Dos columnas alineadas de arriba abajo: galería y contenido a la izquierda; reserva y
+          contexto (sostenibilidad, aforo, mapa) a la derecha, con el mismo ancho en toda la ficha. */}
+      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="min-w-0">
+          <Gallery media={media.data ?? []} name={name} />
+        </div>
+        {/* Misma altura que la galería: el mapa ocupa el espacio que deja la reserva. */}
+        <div className="flex flex-col gap-4">
+          <aside id="reservar" aria-label={t("bookingRegion")} className="card scroll-mt-24 p-5">
+            <BookingPanel atractivoId={id} ficha={data} onRestricted={() => setRestricted(true)} />
+          </aside>
+          {mapa && (
+            <a href={mapa} target="_blank" rel="noreferrer" className="card card-hover flex min-h-28 flex-1 flex-col items-center justify-center gap-2 bg-gradient-to-br from-page to-mist p-4 font-semibold text-action">
+              <Icon name="pin" size={28} />
+              {tl("viewMap")}
+            </a>
+          )}
+        </div>
+
+        <article className="min-w-0 space-y-6">
+          {data.descripcion != null && (
+            <section aria-labelledby="about-title" className="card p-5">
+              <h2 id="about-title" className="!text-2xl">{tl("about")}</h2>
+              <p className="mt-3 max-w-3xl text-lg">{localized(data.descripcion, locale)}</p>
+            </section>
+          )}
+          <DynamicAttributes ficha={data} />
+          <BuenasPracticasBlock data={buenasPracticas.data} />
+          {crowded && <AlternativesBand data={alternativas.data} />}
+        </article>
+
         <div className="space-y-4">
           {level && (
             <section aria-label={ts(level)} className="card p-4">
@@ -109,30 +138,7 @@ export function FichaView({ id }: { id: string }) {
               {restricted ? t("restricted") : t("crowded", { value: Math.round(occupancy ?? 0) })}
             </p>
           )}
-          {mapa && (
-            <a href={mapa} target="_blank" rel="noreferrer" className="card card-hover flex min-h-28 flex-col items-center justify-center gap-2 bg-gradient-to-br from-page to-mist p-4 font-semibold text-action">
-              <Icon name="pin" size={28} />
-              {tl("viewMap")}
-            </a>
-          )}
         </div>
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <article className="min-w-0">
-          {data.descripcion != null && (
-            <section aria-labelledby="about-title" className="card p-5">
-              <h2 id="about-title" className="!text-2xl">{tl("about")}</h2>
-              <p className="mt-3 max-w-3xl text-lg">{localized(data.descripcion, locale)}</p>
-            </section>
-          )}
-          <DynamicAttributes ficha={data} />
-          <BuenasPracticasBlock data={buenasPracticas.data} />
-          {crowded && <AlternativesBand data={alternativas.data} />}
-        </article>
-        <aside id="reservar" aria-label={t("bookingRegion")} className="card h-fit scroll-mt-24 p-5 lg:sticky lg:top-4">
-          <BookingPanel atractivoId={id} ficha={data} onRestricted={() => setRestricted(true)} />
-        </aside>
       </div>
     </Container>
   );

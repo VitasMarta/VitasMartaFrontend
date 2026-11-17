@@ -116,7 +116,7 @@ export function Gallery({ media, name }: { media: MultimediaDTO[]; name: string 
 
 // ── Atributos dinámicos JSONB (M2 §8.1): solo se renderiza lo que existe ────────────────────────
 // Claves propias de la ficha y metadatos de la respuesta de M2 (idioma, frescura, caché): no son atributos del destino.
-const CORE_KEYS = new Set(["id", "tipo", "nombre", "descripcion", "categorias", "ubicacion", "precio", "sostenibilidad", "politica_cancelacion", "atributos", "multimedia", "idioma", "frescura", "desde_cache"]);
+const CORE_KEYS = new Set(["id", "tipo", "nombre", "descripcion", "categorias", "ubicacion", "precio", "sostenibilidad", "politica_cancelacion", "atributos", "multimedia", "rango_precio", "idioma", "frescura", "desde_cache"]);
 
 export const isPresent = (v: unknown): boolean => {
   if (v === null || v === undefined || v === "") return false;
@@ -176,7 +176,7 @@ export function DynamicAttributes({ ficha }: { ficha: FichaCatalogo }) {
   };
 
   return (
-    <section aria-labelledby="atributos-title" className="mt-6">
+    <section aria-labelledby="atributos-title">
       <h2 id="atributos-title" className="!text-2xl">
         {tl("highlights")}
       </h2>
@@ -201,7 +201,7 @@ export function BuenasPracticasBlock({ data }: { data: BuenasPracticas | null | 
   const locale = useLocale();
   if (!data) return null; // 204 / M8 caído → la sección se omite por completo
   return (
-    <section aria-labelledby="bp-title" className="card mt-6 border-l-4 !border-l-emerald p-5">
+    <section aria-labelledby="bp-title" className="card border-l-4 !border-l-emerald p-5">
       <h2 id="bp-title" className="flex items-center gap-2 !text-2xl">
         <Icon name="leaf" size={24} className="text-emerald-ink" />
         {t("goodPractices")}
@@ -217,7 +217,7 @@ export function AlternativesBand({ data }: { data: AlternativasRespuesta | null 
   const t = useTranslations("catalogo.alternatives");
   if (!data || data.alternativas.length === 0) return null;
   return (
-    <section aria-labelledby="alt-title" className="card mt-10 p-5">
+    <section aria-labelledby="alt-title" className="card p-5">
       <h2 id="alt-title" className="!text-2xl">
         {t("title")}
       </h2>

@@ -80,6 +80,8 @@ export type FichaCatalogo = Record<string, unknown> & {
   politica_cancelacion?: { politica_ref: string; version: string | number; descripcion?: Localized };
   sostenibilidad?: { ocupacion_estimada?: number; nivel_saturacion?: NivelSaturacion };
   precio?: number | { monto: number; moneda?: string } | null;
+  /** M2 real: rango de precios de las tarifas del prestador (COP). */
+  rango_precio?: { minimo?: number | null; maximo?: number | null; moneda?: string } | null;
 };
 
 export interface Franja {

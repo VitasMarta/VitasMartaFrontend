@@ -69,7 +69,9 @@ export function BookingPanel({
   // La política a aceptar es la de la franja elegida (antes de elegir se muestra la de la primera).
   const politica = (selected ?? ofertas.find((o) => o.reservable) ?? ofertas[0])?.politica;
   const importes = ofertas.map((o) => Number(o.importe)).filter((n) => Number.isFinite(n));
-  const price = importes.length ? Math.min(...importes) : amountOf(ficha.precio as number | { monto: number } | null | undefined);
+  const price = importes.length
+    ? Math.min(...importes)
+    : (ficha.rango_precio?.minimo ?? amountOf(ficha.precio as number | { monto: number } | null | undefined));
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
