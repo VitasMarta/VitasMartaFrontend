@@ -12,6 +12,11 @@
     "viewAll": "Ver todo el catálogo"
   },
   "ai": {
+    "titleGeneral": "Sugerencias para tu visita",
+    "anonIntro": "Destinos con buena valoración y baja congestión. Inicia sesión para recibir recomendaciones personalizadas con inteligencia artificial.",
+    "login": "Iniciar sesión",
+    "nudge": "¿Quieres recomendaciones a tu medida? Elige tus intereses y activa el perfilado en tu perfil.",
+    "nudgeLink": "Personalizar mis recomendaciones",
     "seal": "Sugerencias generadas por Inteligencia Artificial para tu viaje",
     "sealGeneral": "Sugerencias destacadas de Santa Marta",
     "title": "Recomendado para ti",

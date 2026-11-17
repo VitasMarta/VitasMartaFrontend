@@ -3,7 +3,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { localized } from "@/core/format";
 import { Link } from "@/core/i18n/navigation";
-import { useSessionStore } from "@/core/auth/sessionStore";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Icon } from "@/shared/ui/Icon";
 import { Container } from "@/shared/ui/layout";
@@ -19,7 +18,6 @@ export function HomeView() {
   const tl = useTranslations("catalogo.layout");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const status = useSessionStore((s) => s.status);
   const categorias = useCategorias();
   const popular = useBusqueda({ orden: "popularidad" }, 8);
   useDocumentTitle(t("title"));
@@ -37,18 +35,6 @@ export function HomeView() {
       <Container className="-mt-10">
         <SearchBar />
       </Container>
-
-      {status === "anonymous" && (
-        <Container className="pt-6">
-          <p className="card inline-flex flex-wrap items-center gap-2 px-4 py-3">
-            <Icon name="spark" className="text-emerald-ink" />
-            {t("loginForAi")}{" "}
-            <Link href="/login" className="text-link font-semibold">
-              {t("loginLink")}
-            </Link>
-          </p>
-        </Container>
-      )}
 
       <RecommendationsBand />
 

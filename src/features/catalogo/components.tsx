@@ -7,23 +7,63 @@ import type {
   BuenasPracticas,
   FichaCatalogo,
   MultimediaDTO,
+  NivelSaturacion,
 } from "@/core/api/types";
 import { formatCOP, formatDate, localized } from "@/core/format";
 import { cn } from "@/shared/ui/cn";
 import { Icon } from "@/shared/ui/Icon";
 import { SustainabilityIndicator, levelFromOccupancy } from "@/shared/ui/indicators";
-import { useRecomendaciones } from "./api";
+import { useBusqueda, useMultimedia, useRecomendaciones } from "./api";
 import { useSessionStore } from "@/core/auth/sessionStore";
-import { DestinoImagen } from "./cards";
+import { DestinoImagen, ocupacionDe } from "./cards";
 
-// ── Banda de recomendaciones IA (M6) ────────────────────────────────────────────────────────────
+// ── Banda de recomendaciones (M6) ──────────────────────────────────────────────────────────────
+// Con sesión: M6 (personalizada con IA si hay perfilado + intereses; si no, reglas). Sin sesión M6
+// no responde (exige JWT): se muestran los destinos más sostenibles de M2 con una invitación a entrar.
+interface ItemBanda {
+  id: string;
+  nombre: string;
+  categorias: string[];
+  explicacion?: string;
+  sostenible?: boolean;
+  nivel?: NivelSaturacion;
+  ocupacion?: number;
+  /** M2 trae la imagen en la búsqueda; M6 no, y se toma de la galería del destino. */
+  imagen?: string | null;
+}
+
+function FotoRecomendacion({ item }: { item: ItemBanda }) {
+  const media = useMultimedia(item.id, item.imagen === undefined);
+  const src = item.imagen ?? media.data?.find((m) => m.tipo === "foto")?.url_cdn;
+  return <DestinoImagen src={src} alt={item.nombre} />;
+}
+
 export function RecommendationsBand() {
   const t = useTranslations("catalogo.ai");
+  const locale = useLocale();
+  const status = useSessionStore((s) => s.status);
   const rol = useSessionStore((s) => s.user?.rol);
   const { data } = useRecomendaciones(5);
-  if (rol !== "TURISTA" || !data || data.items.length === 0) return null; // M6 caído o sin datos: se oculta
+  const anonimo = status === "anonymous";
+  const general = useBusqueda({ orden: "sostenibilidad" }, 4, anonimo);
 
-  const personalized = data.estado_respuesta === "PERSONALIZADA";
+  let items: ItemBanda[] = [];
+  if (anonimo) {
+    items = (general.data?.pages[0]?.items ?? []).map((i) => {
+      const o = ocupacionDe(i);
+      return { id: i.id, nombre: localized(i.nombre, locale), categorias: i.categorias ?? [], imagen: i.imagen_url ?? null, nivel: o?.level, ocupacion: o?.value };
+    });
+  } else if (rol === "TURISTA" && data) {
+    items = data.items.map((i) => ({
+      id: i.atractivo_ref, nombre: i.nombre, categorias: i.categorias, explicacion: i.explicacion,
+      sostenible: i.sostenibilidad.es_alternativa_sostenible, nivel: i.sostenibilidad.nivel_saturacion, ocupacion: i.sostenibilidad.ocupacion_estimada,
+    }));
+  }
+  if (items.length === 0) return null; // M6 caído o sin datos: se oculta
+
+  const personalized = !anonimo && data?.estado_respuesta === "PERSONALIZADA";
+  // Turista sin personalización por decisión/cold-start (no por caída de la IA): se le invita a configurarla.
+  const invitar = !anonimo && data?.estado_respuesta === "ESTANDAR_SIN_PERFILADO";
   return (
     <section aria-labelledby="ia-title" className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <p className="inline-flex items-center gap-2 font-semibold text-emerald-ink">
@@ -31,36 +71,54 @@ export function RecommendationsBand() {
         {personalized ? t("seal") : t("sealGeneral")}
       </p>
       <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-        <h2 id="ia-title" className="!text-2xl">{t("title")}</h2>
-        <Link href="/mi-perfil?seccion=consentimientos" className="text-link font-semibold">
-          {t("configure")}
-        </Link>
+        <h2 id="ia-title" className="!text-2xl">{personalized ? t("title") : t("titleGeneral")}</h2>
+        {personalized && (
+          <Link href="/mi-perfil?seccion=consentimientos" className="text-link font-semibold">
+            {t("configure")}
+          </Link>
+        )}
       </div>
-      <p className="mt-1 max-w-3xl text-ink/90">{data.aviso_transparencia_ia}</p>
-      {data.degradada && <p className="meta mt-1 font-semibold text-ink/80">{t("fallbackTag")}</p>}
-      <ul role="list" aria-label={t("title")} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {data.items.map((item) => (
-          <li key={item.atractivo_ref} className="card card-hover relative flex flex-col overflow-hidden">
+      {anonimo ? (
+        <p className="mt-1 max-w-3xl text-ink/90">
+          {t("anonIntro")}{" "}
+          <Link href="/login" className="text-link font-semibold">{t("login")}</Link>
+        </p>
+      ) : (
+        <p className="mt-1 max-w-3xl text-ink/90">{data?.aviso_transparencia_ia}</p>
+      )}
+      {data?.degradada && !anonimo && <p className="meta mt-1 font-semibold text-ink/80">{t("fallbackTag")}</p>}
+      {invitar && (
+        <p className="card mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+          <Icon name="spark" className="text-emerald-ink" />
+          <span>{t("nudge")}</span>
+          <Link href="/mi-perfil?seccion=intereses" className="text-link font-semibold">{t("nudgeLink")}</Link>
+        </p>
+      )}
+      <ul role="list" aria-label={personalized ? t("title") : t("titleGeneral")} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {items.map((item) => (
+          <li key={item.id} className="card card-hover relative flex flex-col overflow-hidden">
             <div className="aspect-[4/3] w-full">
-              <DestinoImagen alt={item.nombre} />
+              <FotoRecomendacion item={item} />
             </div>
             <div className="flex flex-1 flex-col gap-2 p-4">
               <h3 className="!text-lg leading-snug">
-                <Link href={`/atractivo/${item.atractivo_ref}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
+                <Link href={`/atractivo/${item.id}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
                   {item.nombre}
                 </Link>
               </h3>
               {item.categorias.length > 0 && <p className="meta text-ink/80">{item.categorias.join(" · ")}</p>}
               {item.explicacion && <p className="border-l-[3px] border-emerald pl-3 text-sm italic">{item.explicacion}</p>}
-              {item.sostenibilidad.es_alternativa_sostenible && (
+              {item.sostenible && (
                 <p className="meta inline-flex items-center gap-1.5 font-semibold text-emerald-ink">
                   <Icon name="leaf" size={16} />
                   {t("sustainable")}
                 </p>
               )}
-              <div className="mt-auto pt-1">
-                <SustainabilityIndicator level={item.sostenibilidad.nivel_saturacion} occupancy={item.sostenibilidad.ocupacion_estimada} />
-              </div>
+              {item.nivel && (
+                <div className="mt-auto pt-1">
+                  <SustainabilityIndicator level={item.nivel} occupancy={item.ocupacion} />
+                </div>
+              )}
             </div>
           </li>
         ))}

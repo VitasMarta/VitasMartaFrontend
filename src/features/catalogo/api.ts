@@ -38,9 +38,10 @@ export const useCategorias = () =>
   });
 
 /** Paginación por cursor (`cursor_siguiente`). Cambiar `orden` conserva el resto de filtros (RF-01-6). */
-export const useBusqueda = (filtros: BusquedaFiltros, limite = 20) =>
+export const useBusqueda = (filtros: BusquedaFiltros, limite = 20, enabled = true) =>
   useInfiniteQuery({
     queryKey: ["catalogo", "busqueda", filtros, limite],
+    enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) =>
       (
@@ -64,9 +65,10 @@ export const useFranjas = (id: string) =>
     queryFn: async () => (await api.get<RespuestaFranjas>(routes.catalogo.franjas(id), { auth: false })).data,
   });
 
-export const useMultimedia = (id: string) =>
+export const useMultimedia = (id: string, enabled = true) =>
   useQuery({
     queryKey: ["catalogo", "multimedia", id],
+    enabled,
     queryFn: async () =>
       [...(await api.get<MultimediaDTO[]>(routes.catalogo.multimedia(id), { auth: false })).data].sort((a, b) => a.orden - b.orden),
   });
