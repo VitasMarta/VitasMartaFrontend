@@ -122,13 +122,20 @@ export function BookingPanel({
       {status === "authenticated" && rol !== "TURISTA" && <p className="mt-6 border-l-4 border-ink pl-3">{t("onlyTourists")}</p>}
       {status === "unknown" && <StatusBlock kind="loading" title={t("slotsLoading")} />}
 
-      {status === "authenticated" && rol === "TURISTA" && (
+      {status === "authenticated" && rol === "TURISTA" && ofertasQuery.isPending && (
+        <StatusBlock kind="loading" title={t("slotsLoading")} className="mt-6" />
+      )}
+      {status === "authenticated" && rol === "TURISTA" && ofertasQuery.isError && (
+        <ErrorNotice error={ofertasQuery.error} referenceLabel={tc("reference")} />
+      )}
+      {/* Sin franjas no hay nada que reservar: solo el aviso, sin cupos, política ni botón. */}
+      {status === "authenticated" && rol === "TURISTA" && ofertasQuery.data && byDate.length === 0 && (
+        <StatusBlock kind="empty" title={t("noSlots")} className="mt-6" />
+      )}
+
+      {status === "authenticated" && rol === "TURISTA" && byDate.length > 0 && (
         <form onSubmit={onSubmit} noValidate className="mt-6 space-y-6">
           <ErrorSummary errors={errors} title={tc("errorSummary")} />
-
-          {ofertasQuery.isPending && <StatusBlock kind="loading" title={t("slotsLoading")} />}
-          {ofertasQuery.isError && <ErrorNotice error={ofertasQuery.error} referenceLabel={tc("reference")} />}
-          {ofertasQuery.data && byDate.length === 0 && <StatusBlock kind="empty" title={t("noSlots")} />}
 
           {byDate.map(([fecha, franjas], index) => (
             <fieldset key={fecha} className="min-w-0">
