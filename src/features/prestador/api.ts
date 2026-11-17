@@ -68,19 +68,25 @@ export interface Multimedia {
 export const useMultimediaM4 = (id: string) =>
   useQuery({ queryKey: ["m4", "multimedia", id], queryFn: async () => (await api.get<Multimedia[]>(routes.prestadores.contenido(id, "multimedia"))).data });
 
+/**
+ * Sube un archivo a la multimedia de un contenido en borrador. M4 incrementa la versión del contenido
+ * con cada subida, así que quien sube varios archivos seguidos debe pasar la versión siguiente cada vez.
+ */
+export async function subirMultimedia(id: string, version: number, archivo: File, orden: number): Promise<Multimedia> {
+  const form = new FormData();
+  form.append("archivo", archivo);
+  form.append("tipo", archivo.type === "video/mp4" ? "video" : "foto");
+  form.append("orden", String(orden));
+  form.append("version_esperada", String(version));
+  return (await api.post<Multimedia>(routes.prestadores.contenido(id, "multimedia"), { body: form })).data;
+}
+
 export function useMultimediaActions(id: string, version: number) {
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ["m4"] });
   return {
     upload: useMutation({
-      mutationFn: async ({ archivo, tipo, orden }: { archivo: File; tipo: "foto" | "video"; orden: number }) => {
-        const form = new FormData();
-        form.append("archivo", archivo);
-        form.append("tipo", tipo);
-        form.append("orden", String(orden));
-        form.append("version_esperada", String(version));
-        return (await api.post<Multimedia>(routes.prestadores.contenido(id, "multimedia"), { body: form })).data;
-      },
+      mutationFn: async ({ archivo, orden }: { archivo: File; orden: number }) => subirMultimedia(id, version, archivo, orden),
       onSuccess: refresh,
     }),
     reorder: useMutation({

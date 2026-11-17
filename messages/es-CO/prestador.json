@@ -67,6 +67,11 @@
     "reloaded": "Se cargó la versión {version}. Tu texto se conservó.",
     "changedUpstream": "Cambios recientes en: {fields}.",
     "readOnly": "Este contenido no es editable en su estado actual. Usa «Corregir» en la pestaña editorial para volver a editarlo.",
+    "photos": "Fotos y videos (opcional)",
+    "photosHint": "Se suben al crear el borrador, en el orden elegido. Después puedes reordenarlos o agregar más en la pestaña Multimedia.",
+    "photosSelected": "{count, plural, one {# archivo seleccionado} other {# archivos seleccionados}}",
+    "photosFailed": "Se creó el borrador, pero {count, plural, one {# archivo no se pudo subir} other {# archivos no se pudieron subir}}. Súbelos desde la pestaña Multimedia.",
+    "uploadingPhotos": "Subiendo fotos…",
     "tabs": { "content": "Contenido", "editorial": "Flujo editorial", "media": "Multimedia", "slots": "Franjas" }
   },
   "editorial": {

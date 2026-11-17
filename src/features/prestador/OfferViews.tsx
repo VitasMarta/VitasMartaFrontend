@@ -28,6 +28,7 @@ import {
   useMultimediaActions,
   useMultimediaM4,
   useOferta,
+  subirMultimedia,
   type FranjaM4,
 } from "./api";
 import { ESTADOS_EDITABLES, TIPOS, fieldsFor, toBody, toFormValues, type Contenido, type FieldDef, type Tipo } from "./offer";
@@ -127,6 +128,35 @@ function ContentForm({ tipo, content }: { tipo: Tipo; content?: Contenido }) {
   const [upstream, setUpstream] = useState<string[]>([]);
   const editable = !content || ESTADOS_EDITABLES.includes(content.estado);
   const defs = fieldsFor(tipo);
+  const tm = useTranslations("prestador.media");
+  // Fotos elegidas al crear: se suben justo después de crear el borrador (M4 necesita su id).
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const [errorArchivos, setErrorArchivos] = useState<string>();
+  const [subiendo, setSubiendo] = useState(false);
+
+  const elegirArchivos = (lista: FileList | null) => {
+    const elegidos = Array.from(lista ?? []);
+    const invalido = elegidos.map(validarArchivo).find(Boolean);
+    setErrorArchivos(invalido ? tm(invalido.clave, { max: invalido.max ?? 0 }) : undefined);
+    setArchivos(elegidos.filter((f) => !validarArchivo(f)));
+  };
+
+  /** Sube en orden las fotos elegidas; devuelve cuántas fallaron (el borrador ya existe igual). */
+  const subirElegidos = async (id: string, version: number) => {
+    let v = version;
+    let orden = 1;
+    let fallidos = 0;
+    for (const archivo of archivos) {
+      try {
+        await subirMultimedia(id, v, archivo, orden);
+        v += 1;
+        orden += 1;
+      } catch {
+        fallidos += 1;
+      }
+    }
+    return fallidos;
+  };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -138,7 +168,13 @@ function ContentForm({ tipo, content }: { tipo: Tipo; content?: Contenido }) {
     guardar.mutate(
       { body: toBody(tipo, values), version },
       {
-        onSuccess: (saved) => {
+        onSuccess: async (saved) => {
+          if (!content && archivos.length) {
+            setSubiendo(true);
+            const fallidos = await subirElegidos(saved.id, saved.version);
+            setSubiendo(false);
+            if (fallidos) useUiStore.getState().push({ tone: "warn", message: t("photosFailed", { count: fallidos }) });
+          }
           useUiStore.getState().push({ tone: "success", message: t("saved") });
           if (!content) router.replace(`/mi-oferta/${tipo}/${saved.id}`);
           else setVersion(saved.version);
@@ -191,7 +227,35 @@ function ContentForm({ tipo, content }: { tipo: Tipo; content?: Contenido }) {
           </div>
         ))}
       </fieldset>
-      {editable && <Button type="submit" loading={guardar.isPending}>{content ? tc("save") : t("create")}</Button>}
+      {!content && (
+        <div className="card space-y-3 p-5 sm:p-6">
+          <TextField
+            label={t("photos")}
+            name="fotos"
+            type="file"
+            multiple
+            accept={ACCEPT.join(",")}
+            hint={`${t("photosHint")} ${tm("limits")}`}
+            error={errorArchivos}
+            onChange={(e) => elegirArchivos(e.currentTarget.files)}
+          />
+          {archivos.length > 0 && (
+            <ul role="list" aria-label={t("photosSelected", { count: archivos.length })} className="divide-y divide-line rounded-md border border-line bg-card px-4">
+              {archivos.map((f, i) => (
+                <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-4 py-2 text-sm">
+                  <span className="min-w-0 truncate">{i + 1}. {f.name}</span>
+                  <span className="meta shrink-0 text-ink/80">{formatBytes(f.size)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {editable && (
+        <Button type="submit" loading={guardar.isPending || subiendo}>
+          {subiendo ? t("uploadingPhotos") : content ? tc("save") : t("create")}
+        </Button>
+      )}
     </form>
   );
 }
@@ -256,6 +320,13 @@ function EditorialPanel({ tipo, content }: { tipo: Tipo; content: Contenido }) {
 }
 
 const ACCEPT = ["image/jpeg", "image/png", "image/webp", "video/mp4"];
+/** Formato y tamaño permitidos por M4 (RF-04-8): imágenes hasta 10 MB, MP4 hasta 50 MB. */
+function validarArchivo(file: File): { clave: "badType" | "tooLarge"; max?: number } | null {
+  if (!ACCEPT.includes(file.type)) return { clave: "badType" };
+  const max = file.type === "video/mp4" ? 50 : 10;
+  return file.size > max * 1_000_000 ? { clave: "tooLarge", max } : null;
+}
+
 function MediaPanel({ content }: { content: Contenido }) {
   const t = useTranslations("prestador.media");
   const tc = useTranslations("common");
@@ -268,11 +339,10 @@ function MediaPanel({ content }: { content: Contenido }) {
     e.preventDefault();
     const file = new FormData(e.currentTarget).get("archivo") as File | null;
     if (!file || !file.size) return setError(t("fileRequired"));
-    if (!ACCEPT.includes(file.type)) return setError(t("badType"));
-    const video = file.type === "video/mp4";
-    if (file.size > (video ? 50 : 10) * 1_000_000) return setError(t("tooLarge", { max: video ? 50 : 10 }));
+    const invalido = validarArchivo(file);
+    if (invalido) return setError(t(invalido.clave, { max: invalido.max ?? 0 }));
     setError(undefined);
-    actions.upload.mutate({ archivo: file, tipo: video ? "video" : "foto", orden: (q.data?.length ?? 0) + 1 });
+    actions.upload.mutate({ archivo: file, orden: (q.data?.length ?? 0) + 1 });
   };
 
   const move = (index: number, delta: number) => {

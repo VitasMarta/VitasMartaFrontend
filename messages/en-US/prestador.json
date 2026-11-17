@@ -67,6 +67,11 @@
     "reloaded": "Version {version} was loaded. Your text was kept.",
     "changedUpstream": "Recent changes in: {fields}.",
     "readOnly": "This content cannot be edited in its current state. Use “Correct” in the editorial tab to edit it again.",
+    "photos": "Photos and videos (optional)",
+    "photosHint": "They are uploaded when the draft is created, in the chosen order. Afterwards you can reorder them or add more in the Media tab.",
+    "photosSelected": "{count, plural, one {# file selected} other {# files selected}}",
+    "photosFailed": "The draft was created, but {count, plural, one {# file could not be uploaded} other {# files could not be uploaded}}. Upload them from the Media tab.",
+    "uploadingPhotos": "Uploading photos…",
     "tabs": { "content": "Content", "editorial": "Editorial flow", "media": "Media", "slots": "Time slots" }
   },
   "editorial": {

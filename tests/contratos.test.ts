@@ -51,6 +51,20 @@ describe("contratos reales · M4 atractivo", () => {
   });
 });
 
+describe("contratos reales · M4 actividad", () => {
+  it("envía operador, equipamiento e incluye como textos bilingües {es} (ActividadEntradaSchema)", () => {
+    const b = toBody("actividades", {
+      nombre_es: "Kayak", nombre_en: "Kayak", descripcion_es: "d", descripcion_en: "d", categorias: "aventura", lat: "11.24", lng: "-74.21",
+      duracion_minutos: "120", nivel_dificultad: "media", equipamiento: "Chaleco, Remo", operador_nombre: "Kayak SM", operador_descripcion: "",
+      operador_sitio_web: "", precio_monto: "45000", edad_minima: "", capacidad_maxima: "", incluye: "Guía",
+    });
+    expect(b.operador).toEqual({ nombre: { es: "Kayak SM" }, descripcion: undefined, sitio_web: undefined });
+    expect(b.equipamiento).toEqual([{ es: "Chaleco" }, { es: "Remo" }]);
+    expect(b.incluye).toEqual([{ es: "Guía" }]);
+    expect(b.precio).toEqual({ monto: 45000, moneda: "COP" });
+  });
+});
+
 describe("contratos reales · fechas", () => {
   it("agrupa las franjas por el día de Santa Marta (UTC-5), no por el día UTC", () => {
     expect(localDayOf("2026-11-17T03:00:00Z")).toBe("2026-11-16");

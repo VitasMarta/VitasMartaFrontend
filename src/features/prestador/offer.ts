@@ -76,7 +76,11 @@ const pair = (v: unknown): { es: string; en: string } => {
   const o = (v ?? {}) as Record<string, string>;
   return { es: o.es ?? o["es-CO"] ?? "", en: o.en ?? o["en-US"] ?? "" };
 };
-const list = (v: unknown) => (Array.isArray(v) ? v.join(", ") : v == null ? "" : String(v));
+/** Lista de M4 → texto separado por comas; los textos bilingües {es, en} se muestran en español. */
+const list = (v: unknown) =>
+  Array.isArray(v) ? v.map((x) => (x && typeof x === "object" ? pair(x).es : String(x))).join(", ") : v == null ? "" : String(v);
+/** Texto plano del formulario → texto bilingüe de M4 (solo español; el inglés es opcional en M4). */
+const bilingue = (es: string | undefined) => ((es ?? "").trim() ? { es: (es ?? "").trim() } : undefined);
 const str = (v: unknown) => (v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v));
 const toLocalInput = (iso: unknown) => (typeof iso === "string" && iso ? iso.slice(0, 16) : "");
 
@@ -113,10 +117,12 @@ export function toFormValues(tipo: Tipo, c: Contenido | undefined): Record<strin
       certificaciones: list(sos.certificaciones),
     });
   } else if (tipo === "actividades") {
-    const op = (c.operador ?? {}) as Record<string, string>;
+    const op = (c.operador ?? {}) as { nombre?: unknown; descripcion?: unknown; sitio_web?: string };
     Object.assign(base, {
       duracion_minutos: str(c.duracion_minutos), nivel_dificultad: str(c.nivel_dificultad), equipamiento: list(c.equipamiento),
-      operador_nombre: op.nombre ?? "", operador_descripcion: op.descripcion ?? "", operador_sitio_web: op.sitio_web ?? "",
+      operador_nombre: typeof op.nombre === "string" ? op.nombre : pair(op.nombre).es,
+      operador_descripcion: typeof op.descripcion === "string" ? op.descripcion : pair(op.descripcion).es,
+      operador_sitio_web: op.sitio_web ?? "",
       precio_monto: str((c.precio as { monto?: number } | undefined)?.monto), edad_minima: str(c.edad_minima), capacidad_maxima: str(c.capacidad_maxima), incluye: list(c.incluye),
     });
   } else {
@@ -159,9 +165,10 @@ export function toBody(tipo: Tipo, v: Record<string, string>): Record<string, un
     });
   } else if (tipo === "actividades") {
     Object.assign(body, {
-      duracion_minutos: num(v.duracion_minutos ?? ""), nivel_dificultad: v.nivel_dificultad, equipamiento: csv(v.equipamiento ?? ""),
-      operador: { nombre: v.operador_nombre, descripcion: v.operador_descripcion || undefined, sitio_web: v.operador_sitio_web || undefined },
-      precio: { monto: num(v.precio_monto ?? ""), moneda: "COP" }, edad_minima: num(v.edad_minima ?? ""), capacidad_maxima: num(v.capacidad_maxima ?? ""), incluye: csv(v.incluye ?? ""),
+      // M4 (ActividadEntradaSchema): operador.nombre/descripcion, equipamiento e incluye son {es, en}.
+      duracion_minutos: num(v.duracion_minutos ?? ""), nivel_dificultad: v.nivel_dificultad, equipamiento: csv(v.equipamiento ?? "").map((es) => ({ es })),
+      operador: { nombre: bilingue(v.operador_nombre), descripcion: bilingue(v.operador_descripcion), sitio_web: v.operador_sitio_web || undefined },
+      precio: { monto: num(v.precio_monto ?? ""), moneda: "COP" }, edad_minima: num(v.edad_minima ?? ""), capacidad_maxima: num(v.capacidad_maxima ?? ""), incluye: csv(v.incluye ?? "").map((es) => ({ es })),
     });
   } else {
     Object.assign(body, {
