@@ -1,0 +1,15 @@
+# Despliegue del frontend VITASMARTA en Netlify (Next.js 15 con el adaptador de Netlify, automático).
+# Las rutas /bff/** corren como funciones de Netlify: el navegador solo habla con este sitio (HTTPS)
+# y el BFF llama al API Gateway desde el servidor, por eso el Gateway puede ser HTTP.
+
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10.11.0"
+  # Se fija en el build (Next la incrusta): si cambia, hay que volver a desplegar.
+  NEXT_PUBLIC_GATEWAY_URL = "http://3.142.187.230"
+  API_MOCKING = "disabled"
+  NEXT_TELEMETRY_DISABLED = "1"
