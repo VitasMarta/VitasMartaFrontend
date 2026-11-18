@@ -223,11 +223,24 @@ export function SustainabilityView() {
 }
 
 // ── Pipeline de M9 (estado de colas + replay) ───────────────────────────────────────────────────
+/** M9 `GET /admin/pipeline/estado` (CTR-M9-OUT-06): colas es un MAPA nombre → {mensajes_pendientes, consumidores}. */
+interface EstadoPipelineM9 {
+  colas?: Record<string, { mensajes_pendientes?: number; consumidores?: number }> | null;
+  lag_consume_segundos?: number | null;
+  eventos_procesados_hoy?: number | null;
+  errores_pipeline_hoy?: number | null;
+  ultimo_replay?: { replay_id?: string; estado?: string } | null;
+}
+
 export function PipelinePanel() {
   const t = useTranslations("analitica.pipeline");
   const tc = useTranslations("common");
   const locale = useLocale();
-  const q = useQuery({ queryKey: ["m9", "pipeline"], refetchInterval: 15_000, queryFn: async () => (await api.get<{ lag_consume_segundos: number; mensajes_pendientes: number; ultimo_replay: string | null; colas?: { nombre: string; pendientes: number }[] }>(routes.reportes.pipelineEstado)).data });
+  const q = useQuery({ queryKey: ["m9", "pipeline"], refetchInterval: 15_000, queryFn: async () => (await api.get<EstadoPipelineM9>(routes.reportes.pipelineEstado)).data });
+  const colas = Object.entries(q.data?.colas ?? {}).map(([nombre, c]) => ({ nombre, pendientes: c?.mensajes_pendientes ?? 0, consumidores: c?.consumidores ?? 0 }));
+  const num = (v: number | null | undefined) => (typeof v === "number" ? formatNumber(v, locale) : "—");
+  // M9 recibe instantes (Instant): el día completo en UTC.
+  const instante = (v: FormDataEntryValue | null, fin: boolean) => (v ? `${v}T${fin ? "23:59:59" : "00:00:00"}Z` : undefined);
   const replay = useMutation({
     mutationFn: async (body: Record<string, unknown>) => (await api.post<{ replay_id: string; estado: string; eventos_estimados: number }>(routes.reportes.pipelineReplay, { body })).data,
     onSuccess: (d) => useUiStore.getState().push({ tone: "success", message: t("started", { count: d.eventos_estimados }) }),
@@ -238,11 +251,17 @@ export function PipelinePanel() {
       {q.isError && <ErrorNotice error={q.error} referenceLabel={tc("reference")} />}
       {q.data && (
         <>
-          <MetricRibbon label={t("title")} items={[{ label: t("lag"), value: `${q.data.lag_consume_segundos} s` }, { label: t("pending"), value: formatNumber(q.data.mensajes_pendientes, locale) }, { label: t("lastReplay"), value: q.data.ultimo_replay ? formatDateTime(q.data.ultimo_replay, locale).split(",")[0] : "—" }]} />
-          {q.data.colas && <EditorialTable caption={t("queues")} rows={q.data.colas} rowKey={(c) => c.nombre} columns={[{ key: "n", header: t("queue"), cell: (c) => <span className="font-mono">{c.nombre}</span> }, { key: "p", header: t("pending"), align: "right", cell: (c) => c.pendientes }]} />}
+          <MetricRibbon label={t("title")} items={[
+            { label: t("lag"), value: typeof q.data.lag_consume_segundos === "number" ? `${formatNumber(q.data.lag_consume_segundos, locale)} s` : "—" },
+            { label: t("pending"), value: formatNumber(colas.reduce((s, c) => s + c.pendientes, 0), locale) },
+            { label: t("processedToday"), value: num(q.data.eventos_procesados_hoy) },
+            { label: t("errorsToday"), value: num(q.data.errores_pipeline_hoy) },
+            { label: t("lastReplay"), value: q.data.ultimo_replay?.estado ? (t.has(`replayStates.${q.data.ultimo_replay.estado}`) ? t(`replayStates.${q.data.ultimo_replay.estado}`) : q.data.ultimo_replay.estado) : "—" },
+          ]} />
+          {colas.length > 0 && <EditorialTable caption={t("queues")} rows={colas} rowKey={(c) => c.nombre} columns={[{ key: "n", header: t("queue"), cell: (c) => <span className="font-mono text-sm">{c.nombre}</span> }, { key: "p", header: t("pending"), align: "right", cell: (c) => formatNumber(c.pendientes, locale) }, { key: "c", header: t("consumers"), align: "right", cell: (c) => c.consumidores }]} />}
         </>
       )}
-      <form className="card p-5 sm:p-6 flex max-w-3xl flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); replay.mutate({ origen: f.get("origen"), desde: f.get("desde") || undefined, hasta: f.get("hasta") || undefined }); }}>
+      <form className="card p-5 sm:p-6 flex max-w-3xl flex-wrap items-end gap-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); replay.mutate({ origen: f.get("origen"), desde: instante(f.get("desde"), false), hasta: instante(f.get("hasta"), true) }); }}>
         <h3 className="w-full !text-xl">{t("replay")}</h3>
         <SelectField label={t("origin")} name="origen" defaultValue="TODOS">{["TODOS", "RESERVAS", "AMBIENTAL", "OFERTA", "CATALOGO"].map((o) => <option key={o} value={o}>{o}</option>)}</SelectField>
         <TextField label={t("from")} name="desde" type="date" /><TextField label={t("to")} name="hasta" type="date" />

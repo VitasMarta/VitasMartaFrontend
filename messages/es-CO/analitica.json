@@ -43,6 +43,10 @@
     "flow": "Distribución del flujo turístico"
   },
   "pipeline": {
+    "processedToday": "Eventos procesados hoy",
+    "errorsToday": "Errores hoy",
+    "consumers": "Consumidores",
+    "replayStates": {"COMPLETADO":"Completado","FALLIDO":"Fallido","EN_CURSO":"En curso"},
     "title": "Pipeline de reportes",
     "lag": "Retraso de consumo",
     "pending": "Mensajes pendientes",

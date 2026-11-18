@@ -43,6 +43,10 @@
     "flow": "Tourist flow distribution"
   },
   "pipeline": {
+    "processedToday": "Events processed today",
+    "errorsToday": "Errors today",
+    "consumers": "Consumers",
+    "replayStates": {"COMPLETADO":"Completed","FALLIDO":"Failed","EN_CURSO":"In progress"},
     "title": "Reports pipeline",
     "lag": "Consumption lag",
     "pending": "Pending messages",

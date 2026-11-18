@@ -27,6 +27,7 @@ import { Pagination } from "@/shared/ui/Pagination";
 import { SlideOver } from "@/shared/ui/SlideOver";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { Tabs } from "@/shared/ui/Tabs";
+import { GuiaApiIntegracion } from "./GuiaApiIntegracion";
 import { ACCIONES_POR_ESTADO, VistaPreviaContenido } from "./VistaPreviaContenido";
 
 const ROLES: Rol[] = ["TURISTA", "PRESTADOR", "ANALISTA_TURISTICO", "AUTORIDAD_AMBIENTAL", "INTEGRADOR_TECNICO", "ADMINISTRADOR"];
@@ -665,6 +666,7 @@ export function CredentialsView() {
             { key: "a", header: <span className="sr-only">{tc("actions")}</span>, cell: (r) => r.activo && <button type="button" className={actionButtonClass("danger")} onClick={() => revoke.mutate(r.id)}>{t("revoke")}<span className="sr-only"> {r.prefijo}</span></button> },
           ]} />
         )}
+        <GuiaApiIntegracion />
       </Container>
     </>
   );

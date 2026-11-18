@@ -299,7 +299,7 @@ export const institucionalHandlers = [
     return HttpResponse.json({ job_id: params.id, estado, formato: j.formato, url_descarga: estado === "DISPONIBLE" ? `/api/v1/reportes/exportaciones/${params.id}/descarga` : null, fecha_expiracion: new Date(j.creado + 3 * 86_400_000).toISOString() });
   }),
   http.get(gw("/reportes/admin/pipeline/estado"), ({ request }) =>
-    allow(request, ADMIN_ROLES) ?? HttpResponse.json({ lag_consume_segundos: 4.2, mensajes_pendientes: 17, ultimo_replay: new Date(Date.now() - 2 * 86_400_000).toISOString(), colas: [{ nombre: "reservas.eventos", pendientes: 9 }, { nombre: "ambiental.eventos", pendientes: 8 }] }),
+    allow(request, ADMIN_ROLES) ?? HttpResponse.json({ lag_consume_segundos: 4, eventos_procesados_hoy: 1820, errores_pipeline_hoy: 0, ultimo_replay: { replay_id: "rpl-001", estado: "COMPLETADO" }, colas: { "svc-reportes.reservas": { mensajes_pendientes: 12, consumidores: 1 }, "svc-reportes.oferta": { mensajes_pendientes: 5, consumidores: 1 } } }),
   ),
   http.post(gw("/reportes/admin/pipeline/replay"), ({ request }) => allow(request, ADMIN_ROLES) ?? HttpResponse.json({ replay_id: crypto.randomUUID(), estado: "EN_CURSO", eventos_estimados: 1840 }, { status: 202 })),
 ];
