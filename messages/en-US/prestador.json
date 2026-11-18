@@ -81,7 +81,7 @@
     "history": "Editorial history",
     "reasonRequired": "Enter a reason",
     "done": "The content status was updated",
-    "correctHelp": "The content goes back to draft so you can edit it and resubmit it for review.",
+    "correctHelp": "The content moves to review: you can edit it right away and the editorial team will approve and publish it again. Meanwhile the published version is no longer shown.",
     "reviewHelp": "The editorial team will review your content before publishing it.",
     "reason": "Reason"
   },

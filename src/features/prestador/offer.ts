@@ -180,4 +180,9 @@ export function toBody(tipo: Tipo, v: Record<string, string>): Record<string, un
   return body;
 }
 
-export const ESTADOS_EDITABLES = ["borrador", "devuelto"];
+/**
+ * Estados en que M4 acepta edición del prestador (regla 10/13 de M4: borrador y en revisión).
+ * "Corregir contenido publicado" lleva el contenido a en_revision: desde ahí se edita y el
+ * equipo editorial lo vuelve a aprobar y publicar. Aprobado/publicado/archivado: solo lectura.
+ */
+export const ESTADOS_EDITABLES = ["borrador", "en_revision"];

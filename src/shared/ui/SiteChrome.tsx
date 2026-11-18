@@ -60,6 +60,7 @@ export function LocaleSwitcher({ tono = "oscuro" }: { tono?: "oscuro" | "claro" 
   return (
     <div
       role="group"
+      translate="no"
       aria-label={t("label")}
       className={cn("items-center gap-1 rounded-full p-1", claro ? "grid w-full grid-cols-2 bg-page" : "inline-flex bg-on-action/10")}
     >
@@ -119,7 +120,7 @@ function Marca() {
       <span aria-hidden="true" className="inline-flex size-9 items-center justify-center rounded-xl bg-emerald text-ink transition-transform group-hover:-rotate-6">
         <Icon name="leaf" size={20} />
       </span>
-      <span className="text-xl font-bold tracking-tight">VITASMARTA</span>
+      <span translate="no" className="notranslate text-xl font-bold tracking-tight">VITASMARTA</span>
       <span className="sr-only"> — {t("home")}</span>
     </Link>
   );

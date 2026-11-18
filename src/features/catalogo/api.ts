@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
 import { routes } from "@/core/api/routes";
@@ -53,11 +54,14 @@ export const useBusqueda = (filtros: BusquedaFiltros, limite = 20, enabled = tru
     getNextPageParam: (last) => last.cursor_siguiente ?? undefined,
   });
 
-export const useFicha = (id: string) =>
-  useQuery({
-    queryKey: ["catalogo", "ficha", id],
-    queryFn: async () => (await api.get<FichaCatalogo>(routes.catalogo.ficha(id), { auth: false })).data,
+/** M2 elige el idioma de la ficha con `?idioma=` (no con Accept-Language): se envía el locale activo. */
+export const useFicha = (id: string) => {
+  const idioma = useLocale();
+  return useQuery({
+    queryKey: ["catalogo", "ficha", id, idioma],
+    queryFn: async () => (await api.get<FichaCatalogo>(routes.catalogo.ficha(id), { auth: false, query: { idioma } })).data,
   });
+};
 
 export const useFranjas = (id: string) =>
   useQuery({

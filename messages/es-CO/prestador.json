@@ -81,7 +81,7 @@
     "history": "Historial editorial",
     "reasonRequired": "Indica un motivo",
     "done": "El estado del contenido se actualizó",
-    "correctHelp": "El contenido volverá a borrador para que puedas editarlo y reenviarlo a revisión.",
+    "correctHelp": "El contenido pasará a revisión: podrás editarlo de inmediato y el equipo editorial lo aprobará y publicará de nuevo. Mientras tanto la versión publicada deja de mostrarse.",
     "reviewHelp": "El equipo editorial revisará tu contenido antes de publicarlo.",
     "reason": "Motivo"
   },

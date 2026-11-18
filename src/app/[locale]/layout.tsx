@@ -7,6 +7,7 @@ import { routing } from "@/core/i18n/routing";
 import { Providers } from "@/core/providers/Providers";
 import { BannerHost } from "@/shared/ui/BannerHost";
 import { SiteFooter, SiteHeader, SkipLink } from "@/shared/ui/SiteChrome";
+import { TraductorGoogle } from "@/shared/ui/TraductorGoogle";
 import "../globals.css";
 
 // Poppins con precarga, subconjunto latin y display swap (RNF-03-3 / LCP).
@@ -50,6 +51,7 @@ export default async function LocaleLayout({
               {children}
             </main>
             <SiteFooter />
+            <TraductorGoogle />
           </Providers>
         </NextIntlClientProvider>
       </body>

@@ -203,3 +203,27 @@ a.text-link:hover {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Google Translate (modo inglés, TraductorGoogle.tsx): se oculta toda su interfaz ─────── */
+body > .skiptranslate,
+iframe.skiptranslate,
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+.goog-te-gadget,
+.goog-te-spinner-pos,
+.goog-tooltip,
+#goog-gt-tt,
+#google_translate_element,
+[class^="VIpgJd-"][class*="-L7lbkb"] {
+  display: none !important;
+}
+/* Google desplaza el body hacia abajo para su barra: se anula. */
+body {
+  top: 0 !important;
+}
+/* Sin resaltado al pasar el cursor sobre el texto traducido. */
+.goog-text-highlight,
+[class^="VIpgJd-"][class*="-sn54Q"] {
+  background: none !important;
+  box-shadow: none !important;
+}
