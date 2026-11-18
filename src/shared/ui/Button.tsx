@@ -5,11 +5,11 @@ import { cn } from "./cn";
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "emerald" | "danger" | "inverse";
 
 const BASE =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-5 py-2.5 text-[1rem] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-[0.975rem] font-semibold transition-[background-color,border-color,color,box-shadow] duration-150 disabled:cursor-not-allowed disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:opacity-60";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-action text-on-action hover:bg-action-strong",
-  secondary: "border border-action bg-card text-action hover:bg-page",
+  secondary: "border border-action/60 bg-card text-action hover:border-action hover:bg-action/5",
   ghost: "text-action underline underline-offset-4 hover:bg-page",
   // Sobre la banda Azul Tinta (cabecera / hero): borde y texto blancos.
   inverse: "border border-on-action text-on-action hover:bg-on-action hover:text-ink",

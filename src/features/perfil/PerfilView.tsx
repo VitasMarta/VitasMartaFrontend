@@ -56,7 +56,6 @@ function PerfilTab() {
   return (
     <form onSubmit={onSubmit} noValidate className="max-w-xl space-y-6">
       <ErrorSummary errors={errors} title={tc("errorSummary")} />
-      <TextField label={t("email")} name="correo" value={q.data.correo ?? ""} readOnly hint={t("emailHint")} />
       <TextField label={t("firstName")} name="nombre" defaultValue={q.data.nombre} required error={errors.nombre} autoComplete="given-name" />
       <TextField label={t("lastName")} name="apellido" defaultValue={q.data.apellido} required error={errors.apellido} autoComplete="family-name" />
       <TextField label={t("phone")} name="telefono" defaultValue={q.data.telefono} autoComplete="tel" />

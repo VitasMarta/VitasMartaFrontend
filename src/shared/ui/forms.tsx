@@ -13,8 +13,15 @@ interface FieldBase {
 
 const idOf = (name: string, id?: string) => id ?? `field-${name}`;
 
+/**
+ * Control de formulario minimalista: borde suave (tinta al 55 % ≈ 3,5:1, WCAG 1.4.11), esquinas
+ * amplias y, al enfocar, borde de acción con halo suave en lugar del contorno grueso global.
+ */
 const CONTROL =
-  "block w-full rounded-md border border-ink/60 bg-card text-ink placeholder:text-ink/70 hover:border-ink focus-visible:border-action disabled:opacity-60 aria-[invalid=true]:border-2 aria-[invalid=true]:border-critical";
+  "form-control block w-full rounded-lg border border-ink/55 bg-card text-ink shadow-[0_1px_2px_rgba(29,43,92,0.04)] transition-[border-color,box-shadow] duration-150 placeholder:text-ink/50 hover:border-ink/75 focus:outline-none focus-visible:outline-none focus:border-action focus:ring-4 focus:ring-action/15 [&[readonly]]:bg-page disabled:cursor-not-allowed disabled:bg-page disabled:opacity-70 aria-[invalid=true]:border-critical aria-[invalid=true]:focus:ring-critical/15";
+
+/** Flecha propia del select (la nativa se ve distinta en cada navegador): ver `.select-arrow` en globals.css. */
+const SELECT_ARROW = "select-arrow appearance-none pr-10";
 
 function FieldShell({
   label,
@@ -29,12 +36,12 @@ function FieldShell({
   const fid = idOf(name, id);
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={fid} className="block text-sm font-semibold">
+      <label htmlFor={fid} className="block text-sm font-medium text-ink/90">
         {label}
-        {required && <span aria-hidden="true"> *</span>}
+        {required && <span aria-hidden="true" className="text-critical"> *</span>}
       </label>
       {hint && (
-        <p id={`${fid}-hint`} className="text-sm text-ink/80">
+        <p id={`${fid}-hint`} className="text-[0.8125rem] leading-snug text-ink/70">
           {hint}
         </p>
       )}
@@ -70,7 +77,7 @@ export function TextField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "min-h-11 px-3 py-2.5")}
+        className={cn(CONTROL, "min-h-11 px-3.5 py-2.5")}
       />
     </FieldShell>
   );
@@ -96,7 +103,7 @@ export function TextAreaField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "px-3 py-2")}
+        className={cn(CONTROL, "resize-y px-3.5 py-2.5 leading-relaxed")}
       />
     </FieldShell>
   );
@@ -122,7 +129,7 @@ export function SelectField({
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy(fid, error, hint)}
-        className={cn(CONTROL, "min-h-11 px-3 py-2.5")}
+        className={cn(CONTROL, SELECT_ARROW, "min-h-11 cursor-pointer px-3.5 py-2.5")}
       >
         {children}
       </select>
@@ -151,16 +158,16 @@ export function CheckboxField({
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(fid, error, hint)}
-          className="mt-1 size-5 shrink-0 accent-ink"
+          className="mt-0.5 size-[1.15rem] shrink-0 cursor-pointer rounded accent-action"
         />
         {/* `text-base` en este proyecto también es el COLOR base (casi blanco): la etiqueta quedaba invisible. */}
-        <label htmlFor={fid} className="text-ink">
+        <label htmlFor={fid} className="cursor-pointer text-ink/90">
           {label}
           {required && <span aria-hidden="true"> *</span>}
         </label>
       </div>
       {hint && (
-        <p id={`${fid}-hint`} className="pl-8 text-sm text-ink/80">
+        <p id={`${fid}-hint`} className="pl-8 text-[0.8125rem] text-ink/70">
           {hint}
         </p>
       )}
@@ -191,13 +198,13 @@ export function SwitchField({
 }) {
   const fid = idOf(name);
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-line py-4">
+    <div className="flex items-start justify-between gap-4 border-b border-line/70 py-4 last:border-b-0">
       <div>
-        <label htmlFor={fid} className="block font-semibold">
+        <label htmlFor={fid} className="block font-medium">
           {label}
         </label>
         {hint && (
-          <p id={`${fid}-hint`} className="mt-1 text-sm text-ink/80">
+          <p id={`${fid}-hint`} className="mt-1 text-[0.8125rem] text-ink/70">
             {hint}
           </p>
         )}
@@ -211,7 +218,7 @@ export function SwitchField({
         disabled={disabled}
         aria-describedby={hint ? `${fid}-hint` : undefined}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 size-6 shrink-0 accent-ink"
+        className="mt-1 size-5 shrink-0 cursor-pointer accent-action"
       />
     </div>
   );
@@ -222,7 +229,7 @@ export function ErrorSummary({ errors, title }: { errors: Record<string, string>
   const entries = Object.entries(errors);
   if (entries.length === 0) return null;
   return (
-    <div role="alert" className="rounded-md border border-l-4 border-line border-l-critical bg-card p-4">
+    <div role="alert" className="rounded-lg border border-critical/25 bg-critical/5 p-4">
       <p className="font-semibold text-critical">{title}</p>
       <ul className="mt-2 list-disc pl-5">
         {entries.map(([name, message]) => (
