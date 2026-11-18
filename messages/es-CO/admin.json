@@ -91,10 +91,14 @@
     "retried": "El evento volvió a la cola"
   },
   "providers": {
+    "roleFailed": "El prestador quedó aprobado, pero no se pudo asignar el rol ({error}). Reinténtalo con «Asignar rol de prestador».",
+    "approvedWithRole": "Prestador aprobado y rol Prestador asignado a la cuenta del solicitante",
+    "roleAssigned": "La cuenta del solicitante ya tiene el rol Prestador",
+    "assignRole": "Asignar rol de prestador",
     "title": "Prestadores",
     "description": "Solicitudes y prestadores registrados.",
     "providerId": "Identificador del prestador",
-    "assignRoleHint": "Para habilitar el portal, ve a Usuarios, busca la cuenta del solicitante y asígnale el rol Prestador con este identificador.",
+    "assignRoleHint": "Al aprobar, la cuenta que hizo la solicitud recibe automáticamente el rol Prestador. Si se aprobó antes de esta automatización o la asignación falló, asígnalo aquí. El usuario debe cerrar sesión y volver a entrar para ver su portal.",
     "all": "Todos",
     "states": { "pendiente": "Pendiente", "aprobado": "Aprobado", "rechazado": "Rechazado", "suspendido": "Suspendido" },
     "search": "Buscar por nombre",

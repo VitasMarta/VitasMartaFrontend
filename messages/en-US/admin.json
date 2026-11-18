@@ -91,10 +91,14 @@
     "retried": "The event went back to the queue"
   },
   "providers": {
+    "roleFailed": "The provider was approved, but the role could not be assigned ({error}). Retry with “Assign provider role”.",
+    "approvedWithRole": "Provider approved and Provider role assigned to the applicant's account",
+    "roleAssigned": "The applicant's account now has the Provider role",
+    "assignRole": "Assign provider role",
     "title": "Providers",
     "description": "Registered applications and providers.",
     "providerId": "Provider identifier",
-    "assignRoleHint": "To enable the portal, go to Users, find the applicant's account and assign the Provider role with this identifier.",
+    "assignRoleHint": "When approved, the applicant's account automatically gets the Provider role. If it was approved before this automation or the assignment failed, assign it here. The user must sign out and sign in again to see their portal.",
     "all": "All",
     "states": { "pendiente": "Pending", "aprobado": "Approved", "rechazado": "Rejected", "suspendido": "Suspended" },
     "search": "Search by name",

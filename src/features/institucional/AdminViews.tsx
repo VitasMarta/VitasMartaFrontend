@@ -369,6 +369,15 @@ export function usePrestadoresAdmin(estado?: string, texto?: string, page = 1, e
   });
 }
 
+/**
+ * Aprobar un prestador en M4 no cambia el rol en M7: se asigna aquí mismo con la cuenta que hizo la
+ * solicitud (`usuario_id` del detalle de M4) y el prestador como `prestador_ref` (CTR-M7 cambio de rol).
+ */
+async function asignarRolPrestador(prestadorId: string) {
+  const detalle = (await api.get<{ usuario_id: string }>(routes.prestadores.admin.prestador(prestadorId))).data;
+  await api.patch(routes.identidad.admin.rol(detalle.usuario_id), { body: { rol_nuevo: "PRESTADOR", prestador_ref: prestadorId } });
+}
+
 export function ProvidersView() {
   const t = useTranslations("admin.providers");
   const tc = useTranslations("common");
@@ -382,9 +391,30 @@ export function ProvidersView() {
   const q = usePrestadoresAdmin(filters.estado || undefined, filters.texto || undefined, page);
   const act = useMutation({
     meta: { silent: true },
-    mutationFn: async ({ id, accion, motivo }: { id: string; accion: string; motivo: string }) => (await api.post(routes.prestadores.admin.prestadorAccion(id, accion), { body: { motivo } })).data,
-    onSuccess: () => { toast("success", t("done")); setPanel(null); setAction(""); qc.invalidateQueries({ queryKey: ["m4", "admin", "prestadores"] }); },
+    mutationFn: async ({ id, accion, motivo }: { id: string; accion: string; motivo: string }) => {
+      await api.post(routes.prestadores.admin.prestadorAccion(id, accion), { body: { motivo } });
+      if (accion !== "aprobar") return { rol: null };
+      // La aprobación ya quedó en M4: si el cambio de rol falla, se informa sin deshacerla.
+      try {
+        await asignarRolPrestador(id);
+        return { rol: "ok" as const };
+      } catch (e) {
+        return { rol: e instanceof ApiError ? e : new Error(String(e)) };
+      }
+    },
+    onSuccess: (r) => {
+      if (r.rol instanceof Error) toast("error", t("roleFailed", { error: r.rol.message }), r.rol instanceof ApiError ? r.rol.correlationId : undefined);
+      else toast("success", r.rol === "ok" ? t("approvedWithRole") : t("done"));
+      setPanel(null); setAction(""); qc.invalidateQueries({ queryKey: ["m4", "admin", "prestadores"] }); qc.invalidateQueries({ queryKey: ["m7"] });
+    },
     onError: (e) => e instanceof ApiError && setError(e.message),
+  });
+  // Prestadores aprobados antes de la automatización (o si falló la asignación): un clic.
+  const rol = useMutation({
+    meta: { silent: true },
+    mutationFn: async (id: string) => asignarRolPrestador(id),
+    onSuccess: () => { toast("success", t("roleAssigned")); setPanel(null); },
+    onError: (e) => setError(e instanceof Error ? e.message : String(e)),
   });
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -430,7 +460,13 @@ export function ProvidersView() {
               // El administrador lo usa como `prestador_ref` al asignar el rol PRESTADOR en Usuarios (M7).
               { term: t("providerId"), value: <code className="break-all font-mono select-all" data-testid="prestador-id">{panel.id}</code> },
             ]} />
-            {panel.estado === "aprobado" && <p className="border-l-4 border-ink pl-3 text-sm">{t("assignRoleHint")}</p>}
+            {panel.estado === "aprobado" && (
+              <div className="space-y-3 rounded-lg bg-page p-4">
+                <p className="text-sm">{t("assignRoleHint")}</p>
+                <Button type="button" variant="secondary" loading={rol.isPending} onClick={() => rol.mutate(panel.id)}>{t("assignRole")}</Button>
+                {rol.isError && <p role="alert" className="text-sm font-medium text-critical">{error}</p>}
+              </div>
+            )}
             {(PROVIDER_ACTIONS[panel.estado] ?? []).length === 0 ? <p>{t("noActions")}</p> : (
               <>
                 <SelectField label={t("action")} name="accion" value={action} onChange={(e) => setAction(e.target.value)}>
