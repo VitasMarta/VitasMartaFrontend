@@ -111,6 +111,9 @@
     "done": "La acción se aplicó correctamente"
   },
   "moderation": {
+    "currentState": "Estado actual",
+    "noActions": "No hay acciones de moderación para este estado. El prestador debe enviar el contenido a revisión.",
+    "doc": {"valid":"Válido para publicar","invalid":"Con datos pendientes","omitted":"Campos omitidos: {keys}","noMedia":"Sin fotos ni videos","media":"{count, plural, one {# archivo multimedia} other {# archivos multimedia}}","video":"Video","english":"Ver descripción en inglés","other":"Otros datos","categories":"Categorías","location":"Ubicación","rates":"Tarifas","schedule":"Horario","everyDay":"Todos los días, {range}","price":"Precio por persona","duration":"Duración","minutes":"{count, plural, one {# minuto} other {# minutos}}","difficulty":"Dificultad","operator":"Operador","organizer":"Organizador","dates":"Fechas","capacity":"Cupo","minAge":"Edad mínima","mode":"Modalidad","includes":"Incluye","equipment":"Equipamiento","accessibility":"Accesibilidad","notReported":"No reportada","accessConditions":"Condiciones de acceso","certifications":"Certificaciones","days":{"0":"Lun","1":"Mar","2":"Mié","3":"Jue","4":"Vie","5":"Sáb","6":"Dom"},"levels":{"baja":"Baja","media":"Media","alta":"Alta"},"access":{"movilidad_reducida":"Movilidad reducida","rampa":"Rampa","banio_adaptado":"Baño adaptado"}},
     "title": "Moderación editorial",
     "description": "Elige un prestador y revisa su contenido. Las acciones se ejecutan en nombre de ese prestador (X-Tenant-Id).",
     "provider": "Prestador",

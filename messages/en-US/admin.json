@@ -111,6 +111,9 @@
     "done": "The action was applied successfully"
   },
   "moderation": {
+    "currentState": "Current status",
+    "noActions": "There are no moderation actions for this status. The provider must submit the content for review.",
+    "doc": {"valid":"Ready to publish","invalid":"Missing data","omitted":"Omitted fields: {keys}","noMedia":"No photos or videos","media":"{count, plural, one {# media file} other {# media files}}","video":"Video","english":"Show English description","other":"Other data","categories":"Categories","location":"Location","rates":"Rates","schedule":"Opening hours","everyDay":"Every day, {range}","price":"Price per person","duration":"Duration","minutes":"{count, plural, one {# minute} other {# minutes}}","difficulty":"Difficulty","operator":"Operator","organizer":"Organizer","dates":"Dates","capacity":"Capacity","minAge":"Minimum age","mode":"Mode","includes":"Includes","equipment":"Equipment","accessibility":"Accessibility","notReported":"Not reported","accessConditions":"Access conditions","certifications":"Certifications","days":{"0":"Mon","1":"Tue","2":"Wed","3":"Thu","4":"Fri","5":"Sat","6":"Sun"},"levels":{"baja":"Low","media":"Medium","alta":"High"},"access":{"movilidad_reducida":"Reduced mobility","rampa":"Ramp","banio_adaptado":"Accessible restroom"}},
     "title": "Editorial moderation",
     "description": "Choose a provider and review their content. Actions run on behalf of that provider (X-Tenant-Id).",
     "provider": "Provider",

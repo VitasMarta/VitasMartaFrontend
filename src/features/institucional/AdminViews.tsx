@@ -27,6 +27,7 @@ import { Pagination } from "@/shared/ui/Pagination";
 import { SlideOver } from "@/shared/ui/SlideOver";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { Tabs } from "@/shared/ui/Tabs";
+import { ACCIONES_POR_ESTADO, VistaPreviaContenido } from "./VistaPreviaContenido";
 
 const ROLES: Rol[] = ["TURISTA", "PRESTADOR", "ANALISTA_TURISTICO", "AUTORIDAD_AMBIENTAL", "INTEGRADOR_TECNICO", "ADMINISTRADOR"];
 const SIZE = 10;
@@ -454,6 +455,7 @@ function useTenantPicker() {
 
 export function ModerationView() {
   const t = useTranslations("admin.moderation");
+  const tEstados = useTranslations("prestador.states");
   const tc = useTranslations("common");
   const locale = useLocale();
   const qc = useQueryClient();
@@ -472,6 +474,7 @@ export function ModerationView() {
     onSuccess: () => { toast("success", t("done")); setPanel(null); qc.invalidateQueries({ queryKey: ["m4"] }); },
     onError: (e) => e instanceof ApiError && setError(e.message),
   });
+  const acciones = ACCIONES_POR_ESTADO[panel?.estado ?? ""] ?? [];
   const onAction = (accion: string, form: HTMLFormElement) => {
     const motivo = String(new FormData(form).get("motivo") ?? "").trim();
     if (["devolver", "rechazar"].includes(accion) && !motivo) return setError(t("reasonRequired"));
@@ -492,7 +495,7 @@ export function ModerationView() {
           </SelectField>
           <SelectField label={tc("status")} name="estado" value={estado} onChange={(e) => { setEstado(e.target.value); setPage(1); }}>
             <option value="">{t("all")}</option>
-            {["en_revision", "aprobado", "publicado", "borrador", "rechazado"].map((s) => <option key={s} value={s}>{s}</option>)}
+            {["en_revision", "aprobado", "publicado", "borrador", "archivado"].map((s) => <option key={s} value={s}>{tEstados.has(s) ? tEstados(s) : s}</option>)}
           </SelectField>
         </div>
         {(providers.isPending || list.isPending) && <StatusBlock kind="loading" title={tc("loading")} />}
@@ -512,15 +515,26 @@ export function ModerationView() {
       <SlideOver open={panel !== null} onClose={() => setPanel(null)} title={localized(panel?.nombre, locale)}>
         {panel && (
           <form onSubmit={(e) => e.preventDefault()} noValidate className="space-y-5">
-            <h3>{t("preview")}</h3>
+            <p className="flex items-center gap-2"><span className="meta text-ink/70">{t("currentState")}</span><EstadoTag estado={panel.estado} /></p>
+            <h3 className="!text-lg">{t("preview")}</h3>
             {preview.isPending && <StatusBlock kind="loading" title={tc("loading")} />}
-            {preview.data && <DefinitionRows rows={Object.entries(preview.data).filter(([k, v]) => v != null && v !== "" && !["tenant", "id"].includes(k)).slice(0, 10).map(([k, v]) => ({ term: k, value: typeof v === "object" ? JSON.stringify(v) : String(v) }))} />}
-            <TextAreaField label={t("reason")} name="motivo" error={error} hint={t("reasonHint")} />
-            <div className="flex flex-wrap gap-3">
-              {["aprobar", "publicar", "devolver", "rechazar", "archivar"].map((a) => (
-                <Button key={a} variant={["devolver", "rechazar"].includes(a) ? "danger" : a === "publicar" ? "primary" : "secondary"} loading={act.isPending} onClick={(e) => onAction(a, (e.currentTarget as HTMLButtonElement).form!)}>{t(`actions.${a}`)}</Button>
-              ))}
-            </div>
+            {preview.isError && <ErrorNotice error={preview.error} referenceLabel={tc("reference")} />}
+            {preview.data && <VistaPreviaContenido data={preview.data} />}
+            {acciones.length === 0 ? (
+              <p role="status" className="rounded-lg bg-page px-4 py-3 text-sm text-ink/80">{t("noActions")}</p>
+            ) : (
+              <div className="space-y-4 border-t border-line pt-5">
+                {acciones.some((a) => ["devolver", "rechazar"].includes(a)) && (
+                  <TextAreaField label={t("reason")} name="motivo" error={error} hint={t("reasonHint")} rows={3} />
+                )}
+                {error && !acciones.some((a) => ["devolver", "rechazar"].includes(a)) && <p role="alert" className="text-sm font-medium text-critical">{error}</p>}
+                <div className="flex flex-wrap gap-3">
+                  {acciones.map((a) => (
+                    <Button key={a} variant={a === "rechazar" ? "danger" : ["aprobar", "publicar"].includes(a) ? "primary" : "secondary"} loading={act.isPending} onClick={(e) => onAction(a, (e.currentTarget as HTMLButtonElement).form!)}>{t(`actions.${a}`)}</Button>
+                  ))}
+                </div>
+              </div>
+            )}
           </form>
         )}
       </SlideOver>
