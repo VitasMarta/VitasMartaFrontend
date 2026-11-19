@@ -169,3 +169,11 @@ test("el idioma se puede cambiar y la sesión se restaura tras recargar (cookie 
   await expect(page).toHaveURL(/\/en-US/);
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
 });
+
+test("verificación: enlace vencido ofrece reenviar el correo con espera entre envíos", async ({ page }) => {
+  await page.goto("/es-CO/verificacion?token=expirado");
+  await page.getByLabel("Correo electrónico").fill("nuevo@correo.co");
+  await page.getByRole("button", { name: "Reenviar correo de verificación" }).click();
+  await expect(page.getByText(/te enviamos un enlace nuevo/)).toBeVisible();
+  await expect(page.getByRole("button", { name: /Podrás reenviarlo en \d+ s/ })).toBeDisabled();
+});

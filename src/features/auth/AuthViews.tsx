@@ -54,6 +54,7 @@ export function LoginView() {
   const [enrollmentSecret, setEnrollmentSecret] = useState<string | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<unknown>(null);
+  const [correoIntento, setCorreoIntento] = useState("");
   const [busy, setBusy] = useState(false);
   const oauth = params.get("oauth");
   const finishing = useRef(false);
@@ -83,6 +84,7 @@ export function LoginView() {
     setErrors(fieldErrors ?? {});
     setFailure(null);
     if (!data) return;
+    setCorreoIntento(data.correo);
     setBusy(true);
     try {
       const result = await login(data.correo, data.password);
@@ -116,6 +118,7 @@ export function LoginView() {
   };
 
   const locked = failure instanceof ApiError && failure.status === 423;
+  const sinVerificar = failure instanceof ApiError && failure.codigo === "CUENTA_NO_VERIFICADA";
 
   return (
     <AuthShell title={step === "mfa" ? t("mfaTitle") : t("title")} description={step === "mfa" ? t("mfaDescription") : t("description")}>
@@ -126,6 +129,7 @@ export function LoginView() {
           <TextField label={t("email")} name="correo" type="email" autoComplete="username" required error={errors.correo} />
           <TextField label={t("password")} name="password" type="password" autoComplete="current-password" required error={errors.password} />
           {failure != null && (locked ? <StatusBlock kind="error" title={t("locked")} /> : <ErrorNotice error={failure} referenceLabel={tc("reference")} />)}
+          {sinVerificar && <ReenviarVerificacion correo={correoIntento} />}
           <Button type="submit" loading={busy} className="w-full !min-h-12 text-lg">
             {busy ? t("submitting") : t("submit")}
           </Button>
@@ -186,7 +190,7 @@ export function RegisterView() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
 
   const schema = z
     .object({
@@ -223,7 +227,7 @@ export function RegisterView() {
           ],
         },
       });
-      setDone(true);
+      setDone(data.correo);
     } catch (error) {
       if (error instanceof ApiError) setErrors(error.fieldErrors());
       setFailure(error);
@@ -236,6 +240,7 @@ export function RegisterView() {
     return (
       <AuthShell title={t("doneTitle")}>
         <p className="flex items-start gap-2 text-lg"><Icon name="check" className="mt-1 text-emerald-ink" size={24} />{t("doneBody")}</p>
+        <ReenviarVerificacion correo={done} />
         <Link href="/login" className="text-link mt-6 inline-block font-semibold">{t("goLogin")}</Link>
       </AuthShell>
     );
@@ -277,6 +282,69 @@ export function RegisterView() {
   );
 }
 
+// ── Reenvío del correo de verificación (M7 `POST /cuentas/reenvio-verificacion`) ────────────────
+const ESPERA_REENVIO_S = 60;
+
+/**
+ * Pide a M7 un enlace nuevo (el anterior queda inválido). La respuesta es siempre neutra
+ * (anti-enumeración), así que se muestra el mismo aviso exista o no la cuenta. Tras cada envío
+ * el botón espera {@link ESPERA_REENVIO_S} s para no llenar la bandeja ni la cola de M10.
+ * Sin `correo` se pide el correo en un campo.
+ */
+export function ReenviarVerificacion({ correo }: { correo?: string }) {
+  const t = useTranslations("auth.resend");
+  const tc = useTranslations("common");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [espera, setEspera] = useState(0);
+  const [error, setError] = useState<string | undefined>();
+  const [failure, setFailure] = useState<unknown>(null);
+
+  useEffect(() => {
+    if (espera <= 0) return;
+    const id = setTimeout(() => setEspera((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [espera]);
+
+  const enviar = async (destino: string) => {
+    setFailure(null);
+    setBusy(true);
+    try {
+      await api.post(routes.identidad.reenvioVerificacion, { auth: false, body: { correo: destino } });
+      setSent(true);
+      setEspera(ESPERA_REENVIO_S);
+    } catch (e) {
+      // Igual que la recuperación: solo los fallos de red/servidor se informan.
+      if (e instanceof ApiError && e.status !== 0 && e.status < 500) {
+        setSent(true);
+        setEspera(ESPERA_REENVIO_S);
+      } else setFailure(e);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const destino = correo ?? String(formValues(e.currentTarget).correo ?? "").trim();
+    if (!z.string().email().safeParse(destino).success) return setError(t("invalidEmail"));
+    setError(undefined);
+    void enviar(destino);
+  };
+
+  return (
+    <form onSubmit={onSubmit} noValidate className="mt-6 space-y-4 rounded-lg bg-page px-4 py-4" aria-live="polite">
+      <p className="text-sm text-ink/85">{correo ? t("questionWithEmail", { correo }) : t("question")}</p>
+      {!correo && <TextField label={t("email")} name="correo" type="email" autoComplete="email" required error={error} />}
+      {sent && <p role="status" className="border-l-4 border-emerald pl-3 text-sm">{t("sent")}</p>}
+      {failure != null && <ErrorNotice error={failure} referenceLabel={tc("reference")} />}
+      <Button type="submit" variant="secondary" loading={busy} disabled={espera > 0}>
+        {espera > 0 ? t("wait", { segundos: espera }) : sent ? t("again") : t("submit")}
+      </Button>
+    </form>
+  );
+}
+
 // ── Verificación de correo (enlace con ?token=) ─────────────────────────────────────────────────
 export function VerifyView() {
   const t = useTranslations("auth.verify");
@@ -308,7 +376,12 @@ export function VerifyView() {
             <Link href="/login" className="text-link mt-4 inline-block font-semibold">{t("goLogin")}</Link>
           </>
         )}
-        {state === "error" && <ErrorNotice error={failure} referenceLabel={tc("reference")} />}
+        {state === "error" && (
+          <>
+            <ErrorNotice error={failure} referenceLabel={tc("reference")} />
+            <ReenviarVerificacion />
+          </>
+        )}
       </div>
     </AuthShell>
   );
