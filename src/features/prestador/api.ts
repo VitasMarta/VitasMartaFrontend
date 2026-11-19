@@ -30,6 +30,18 @@ export const useContenido = (tipo: Tipo, id: string | undefined) =>
   });
 
 /** Crea (POST) o actualiza (PATCH con `version_esperada`) un contenido de M4. */
+/**
+ * Tras un cambio del prestador en M4 (contenido, fotos, franjas, flujo editorial) se invalidan también
+ * las vistas públicas: el catálogo (M2) y las franjas reservables (M3) muestran precio y fotos, y antes
+ * quedaban en caché 30 s con el valor viejo («hay que guardar dos veces»).
+ */
+const invalidarOferta = (qc: ReturnType<typeof useQueryClient>, ...extra: unknown[][]) =>
+  Promise.all([
+    ...(extra.length ? extra : [["m4"]]).map((queryKey) => qc.invalidateQueries({ queryKey })),
+    qc.invalidateQueries({ queryKey: ["catalogo"] }),
+    qc.invalidateQueries({ queryKey: ["reservas", "ofertas"] }),
+  ]);
+
 export function useGuardarContenido(tipo: Tipo, id?: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -38,7 +50,7 @@ export function useGuardarContenido(tipo: Tipo, id?: string) {
       id
         ? (await api.patch<Contenido>(routes.prestadores.ofertaItem(tipo, id), { body: { version_esperada: version, ...body } })).data
         : (await api.post<Contenido>(routes.prestadores.oferta(tipo), { body })).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["m4"] }),
+    onSuccess: () => invalidarOferta(qc),
   });
 }
 
@@ -48,7 +60,7 @@ export function useAccionContenido(id: string) {
     meta: { silent: true },
     mutationFn: async ({ accion, motivo, version }: { accion: "enviar-revision" | "corregir"; motivo: string; version: number }) =>
       (await api.post<Contenido>(routes.prestadores.contenido(id, accion), { body: { motivo, version_esperada: version } })).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["m4"] }),
+    onSuccess: () => invalidarOferta(qc),
   });
 }
 
@@ -84,7 +96,7 @@ export async function subirMultimedia(id: string, version: number, archivo: File
 
 export function useMultimediaActions(id: string, version: number) {
   const qc = useQueryClient();
-  const refresh = () => qc.invalidateQueries({ queryKey: ["m4"] });
+  const refresh = () => invalidarOferta(qc);
   return {
     upload: useMutation({
       mutationFn: async ({ archivo, orden }: { archivo: File; orden: number }) => subirMultimedia(id, version, archivo, orden),
@@ -135,7 +147,7 @@ export const useFranjasM4 = (id: string) =>
 
 export function useFranjaActions(contenidoId: string) {
   const qc = useQueryClient();
-  const refresh = () => qc.invalidateQueries({ queryKey: ["m4", "franjas", contenidoId] });
+  const refresh = () => invalidarOferta(qc, ["m4", "franjas", contenidoId]);
   return {
     create: useMutation({
       meta: { silent: true },

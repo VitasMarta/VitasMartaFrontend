@@ -43,6 +43,9 @@ export const useBusqueda = (filtros: BusquedaFiltros, limite = 20, enabled = tru
   useInfiniteQuery({
     queryKey: ["catalogo", "busqueda", filtros, limite],
     enabled,
+    // Precio/foto cambian cuando el prestador edita (M4 → M2 por eventos): sin caché al volver.
+    staleTime: 0,
+    refetchOnMount: "always",
     initialPageParam: undefined as string | undefined,
     queryFn: async ({ pageParam }) =>
       (
@@ -59,6 +62,8 @@ export const useFicha = (id: string) => {
   const idioma = useLocale();
   return useQuery({
     queryKey: ["catalogo", "ficha", id, idioma],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => (await api.get<FichaCatalogo>(routes.catalogo.ficha(id), { auth: false, query: { idioma } })).data,
   });
 };
@@ -73,6 +78,8 @@ export const useMultimedia = (id: string, enabled = true) =>
   useQuery({
     queryKey: ["catalogo", "multimedia", id],
     enabled,
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () =>
       [...(await api.get<MultimediaDTO[]>(routes.catalogo.multimedia(id), { auth: false })).data].sort((a, b) => a.orden - b.orden),
   });

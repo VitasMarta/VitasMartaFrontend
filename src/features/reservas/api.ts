@@ -17,6 +17,8 @@ export const useOfertasReserva = (servicioRef: string) => {
   const status = useSessionStore((s) => s.status);
   return useQuery({
     queryKey: ["reservas", "ofertas", servicioRef],
+    staleTime: 0,
+    refetchOnMount: "always",
     enabled: status === "authenticated" && !!servicioRef,
     queryFn: async () => (await api.get<OfertasRespuesta>(routes.reservas.ofertas(servicioRef))).data,
     refetchInterval: 60_000, // los cupos y las restricciones ambientales cambian en vivo
