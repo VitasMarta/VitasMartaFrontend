@@ -7,6 +7,8 @@ import { formatDateTime, localized } from "@/core/format";
 import { Link, usePathname, useRouter } from "@/core/i18n/navigation";
 import { useDocumentTitle } from "@/shared/hooks";
 import { Button } from "@/shared/ui/Button";
+import { cn } from "@/shared/ui/cn";
+import { Icon } from "@/shared/ui/Icon";
 import { SelectField, TextField } from "@/shared/ui/forms";
 import { Container } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
@@ -57,6 +59,8 @@ export function SearchView() {
   useEffect(() => setCats(urlCategorias ? urlCategorias.split(",") : []), [urlCategorias]);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
+  // En móvil los filtros se pliegan en un desplegable; en escritorio siempre están a la vista.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   useDocumentTitle(t("title"));
 
   const categorias = useCategorias();
@@ -74,6 +78,7 @@ export function SearchView() {
     const f = new FormData(e.currentTarget);
     const n = (k: string) => (f.get(k) ? Number(f.get(k)) : undefined);
     apply({ texto: (f.get("texto") as string) || undefined, precio_minimo: n("precio_minimo"), precio_maximo: n("precio_maximo"), radio_km: n("radio_km") });
+    setFiltrosAbiertos(false); // en móvil se cierra para ver los resultados
   };
 
   const toggleCategoria = (slug: string) => {
@@ -102,6 +107,7 @@ export function SearchView() {
   };
 
   const hasFilters = !!(filtros.texto || filtros.categorias?.length || filtros.precio_minimo || filtros.precio_maximo || filtros.lat);
+  const filtrosActivos = (filtros.categorias?.length ?? 0) + [filtros.precio_minimo, filtros.precio_maximo, filtros.radio_km].filter((v) => v != null).length;
   const formKey = serialize({ ...filtros, orden: undefined, descendente: undefined, categorias: undefined });
 
   return (
@@ -132,43 +138,58 @@ export function SearchView() {
       <Container className="grid gap-6 py-5 lg:grid-cols-[280px_1fr]">
         {/* ── Filtros ── */}
         <aside aria-labelledby="filtros-title" className="card h-fit self-start">
-          <h2 id="filtros-title" className="border-b border-line px-4 py-3 !text-lg">{tl("filterBy")}</h2>
-          <form key={formKey} onSubmit={onSubmit} aria-label={tl("filterBy")} className="space-y-4 border-b border-line p-4">
-            <p className="font-semibold">{tl("budget")}</p>
-            <div className="grid grid-cols-2 gap-3">
-              <TextField label={t("priceMin")} name="precio_minimo" type="number" min={0} step={1000} defaultValue={filtros.precio_minimo} />
-              <TextField label={t("priceMax")} name="precio_maximo" type="number" min={0} step={1000} defaultValue={filtros.precio_maximo} />
-            </div>
-            <TextField label={t("radius")} name="radio_km" type="number" min={1} defaultValue={filtros.radio_km} hint={filtros.lat ? t("locationActive") : undefined} />
-            <input type="hidden" name="texto" value={filtros.texto ?? ""} />
-            <Button type="submit" variant="secondary" className="w-full">{t("apply")}</Button>
-            <Button variant="ghost" onClick={useLocation} loading={locating} className="w-full">
-              {locating ? t("locating") : t("useLocation")}
-            </Button>
-            {geoError && (
-              <p role="alert" className="text-sm font-medium text-critical">
-                {geoError}
-              </p>
-            )}
-          </form>
-          <fieldset className="min-w-0 p-4">
-            <legend className="mb-2 px-0 font-semibold">{t("categories")}</legend>
-            <div className="flex flex-col">
-              {categorias.data?.map((c) => (
-                <label key={c.slug} className="inline-flex min-h-11 cursor-pointer items-center gap-3">
-                  <input type="checkbox" className="size-5 accent-action" checked={cats.includes(c.slug)} onChange={() => toggleCategoria(c.slug)} />
-                  {localized(c.nombre, locale)}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          {hasFilters && (
-            <div className="border-t border-line p-4">
-              <Button variant="ghost" className="w-full" onClick={() => router.replace(pathname, { scroll: false })}>
-                {t("clearAll")}
+          <h2 id="filtros-title" className="!text-lg">
+            {/* Botón del desplegable en móvil; en escritorio es solo el encabezado. */}
+            <button
+              type="button"
+              aria-expanded={filtrosAbiertos}
+              aria-controls="filtros-cuerpo"
+              onClick={() => setFiltrosAbiertos((v) => !v)}
+              className={cn("flex min-h-12 w-full items-center gap-2 px-4 py-3 text-left lg:pointer-events-none lg:border-b lg:border-line", filtrosAbiertos && "border-b border-line")}
+            >
+              <span className="flex-1">{tl("filterBy")}</span>
+              {filtrosActivos > 0 && <span className="tabular rounded-full bg-action px-2 py-0.5 text-xs font-semibold text-on-action">{filtrosActivos}</span>}
+              <Icon name="chevron" size={18} className={cn("transition-transform lg:hidden", filtrosAbiertos ? "-rotate-90" : "rotate-90")} />
+            </button>
+          </h2>
+          <div id="filtros-cuerpo" className={cn(filtrosAbiertos ? "block" : "hidden", "lg:block")}>
+            <form key={formKey} onSubmit={onSubmit} aria-label={tl("filterBy")} className="space-y-4 border-b border-line p-4">
+              <p className="font-semibold">{tl("budget")}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <TextField label={t("priceMin")} name="precio_minimo" type="number" min={0} step={1000} defaultValue={filtros.precio_minimo} />
+                <TextField label={t("priceMax")} name="precio_maximo" type="number" min={0} step={1000} defaultValue={filtros.precio_maximo} />
+              </div>
+              <TextField label={t("radius")} name="radio_km" type="number" min={1} defaultValue={filtros.radio_km} hint={filtros.lat ? t("locationActive") : undefined} />
+              <input type="hidden" name="texto" value={filtros.texto ?? ""} />
+              <Button type="submit" variant="secondary" className="w-full">{t("apply")}</Button>
+              <Button variant="ghost" onClick={useLocation} loading={locating} className="w-full">
+                {locating ? t("locating") : t("useLocation")}
               </Button>
-            </div>
-          )}
+              {geoError && (
+                <p role="alert" className="text-sm font-medium text-critical">
+                  {geoError}
+                </p>
+              )}
+            </form>
+            <fieldset className="min-w-0 p-4">
+              <legend className="mb-2 px-0 font-semibold">{t("categories")}</legend>
+              <div className="flex flex-col">
+                {categorias.data?.map((c) => (
+                  <label key={c.slug} className="inline-flex min-h-11 cursor-pointer items-center gap-3">
+                    <input type="checkbox" className="size-5 accent-action" checked={cats.includes(c.slug)} onChange={() => toggleCategoria(c.slug)} />
+                    {localized(c.nombre, locale)}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            {hasFilters && (
+              <div className="border-t border-line p-4">
+                <Button variant="ghost" className="w-full" onClick={() => router.replace(pathname, { scroll: false })}>
+                  {t("clearAll")}
+                </Button>
+              </div>
+            )}
+          </div>
         </aside>
 
         {/* ── Resultados ── */}

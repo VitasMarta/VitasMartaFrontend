@@ -94,20 +94,20 @@ export function RecommendationsBand() {
           <Link href="/mi-perfil?seccion=intereses" className="text-link font-semibold">{t("nudgeLink")}</Link>
         </p>
       )}
-      <ul role="list" aria-label={personalized ? t("title") : t("titleGeneral")} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <ul role="list" aria-label={personalized ? t("title") : t("titleGeneral")} className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {items.map((item) => (
           <li key={item.id} className="card card-hover relative flex flex-col overflow-hidden">
             <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden">
               <FotoRecomendacion item={item} />
             </div>
-            <div className="flex flex-1 flex-col gap-2 p-4">
-              <h3 className="line-clamp-2 min-h-[2.75em] !text-lg leading-snug" title={item.nombre}>
+            <div className="flex flex-1 flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
+              <h3 className="line-clamp-2 min-h-[2.75em] !text-[0.95rem] leading-snug sm:!text-lg" title={item.nombre}>
                 <Link href={`/atractivo/${item.id}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
                   {item.nombre}
                 </Link>
               </h3>
               {item.categorias.length > 0 && <p className="meta truncate text-ink/80">{item.categorias.join(" · ")}</p>}
-              {item.explicacion && <p className="border-l-[3px] border-emerald pl-3 text-sm italic">{item.explicacion}</p>}
+              {item.explicacion && <p className="line-clamp-3 border-l-[3px] border-emerald pl-2 text-xs italic sm:line-clamp-none sm:pl-3 sm:text-sm">{item.explicacion}</p>}
               {item.sostenible && (
                 <p className="meta inline-flex items-center gap-1.5 font-semibold text-emerald-ink">
                   <Icon name="leaf" size={16} />

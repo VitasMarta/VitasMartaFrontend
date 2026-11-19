@@ -40,7 +40,7 @@ export function DestinoImagen({ src, alt, className, prioridad }: { src?: string
   );
 }
 
-function Precio({ item, align = "left" }: { item: ItemResultadoBusqueda; align?: "left" | "right" }) {
+function Precio({ item, align = "left", compacto }: { item: ItemResultadoBusqueda; align?: "left" | "right"; compacto?: boolean }) {
   const t = useTranslations("catalogo.card");
   const locale = useLocale();
   const precio = precioDe(item);
@@ -48,7 +48,7 @@ function Precio({ item, align = "left" }: { item: ItemResultadoBusqueda; align?:
   return (
     <p className={cn(align === "right" && "text-right")}>
       <span className="meta block text-ink/80">{t("from")}</span>
-      <span className="tabular text-xl font-bold">{formatCOP(precio, locale)}</span>
+      <span className={cn("tabular font-bold", compacto ? "text-[1.05rem] sm:text-xl" : "text-xl")}>{formatCOP(precio, locale)}</span>
       <span className="meta block text-ink/80">{t("perPerson")}</span>
     </p>
   );
@@ -65,9 +65,9 @@ export function DestinoCard({ item, prioridad }: { item: ItemResultadoBusqueda; 
       <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden">
         <DestinoImagen src={item.imagen_url} alt={t("photoOf", { name: nombre })} prioridad={prioridad} />
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-3 sm:gap-2 sm:p-4">
         {/* Título a 2 líneas con altura fija: categoría y precio quedan alineados entre tarjetas. */}
-        <h3 className="line-clamp-2 min-h-[2.75em] !text-lg leading-snug" title={nombre}>
+        <h3 className="line-clamp-2 min-h-[2.75em] !text-[0.95rem] leading-snug sm:!text-lg" title={nombre}>
           {/* Enlace "estirado": toda la tarjeta es clicable sin anidar enlaces. */}
           <Link href={`/atractivo/${item.id}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
             {nombre}
@@ -75,8 +75,8 @@ export function DestinoCard({ item, prioridad }: { item: ItemResultadoBusqueda; 
         </h3>
         {item.categorias && item.categorias.length > 0 && <p className="meta truncate text-ink/80">{item.categorias.join(" · ")}</p>}
         {occ && <SustainabilityIndicator level={occ.level} occupancy={occ.value} />}
-        <div className="mt-auto pt-2">
-          <Precio item={item} />
+        <div className="mt-auto pt-1 sm:pt-2">
+          <Precio item={item} compacto />
         </div>
       </div>
     </li>
@@ -86,7 +86,7 @@ export function DestinoCard({ item, prioridad }: { item: ItemResultadoBusqueda; 
 /** Rejilla de tarjetas de destino. */
 export function DestinoGrid({ items, label }: { items: ItemResultadoBusqueda[]; label: string }) {
   return (
-    <ul role="list" aria-label={label} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <ul role="list" aria-label={label} className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
       {items.map((item, i) => (
         <DestinoCard key={item.id} item={item} prioridad={i < 4} />
       ))}

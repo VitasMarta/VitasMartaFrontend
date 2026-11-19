@@ -25,14 +25,15 @@ export function SustainabilityIndicator({ level, occupancy }: { level: NivelSatu
     level === "CRITICO" ? "text-critical" : level === "PREVENTIVO" ? "text-preventive-ink" : level === "NOMINAL" ? "text-emerald-ink" : "text-ink";
   const icon = level === "CRITICO" ? "octagon" : level === "NOMINAL" ? "leaf" : "alert";
   return (
-    <span className="inline-flex flex-col gap-1">
-      <span className={cn("meta inline-flex items-center gap-1.5 font-semibold", text)}>
-        <Icon name={icon} size={16} />
+    <span className="inline-flex max-w-full flex-col gap-1">
+      {/* En tarjetas angostas (2 por fila en móvil) el porcentaje baja entero, sin partirse. */}
+      <span className={cn("meta inline-flex flex-wrap items-center gap-x-1.5 font-semibold", text)}>
+        <Icon name={icon} size={16} className="shrink-0" />
         {t(level)}
-        {occupancy !== undefined && <span className="tabular"> · {Math.round(occupancy)} %</span>}
+        {occupancy !== undefined && <span className="tabular whitespace-nowrap">· {Math.round(occupancy)} %</span>}
       </span>
       {occupancy !== undefined && (
-        <span aria-hidden="true" className="block h-1.5 w-36 overflow-hidden rounded-full bg-ink/15">
+        <span aria-hidden="true" className="block h-1.5 w-36 max-w-full overflow-hidden rounded-full bg-ink/15">
           <span className={cn("block h-full rounded-full", fill)} style={{ width: `${Math.min(100, Math.max(0, occupancy))}%` }} />
         </span>
       )}
