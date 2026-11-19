@@ -102,12 +102,12 @@ export function ResultadoCard({ item }: { item: ItemResultadoBusqueda }) {
   const occ = ocupacionDe(item);
   const resumen = localized(item.descripcion_corta, locale);
   return (
-    <li className="card card-hover relative grid gap-4 overflow-hidden p-4 sm:grid-cols-[220px_1fr] md:grid-cols-[240px_1fr_auto]">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md sm:aspect-auto sm:h-full sm:min-h-44">
+    <li className="card card-hover relative grid gap-4 overflow-hidden p-4 sm:h-64 sm:grid-cols-[220px_1fr] md:grid-cols-[240px_1fr_auto]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md sm:aspect-auto sm:h-full">
         <DestinoImagen src={item.imagen_url} alt={t("card.photoOf", { name: nombre })} />
       </div>
-      <div className="flex min-w-0 flex-col gap-2">
-        <h3 className="!text-xl">
+      <div className="flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden">
+        <h3 className="line-clamp-2 !text-xl leading-snug" title={nombre}>
           <Link href={`/atractivo/${item.id}`} className="text-action after:absolute after:inset-0 after:content-[''] hover:underline">
             {nombre}
           </Link>
@@ -124,13 +124,13 @@ export function ResultadoCard({ item }: { item: ItemResultadoBusqueda }) {
           </p>
         )}
         {item.categorias && item.categorias.length > 0 && (
-          <ul role="list" className="flex flex-wrap gap-2">
+          <ul role="list" className="flex flex-wrap gap-2 overflow-hidden sm:max-h-[1.9rem]">
             {item.categorias.map((c) => (
               <li key={c} className="meta rounded border border-ink/60 px-2 py-0.5">{c}</li>
             ))}
           </ul>
         )}
-        {resumen && <p className="text-ink/90">{resumen}</p>}
+        {resumen && <p className="line-clamp-2 text-ink/90">{resumen}</p>}
         {occ && <div className="mt-1"><SustainabilityIndicator level={occ.level} occupancy={occ.value} /></div>}
       </div>
       <div className="flex flex-row items-end justify-between gap-4 md:flex-col md:items-end md:justify-between">

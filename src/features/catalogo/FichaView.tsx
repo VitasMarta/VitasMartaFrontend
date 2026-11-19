@@ -54,6 +54,30 @@ export function FichaView({ id }: { id: string }) {
   const mapa = ubicacion?.lat != null && ubicacion?.lng != null ? `https://www.openstreetmap.org/?mlat=${ubicacion.lat}&mlon=${ubicacion.lng}#map=15/${ubicacion.lat}/${ubicacion.lng}` : null;
   const categorias = (data.categorias ?? []).map((c) => (typeof c === "string" ? c : c.nombre ?? c.slug));
 
+  const contexto = (
+    <>
+          {level && (
+            <section aria-label={ts(level)} className="card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{ts(level)}</p>
+                  <p className="meta text-ink/80">{t("goodPractices")}</p>
+                </div>
+                {occupancy != null && (
+                  <span className="tabular rounded-md bg-ink px-2.5 py-1.5 text-lg font-bold text-on-action">{Math.round(occupancy)} %</span>
+                )}
+              </div>
+              <div className="mt-3"><SustainabilityIndicator level={level} occupancy={occupancy} /></div>
+            </section>
+          )}
+          {crowded && (
+            <p role="status" className="card border-l-4 !border-l-preventive p-4 font-medium">
+              {restricted ? t("restricted") : t("crowded", { value: Math.round(occupancy ?? 0) })}
+            </p>
+          )}
+    </>
+  );
+
   return (
     <Container className="py-6">
       <nav aria-label="breadcrumb" className="meta">
@@ -87,57 +111,41 @@ export function FichaView({ id }: { id: string }) {
         </a>
       </header>
 
-      {/* Dos columnas alineadas de arriba abajo: galería y contenido a la izquierda; reserva y
-          contexto (sostenibilidad, aforo, mapa) a la derecha, con el mismo ancho en toda la ficha. */}
-      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="min-w-0">
-          <Gallery media={media.data ?? []} name={name} />
+      {/* Dos columnas independientes en escritorio: galería y contenido a la izquierda; reserva y
+          contexto (mapa, sostenibilidad, aforo) a la derecha. Cada una apila lo suyo sin esperar a la
+          otra, así «Sobre este destino» sigue justo debajo de la galería aunque la reserva sea más
+          alta. En móvil las columnas se disuelven (`contents`) y `order` deja:
+          galería → reserva → contenido → contexto. */}
+      <div className="mt-5 flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-6">
+          <div className="order-1 min-w-0">
+            <Gallery media={media.data ?? []} name={name} />
+          </div>
+          <article className="order-3 min-w-0 space-y-6">
+            {data.descripcion != null && (
+              <section aria-labelledby="about-title" className="card p-5">
+                <h2 id="about-title" className="!text-2xl">{tl("about")}</h2>
+                <p className="mt-3 max-w-3xl text-lg">{localized(data.descripcion, locale)}</p>
+              </section>
+            )}
+            <DynamicAttributes ficha={data} />
+            <BuenasPracticasBlock data={buenasPracticas.data} />
+            {crowded && <AlternativesBand data={alternativas.data} />}
+          </article>
         </div>
-        {/* Misma altura que la galería: el mapa ocupa el espacio que deja la reserva. */}
-        <div className="flex flex-col gap-4">
-          <aside id="reservar" aria-label={t("bookingRegion")} className="card scroll-mt-24 p-5">
+        <div className="contents lg:flex lg:flex-col lg:gap-4">
+          <aside id="reservar" aria-label={t("bookingRegion")} className="card order-2 scroll-mt-24 p-5">
             <BookingPanel atractivoId={id} ficha={data} onRestricted={() => setRestricted(true)} />
           </aside>
-          {mapa && (
-            <a href={mapa} target="_blank" rel="noreferrer" className="card card-hover flex min-h-28 flex-1 flex-col items-center justify-center gap-2 bg-gradient-to-br from-page to-mist p-4 font-semibold text-action">
-              <Icon name="pin" size={28} />
-              {tl("viewMap")}
-            </a>
-          )}
-        </div>
-
-        <article className="min-w-0 space-y-6">
-          {data.descripcion != null && (
-            <section aria-labelledby="about-title" className="card p-5">
-              <h2 id="about-title" className="!text-2xl">{tl("about")}</h2>
-              <p className="mt-3 max-w-3xl text-lg">{localized(data.descripcion, locale)}</p>
-            </section>
-          )}
-          <DynamicAttributes ficha={data} />
-          <BuenasPracticasBlock data={buenasPracticas.data} />
-          {crowded && <AlternativesBand data={alternativas.data} />}
-        </article>
-
-        <div className="space-y-4">
-          {level && (
-            <section aria-label={ts(level)} className="card p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{ts(level)}</p>
-                  <p className="meta text-ink/80">{t("goodPractices")}</p>
-                </div>
-                {occupancy != null && (
-                  <span className="tabular rounded-md bg-ink px-2.5 py-1.5 text-lg font-bold text-on-action">{Math.round(occupancy)} %</span>
-                )}
-              </div>
-              <div className="mt-3"><SustainabilityIndicator level={level} occupancy={occupancy} /></div>
-            </section>
-          )}
-          {crowded && (
-            <p role="status" className="card border-l-4 !border-l-preventive p-4 font-medium">
-              {restricted ? t("restricted") : t("crowded", { value: Math.round(occupancy ?? 0) })}
-            </p>
-          )}
+          <div className="order-4 flex flex-col gap-4">
+            {mapa && (
+              <a href={mapa} target="_blank" rel="noreferrer" className="card card-hover flex min-h-28 flex-col items-center justify-center gap-2 bg-gradient-to-br from-page to-mist p-4 font-semibold text-action">
+                <Icon name="pin" size={28} />
+                {tl("viewMap")}
+              </a>
+            )}
+            {contexto}
+          </div>
         </div>
       </div>
     </Container>
