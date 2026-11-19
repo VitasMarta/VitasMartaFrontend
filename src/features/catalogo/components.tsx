@@ -97,16 +97,16 @@ export function RecommendationsBand() {
       <ul role="list" aria-label={personalized ? t("title") : t("titleGeneral")} className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((item) => (
           <li key={item.id} className="card card-hover relative flex flex-col overflow-hidden">
-            <div className="aspect-[4/3] w-full">
+            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden">
               <FotoRecomendacion item={item} />
             </div>
             <div className="flex flex-1 flex-col gap-2 p-4">
-              <h3 className="!text-lg leading-snug">
+              <h3 className="line-clamp-2 min-h-[2.75em] !text-lg leading-snug" title={item.nombre}>
                 <Link href={`/atractivo/${item.id}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
                   {item.nombre}
                 </Link>
               </h3>
-              {item.categorias.length > 0 && <p className="meta text-ink/80">{item.categorias.join(" · ")}</p>}
+              {item.categorias.length > 0 && <p className="meta truncate text-ink/80">{item.categorias.join(" · ")}</p>}
               {item.explicacion && <p className="border-l-[3px] border-emerald pl-3 text-sm italic">{item.explicacion}</p>}
               {item.sostenible && (
                 <p className="meta inline-flex items-center gap-1.5 font-semibold text-emerald-ink">
@@ -142,7 +142,7 @@ export function Gallery({ media, name }: { media: MultimediaDTO[]; name: string 
   const t = useTranslations("catalogo.ficha");
   if (media.length === 0)
     return (
-      <section aria-label={t("gallery")} className="aspect-[16/9] overflow-hidden rounded-lg">
+      <section aria-label={t("gallery")} className="relative aspect-[16/9] overflow-hidden rounded-lg">
         <DestinoImagen alt={name} />
       </section>
     );
@@ -284,7 +284,7 @@ export function AlternativesBand({ data }: { data: AlternativasRespuesta | null 
       <ul role="list" aria-label={t("title")} className="mt-4 grid gap-4 sm:grid-cols-2">
         {data.alternativas.map((a) => (
           <li key={a.atractivo_ref} className="card card-hover relative flex gap-3 overflow-hidden p-3">
-            <div className="h-24 w-28 shrink-0 overflow-hidden rounded-md">
+            <div className="relative h-24 w-28 shrink-0 overflow-hidden rounded-md">
               <DestinoImagen alt={a.nombre} />
             </div>
             <div className="min-w-0 space-y-1">

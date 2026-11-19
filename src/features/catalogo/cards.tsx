@@ -22,14 +22,18 @@ export function ocupacionDe(item: ItemResultadoBusqueda) {
   return { value, level: typeof s === "object" && s.nivel_saturacion ? s.nivel_saturacion : levelFromOccupancy(value) };
 }
 
-/** Imagen del destino o, si aún no tiene fotos, un fondo de marca con el ícono (decorativo). */
+/**
+ * Imagen del destino o, si aún no tiene fotos, un fondo de marca con el ícono (decorativo).
+ * Rellena por completo su contenedor (que debe ser `relative` con tamaño o proporción fija):
+ * así una foto vertical u horizontal nunca cambia la altura de la tarjeta.
+ */
 export function DestinoImagen({ src, alt, className, prioridad }: { src?: string | null; alt: string; className?: string; prioridad?: boolean }) {
   const t = useTranslations("catalogo.card");
   if (src)
     // eslint-disable-next-line @next/next/no-img-element -- dominio del CDN (R2) aún sin definir en next.config
-    return <img src={src} alt={alt} loading={prioridad ? "eager" : "lazy"} decoding="async" className={cn("h-full w-full object-cover", className)} />;
+    return <img src={src} alt={alt} loading={prioridad ? "eager" : "lazy"} decoding="async" className={cn("absolute inset-0 h-full w-full object-cover", className)} />;
   return (
-    <div className={cn("flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-ink to-emerald-ink text-on-action", className)}>
+    <div className={cn("absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-ink to-emerald-ink text-on-action", className)}>
       <Icon name="leaf" size={36} />
       <span className="text-sm font-semibold">{t("noPhoto")}</span>
     </div>
@@ -58,17 +62,18 @@ export function DestinoCard({ item, prioridad }: { item: ItemResultadoBusqueda; 
   const occ = ocupacionDe(item);
   return (
     <li className="card card-hover relative flex flex-col overflow-hidden">
-      <div className="aspect-[4/3] w-full">
+      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden">
         <DestinoImagen src={item.imagen_url} alt={t("photoOf", { name: nombre })} prioridad={prioridad} />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3 className="!text-lg leading-snug">
+        {/* Título a 2 líneas con altura fija: categoría y precio quedan alineados entre tarjetas. */}
+        <h3 className="line-clamp-2 min-h-[2.75em] !text-lg leading-snug" title={nombre}>
           {/* Enlace "estirado": toda la tarjeta es clicable sin anidar enlaces. */}
           <Link href={`/atractivo/${item.id}`} className="text-ink after:absolute after:inset-0 after:content-[''] hover:text-action">
             {nombre}
           </Link>
         </h3>
-        {item.categorias && item.categorias.length > 0 && <p className="meta text-ink/80">{item.categorias.join(" · ")}</p>}
+        {item.categorias && item.categorias.length > 0 && <p className="meta truncate text-ink/80">{item.categorias.join(" · ")}</p>}
         {occ && <SustainabilityIndicator level={occ.level} occupancy={occ.value} />}
         <div className="mt-auto pt-2">
           <Precio item={item} />
@@ -98,7 +103,7 @@ export function ResultadoCard({ item }: { item: ItemResultadoBusqueda }) {
   const resumen = localized(item.descripcion_corta, locale);
   return (
     <li className="card card-hover relative grid gap-4 overflow-hidden p-4 sm:grid-cols-[220px_1fr] md:grid-cols-[240px_1fr_auto]">
-      <div className="aspect-[4/3] w-full overflow-hidden rounded-md sm:aspect-auto sm:h-full sm:min-h-44">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md sm:aspect-auto sm:h-full sm:min-h-44">
         <DestinoImagen src={item.imagen_url} alt={t("card.photoOf", { name: nombre })} />
       </div>
       <div className="flex min-w-0 flex-col gap-2">
