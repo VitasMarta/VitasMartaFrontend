@@ -99,8 +99,14 @@ export const identidadHandlers = [
   http.get(gw("/identidad/usuarios/actual/perfil"), ({ request }) => {
     const c = claimsOf(request);
     if (!c) return unauthorized(request);
-    const correo = Object.entries(MOCK_USERS).find(([, u]) => u.sub === c.sub)?.[0] ?? "usuario@correo.co";
-    return HttpResponse.json({ correo, nombre: "Camila", apellido: "Restrepo", pais_residencia: "CO", telefono: "+57 300 000 0000", ...perfiles.get(c.sub) });
+    // Misma forma que M7: nombre_visible + datos_contacto.
+    return HttpResponse.json({
+      usuario_ref: c.sub,
+      nombre_visible: "Camila Restrepo",
+      datos_contacto: { nombre: "Camila", apellido: "Restrepo", pais_residencia: "CO", telefono: "+57 300 000 0000" },
+      fecha_actualizacion: null,
+      ...perfiles.get(c.sub),
+    });
   }),
   http.put(gw("/identidad/usuarios/actual/perfil"), async ({ request }) => {
     const c = claimsOf(request);

@@ -27,13 +27,14 @@ import { Container, PageHeader } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
 import { Tabs } from "@/shared/ui/Tabs";
 import { formValues, validate, type FieldErrors } from "@/shared/validate";
+import { escribirPerfil, leerPerfil, type PerfilM7 } from "./perfilM7";
 
 // ── Datos personales ────────────────────────────────────────────────────────────────────────────
 function PerfilTab() {
   const t = useTranslations("perfil.profile");
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
-  const q = useQuery({ queryKey: ["perfil"], queryFn: async () => (await api.get<Record<string, string>>(routes.identidad.perfil)).data });
+  const q = useQuery({ queryKey: ["perfil"], queryFn: async () => leerPerfil((await api.get<PerfilM7>(routes.identidad.perfil)).data) });
   const save = useMutation({
     mutationFn: async (body: Record<string, unknown>) => api.put(routes.identidad.perfil, { body }),
     onSuccess: () => {
@@ -50,7 +51,7 @@ function PerfilTab() {
     e.preventDefault();
     const { data, errors: fe } = validate(z.object({ nombre: z.string().min(1, t("errors.required")), apellido: z.string().min(1, t("errors.required")), telefono: z.string().optional(), pais_residencia: z.string().optional() }), formValues(e.currentTarget));
     setErrors(fe ?? {});
-    if (data) save.mutate({ ...q.data, ...data });
+    if (data) save.mutate(escribirPerfil(q.data.contacto, data));
   };
 
   return (
@@ -112,8 +113,9 @@ function InteresesTab() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const categorias = useCategorias();
-  // M7 solo expone el reemplazo (PUT /intereses); no hay lectura de los intereses guardados. Si la lectura
-  // no está disponible se parte de una selección vacía y se avisa que guardar reemplaza la anterior.
+  const queryClient = useQueryClient();
+  // M7 `GET /intereses` devuelve la lista vigente. Si un despliegue viejo no la tiene (404/405) se parte
+  // de una selección vacía y se avisa que guardar reemplaza la anterior.
   const q = useQuery({
     queryKey: ["intereses"],
     retry: false,
@@ -129,7 +131,11 @@ function InteresesTab() {
   const [draft, setDraft] = useState<Set<string> | null>(null);
   const save = useMutation({
     mutationFn: async (list: string[]) => api.put(routes.identidad.intereses, { body: { intereses: list } }), // reemplazo atómico
-    onSuccess: () => useUiStore.getState().push({ tone: "success", message: t("saved") }),
+    onSuccess: (_r, list) => {
+      queryClient.setQueryData(["intereses"], list);
+      setDraft(null);
+      useUiStore.getState().push({ tone: "success", message: t("saved") });
+    },
   });
 
   if (q.isPending || categorias.isPending) return <StatusBlock kind="loading" title={tc("loading")} />;
