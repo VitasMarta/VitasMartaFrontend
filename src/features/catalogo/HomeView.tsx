@@ -10,6 +10,7 @@ import { StatusBlock } from "@/shared/ui/StatusBlock";
 import { useBusqueda, useCategorias } from "./api";
 import { DestinoGrid } from "./cards";
 import { RecommendationsBand } from "./components";
+import { DescargarApp } from "./DescargarApp";
 import { SearchBar } from "./SearchBar";
 
 /** Portada: banda de marca con el buscador destacado, recomendaciones IA (M6), categorías y destinos (M2). */
@@ -73,6 +74,8 @@ export function HomeView() {
           </div>
         </Container>
       </section>
+
+      <DescargarApp />
     </>
   );
 }

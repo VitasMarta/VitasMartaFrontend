@@ -11,6 +11,20 @@
     "popularDesc": "Most viewed by other travelers.",
     "viewAll": "See the full catalog"
   },
+  "app": {
+    "kicker": "Mobile app",
+    "title": "Take VITASMARTA in your pocket",
+    "body": "Explore Santa Marta, book your spots and check how busy each destination is right from your phone.",
+    "f1": "Book in just a few taps",
+    "f2": "Live destination occupancy",
+    "f3": "Recommendations based on your interests",
+    "cta": "Download the app",
+    "ctaHint": "The link opens in a new tab.",
+    "mockGreeting": "Hi, traveler",
+    "mockPlace": "Tayrona Park",
+    "mockStatus": "Quiet · 32 %",
+    "mockBook": "Book"
+  },
   "ai": {
     "titleGeneral": "Suggestions for your visit",
     "anonIntro": "Well-rated destinations with low congestion. Sign in to get personalized recommendations powered by artificial intelligence.",

@@ -11,6 +11,20 @@
     "popularDesc": "Los más consultados por otros viajeros.",
     "viewAll": "Ver todo el catálogo"
   },
+  "app": {
+    "kicker": "App móvil",
+    "title": "Lleva VITASMARTA en tu bolsillo",
+    "body": "Explora Santa Marta, reserva tus cupos y revisa qué tan concurrido está cada destino desde tu celular.",
+    "f1": "Reserva en pocos toques",
+    "f2": "Ocupación de los destinos al momento",
+    "f3": "Recomendaciones según tus intereses",
+    "cta": "Descargar la app",
+    "ctaHint": "El enlace se abre en una pestaña nueva.",
+    "mockGreeting": "Hola, viajero",
+    "mockPlace": "Parque Tayrona",
+    "mockStatus": "Tranquilo · 32 %",
+    "mockBook": "Reservar"
+  },
   "ai": {
     "titleGeneral": "Sugerencias para tu visita",
     "anonIntro": "Destinos con buena valoración y baja congestión. Inicia sesión para recibir recomendaciones personalizadas con inteligencia artificial.",

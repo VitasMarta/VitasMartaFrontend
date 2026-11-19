@@ -26,6 +26,8 @@ const PATHS = {
   chart: "M4 20h16M7 16v-5M12 16V7M17 16v-8",
   shield: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z",
   activity: "M3 12h4l3-8 4 16 3-8h4",
+  download: "M12 4v11m-5-5l5 5 5-5M5 20h14",
+  phone: "M8 2h8a2 2 0 012 2v16a2 2 0 01-2 2H8a2 2 0 01-2-2V4a2 2 0 012-2zm3 17h2",
 } as const;
 
 export type IconName = keyof typeof PATHS;
