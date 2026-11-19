@@ -37,7 +37,8 @@ export const catalogoHandlers = [
     const orden = q.get("orden") ?? "relevancia";
     const desc = q.get("descendente") === "true";
     const limite = Math.min(100, Math.max(1, Number(q.get("limite") ?? 20)));
-    const offset = Number(q.get("cursor") ?? 0);
+    const pagina = q.get("pagina") ? Math.max(1, Number(q.get("pagina"))) : null;
+    const offset = pagina ? (pagina - 1) * limite : Number(q.get("cursor") ?? 0);
 
     let rows = CATALOGO.map((c) => ({
       c,
@@ -75,6 +76,7 @@ export const catalogoHandlers = [
       })),
       total: rows.length,
       cursor_siguiente: next,
+      ...(pagina ? { pagina } : {}),
       desde_cache: q.get("texto") === "cache",
       frescura_ultima_actualizacion: q.get("texto") === "cache" ? new Date(Date.now() - 20 * 60_000).toISOString() : null,
     });

@@ -62,6 +62,8 @@ export interface ResultadoBusqueda {
   items: ItemResultadoBusqueda[];
   total: number;
   cursor_siguiente: string | null;
+  /** M2: página devuelta cuando se pide con `?pagina=` (paginación numerada). */
+  pagina?: number | null;
   desde_cache: boolean;
   frescura_ultima_actualizacion?: string | null;
 }

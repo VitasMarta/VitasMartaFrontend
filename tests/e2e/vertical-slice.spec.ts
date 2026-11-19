@@ -49,6 +49,43 @@ test("catálogo: filtros por URL, orden conserva filtros y paginación por curso
   await expectNoA11yViolations(page);
 });
 
+test("catálogo: paginación numerada con total real, página en la URL y sin repetir resultados", async ({ page }) => {
+  const TOTAL = 45;
+  await page.route("**/catalogo/busqueda**", async (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    const pagina = Number(q.get("pagina") ?? 1);
+    const limite = Number(q.get("limite") ?? 20);
+    const desde = (pagina - 1) * limite;
+    const items = Array.from({ length: Math.max(0, Math.min(limite, TOTAL - desde)) }, (_, i) => ({
+      id: `atr-p${desde + i + 1}`,
+      nombre: { "es-CO": `Destino ${desde + i + 1}` },
+      categorias: ["naturaleza"],
+    }));
+    await route.fulfill({ json: { items, total: TOTAL, pagina, cursor_siguiente: null, desde_cache: false } });
+  });
+
+  await page.goto("/es-CO/buscar");
+  await expect(page.getByText("45 destinos encontrados")).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Páginas de resultados" });
+  await expect(nav.getByText("1", { exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText("Mostrando 1–20 de 45")).toBeVisible();
+
+  await nav.getByRole("link", { name: "Página 3" }).click();
+  await expect(page).toHaveURL(/pagina=3/, { timeout: 15_000 });
+  await expect(page.getByRole("link", { name: "Destino 41" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Destino 1", exact: true })).toHaveCount(0);
+  await expect(page.getByText("Mostrando 41–45 de 45")).toBeVisible();
+  await expect(nav.locator("[aria-disabled=true]", { hasText: "Siguiente" })).toHaveCount(1);
+
+  await nav.getByRole("link", { name: "Anterior" }).click();
+  await expect(page).toHaveURL(/pagina=2/, { timeout: 15_000 });
+  await expect(page.getByRole("link", { name: "Destino 21" })).toBeVisible();
+
+  // Cambiar el orden vuelve a la página 1.
+  await page.getByLabel("Ordenar por").selectOption("nombre");
+  await expect(page).not.toHaveURL(/pagina=/);
+});
+
 test("ficha: split-screen, atributos JSONB sin filas vacías, buenas prácticas y alternativas", async ({ page }) => {
   await page.goto("/es-CO/atractivo/atr-001");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Tayrona");

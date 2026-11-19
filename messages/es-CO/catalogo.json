@@ -54,7 +54,8 @@
     "cacheNotice": "Mostrando resultados guardados porque la fuente está degradada. Última actualización: {date}.",
     "empty": "No encontramos resultados",
     "emptyHint": "Prueba con otras categorías o amplía el rango de precio.",
-    "loadMore": "Cargar más resultados"
+    "loadMore": "Cargar más resultados",
+    "pages": { "label": "Páginas de resultados", "previous": "Anterior", "next": "Siguiente", "page": "Página {page}", "range": "Mostrando {from}–{to} de {total}" }
   },
   "types": { "atractivo": "Atractivo", "actividad": "Actividad", "evento": "Evento" },
   "row": { "distance": "a {km} km", "consult": "Consultar precio", "explore": "Explorar destino" },

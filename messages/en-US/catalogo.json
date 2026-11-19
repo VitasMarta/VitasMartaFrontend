@@ -54,7 +54,8 @@
     "cacheNotice": "Showing saved results because the source is degraded. Last updated: {date}.",
     "empty": "We found no results",
     "emptyHint": "Try other categories or widen the price range.",
-    "loadMore": "Load more results"
+    "loadMore": "Load more results",
+    "pages": { "label": "Result pages", "previous": "Previous", "next": "Next", "page": "Page {page}", "range": "Showing {from}–{to} of {total}" }
   },
   "types": { "atractivo": "Attraction", "actividad": "Activity", "evento": "Event" },
   "row": { "distance": "{km} km away", "consult": "Ask for price", "explore": "Explore destination" },

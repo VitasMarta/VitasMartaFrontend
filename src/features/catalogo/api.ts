@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 import { ApiError } from "@/core/api/errorNormalizer";
 import { api } from "@/core/api/gatewayClient";
@@ -55,6 +55,22 @@ export const useBusqueda = (filtros: BusquedaFiltros, limite = 20, enabled = tru
         })
       ).data,
     getNextPageParam: (last) => last.cursor_siguiente ?? undefined,
+  });
+
+/**
+ * Página numerada del catálogo (M2 `?pagina=N`, 1 = primera). `total` es el total real de
+ * coincidencias, así que la vista calcula el número de páginas. Mientras carga la siguiente
+ * página se conserva la anterior en pantalla (sin parpadeo).
+ */
+export const BUSQUEDA_POR_PAGINA = 20;
+export const useBusquedaPagina = (filtros: BusquedaFiltros, pagina: number, limite = BUSQUEDA_POR_PAGINA) =>
+  useQuery({
+    queryKey: ["catalogo", "busqueda", "pagina", filtros, pagina, limite],
+    staleTime: 0,
+    refetchOnMount: "always",
+    placeholderData: keepPreviousData,
+    queryFn: async () =>
+      (await api.get<ResultadoBusqueda>(routes.catalogo.busqueda, { auth: false, query: { ...filtros, limite, pagina } })).data,
   });
 
 /** M2 elige el idioma de la ficha con `?idioma=` (no con Accept-Language): se envía el locale activo. */

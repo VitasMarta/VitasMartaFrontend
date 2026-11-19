@@ -12,8 +12,9 @@ import { Icon } from "@/shared/ui/Icon";
 import { SelectField, TextField } from "@/shared/ui/forms";
 import { Container } from "@/shared/ui/layout";
 import { ErrorNotice, StatusBlock } from "@/shared/ui/StatusBlock";
-import { useBusqueda, useCategorias, type BusquedaFiltros } from "./api";
+import { BUSQUEDA_POR_PAGINA, useBusquedaPagina, useCategorias, type BusquedaFiltros } from "./api";
 import { ResultadoCard } from "./cards";
+import { PaginacionCatalogo } from "./PaginacionCatalogo";
 import { SearchBar } from "./SearchBar";
 
 const ORDERS: NonNullable<BusquedaFiltros["orden"]>[] = ["relevancia", "nombre", "distancia", "precio", "popularidad", "sostenibilidad"];
@@ -64,9 +65,21 @@ export function SearchView() {
   useDocumentTitle(t("title"));
 
   const categorias = useCategorias();
-  const busqueda = useBusqueda(filtros);
-  const items = busqueda.data?.pages.flatMap((p) => p.items) ?? [];
-  const first = busqueda.data?.pages[0];
+  // Página numerada en la URL (`?pagina=N`); cambiar filtros u orden vuelve a la 1 (apply no la conserva).
+  const pagina = Math.max(1, Math.floor(Number(searchParams.get("pagina")) || 1));
+  const busqueda = useBusquedaPagina(filtros, pagina);
+  const first = busqueda.data;
+  const items = first?.items ?? [];
+  const paginas = first ? Math.max(1, Math.ceil(first.total / BUSQUEDA_POR_PAGINA)) : 1;
+  const hrefPagina = (p: number) => {
+    const qs = serialize(filtros);
+    const conPagina = p > 1 ? (qs ? `${qs}&pagina=${p}` : `pagina=${p}`) : qs;
+    return conPagina ? `${pathname}?${conPagina}` : pathname;
+  };
+  // Al cambiar de página se sube al inicio de los resultados.
+  useEffect(() => {
+    if (pagina > 1) document.getElementById("resultados-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [pagina]);
 
   const apply = (patch: Partial<BusquedaFiltros>) => {
     const qs = serialize({ ...filtros, ...patch });
@@ -235,12 +248,19 @@ export function SearchView() {
             )}
           </div>
 
-          {busqueda.hasNextPage && (
-            <div className="py-8 text-center">
-              <Button variant="secondary" onClick={() => busqueda.fetchNextPage()} loading={busqueda.isFetchingNextPage}>
-                {t("loadMore")}
-              </Button>
-            </div>
+          {first && first.total > 0 && (
+            <>
+              <PaginacionCatalogo pagina={pagina} paginas={paginas} href={hrefPagina} />
+              {items.length > 0 && (
+                <p className="meta mt-3 text-center text-ink/70">
+                  {t("pages.range", {
+                    from: (pagina - 1) * BUSQUEDA_POR_PAGINA + 1,
+                    to: (pagina - 1) * BUSQUEDA_POR_PAGINA + items.length,
+                    total: first.total,
+                  })}
+                </p>
+              )}
+            </>
           )}
         </section>
       </Container>

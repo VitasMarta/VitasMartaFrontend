@@ -171,3 +171,13 @@ describe("Layouts", () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 });
+
+describe("rangoPaginas (paginación del catálogo)", () => {
+  it("muestra todas si son pocas y recorta con … si son muchas", async () => {
+    const { rangoPaginas } = await import("@/features/catalogo/PaginacionCatalogo");
+    expect(rangoPaginas(1, 5)).toEqual([1, 2, 3, 4, 5]);
+    expect(rangoPaginas(7, 15)).toEqual([1, null, 6, 7, 8, null, 15]);
+    expect(rangoPaginas(1, 15)).toEqual([1, 2, null, 15]);
+    expect(rangoPaginas(15, 15)).toEqual([1, null, 14, 15]);
+  });
+});
