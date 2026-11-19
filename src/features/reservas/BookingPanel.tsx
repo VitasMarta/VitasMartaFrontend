@@ -51,7 +51,9 @@ export function BookingPanel({
   const crear = useCrearReserva();
 
   const [franjaRef, setFranjaRef] = useState("");
-  const [cupos, setCupos] = useState(1);
+  // Se guarda el texto tal cual: con un número, borrar el campo daba 0 y lo escrito quedaba «012».
+  const [cuposTexto, setCuposTexto] = useState("1");
+  const cupos = cuposTexto.trim() === "" ? Number.NaN : Number(cuposTexto);
   const [acepta, setAcepta] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -173,7 +175,7 @@ export function BookingPanel({
                         onChange={() => {
                           setFranjaRef(ref);
                           setAcepta(false); // la política puede cambiar entre franjas: se vuelve a aceptar
-                          setCupos((c) => Math.min(c, Math.max(1, cuposDe(o))));
+                          setCuposTexto((c) => String(Math.min(Number(c) || 1, Math.max(1, cuposDe(o)))));
                         }}
                         className="size-5 accent-ink"
                         aria-describedby={`${id}-cupo`}
@@ -205,8 +207,8 @@ export function BookingPanel({
             inputMode="numeric"
             min={1}
             max={maxCupos}
-            value={cupos}
-            onChange={(e) => setCupos(Number(e.target.value))}
+            value={cuposTexto}
+            onChange={(e) => setCuposTexto(e.target.value.replace(/^0+(?=\d)/, ""))}
             error={errors.cupos ?? errors.cantidad_cupos}
             required
             className="max-w-40"

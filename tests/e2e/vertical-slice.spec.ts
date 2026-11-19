@@ -85,6 +85,11 @@ test("reserva: login → franja → política → soft lock con cuenta regresiva
   await expect(panel.getByRole("alert").first()).toBeVisible();
 
   await panel.getByRole("radio").first().check();
+  // Borrar y escribir no deja un 0 delante («012»).
+  const cantidad = panel.getByLabel("Cantidad de cupos");
+  await cantidad.fill("");
+  await cantidad.pressSequentially("12");
+  await expect(cantidad).toHaveValue("12");
   await panel.getByLabel("Cantidad de cupos").fill("2");
   await panel.getByLabel("Acepto la política de cancelación").check();
   await panel.getByRole("button", { name: "Reservar cupos" }).click();
